@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Client Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .photo-card { transition: all 0.2s ease-in-out; }
+        .photo-card:active { transform: scale(0.97); }
+        .selected-overlay { opacity: 0; transition: opacity 0.2s ease; }
+        .photo-card.selected .selected-overlay { opacity: 1; }
+        .photo-card.selected img { transform: scale(0.95); border-radius: 0.5rem; }
+    </style>
+    <script src="pengaturan.js"></script>
+</head>
+<body class="text-slate-800 pb-24 flex flex-col min-h-screen">
+
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-slate-900 text-white w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg">
+                    <i class="fa-solid fa-camera-retro"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-tight" id="headerVendorName">Client Portal</h1>
+                    <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Secure Selection Tool</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="clientView" class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+        <div id="inputSection" class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 mb-8 max-w-2xl mx-auto text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 via-slate-800 to-slate-200"></div>
+            
+            <h2 class="text-2xl font-bold mb-2 text-slate-800">Selamat Datang di <span id="greetingVendorName" class="text-slate-900">Portal</span></h2>
+            <p class="text-slate-500 text-sm mb-8">Silakan tempel (paste) link folder Google Drive yang telah diberikan oleh tim kami di bawah ini.</p>
+            
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="fa-brands fa-google-drive text-slate-400 text-lg"></i>
+                </div>
+                <input type="text" id="driveLink" 
+                    class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none transition" 
+                    placeholder="Contoh: https://drive.google.com/drive/folders/xxxxx">
+            </div>
+            
+            <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+                <button onclick="loadFromDrive()" class="px-8 py-3.5 bg-slate-900 hover:bg-black text-white font-medium rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-folder-open"></i> Buka Galeri
+                </button>
+            </div>
+        </div>
+
+        <div id="loadingState" class="hidden flex-col items-center justify-center py-16">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-slate-800 mb-4"></i>
+            <p id="loadingText" class="text-slate-500 font-medium">Menarik foto beresolusi tinggi...</p>
+        </div>
+
+        <div id="galleryContainer" class="hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4 border-b border-slate-200 pb-4">
+                <div>
+                    <h3 class="font-bold text-xl text-slate-800">Koleksi Foto</h3>
+                    <p class="text-sm text-slate-500">Klik foto untuk memilih. Foto terpilih akan diberi tanda centang.</p>
+                </div>
+                <button onclick="selectAll()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg font-medium transition flex items-center gap-2">
+                    <i class="fa-solid fa-check-double"></i> Pilih Semua (Hal Ini)
+                </button>
+            </div>
+            
+            <div id="photoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8"></div>
+            <div id="paginationContainer" class="flex justify-center items-center gap-3 mt-10 pb-8 hidden"></div>
+        </div>
+    </main>
+
+    <footer id="clientFooter" class="text-center py-6 mt-auto border-t border-slate-200">
+        <p class="text-sm text-slate-400">&copy; <script>document.write(new Date().getFullYear())</script> Layanan eksklusif oleh <span id="footerVendorName" class="font-medium text-slate-500">Portal</span>.</p>
+    </footer>
+
+    <div id="actionBar" class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="bg-slate-900 text-white font-bold w-12 h-12 rounded-full flex items-center justify-center text-lg shadow-md" id="selectedCount">0</div>
+                <div>
+                    <p class="font-bold text-slate-800">Foto Terpilih</p>
+                    <p class="text-xs text-slate-500 hidden md:block">Kirim daftar ini ke tim kami</p>
+                </div>
+            </div>
+            <button onclick="copyToClipboard()" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center gap-2 shadow-lg">
+                <i class="fa-brands fa-whatsapp text-xl"></i> <span class="hidden md:inline">Salin Format WhatsApp</span><span class="md:hidden">Salin List</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="customAlert" class="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl z-[99] flex items-center gap-3 transition-all duration-300 transform -translate-y-32 opacity-0 min-w-[300px] justify-center">
+        <i id="alertIcon" class="fa-solid fa-circle-check text-green-400 text-lg"></i>
+        <span id="alertText" class="text-sm font-bold tracking-wide">Notifikasi</span>
+    </div>
+
+    <script>
+        const ITEMS_PER_PAGE = 200; 
+        let appState = { photos: [], selectedIds: new Set(), currentPage: 1 };
+
+        // Menerapkan Branding dari file pengaturan.js
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof CONFIG_APP !== 'undefined') {
+                const vendorName = CONFIG_APP.namaVendor || 'Studio Foto';
+                document.getElementById('headerVendorName').textContent = vendorName;
+                document.getElementById('greetingVendorName').textContent = vendorName;
+                document.getElementById('footerVendorName').textContent = vendorName;
+                document.getElementById('pageTitle').textContent = `Client Portal - ${vendorName}`;
+            } else {
+                showAlert('File pengaturan.js tidak ditemukan atau salah format.', 'error');
+            }
+        });
+
+        function showAlert(message, type = 'success') {
+            const alertBox = document.getElementById('customAlert');
+            const alertText = document.getElementById('alertText');
+            const alertIcon = document.getElementById('alertIcon');
+            alertText.textContent = message;
+            alertIcon.className = type === 'success' ? "fa-solid fa-circle-check text-green-400 text-lg" : "fa-solid fa-triangle-exclamation text-red-400 text-lg";
+            alertBox.classList.remove('-translate-y-32', 'opacity-0');
+            setTimeout(() => alertBox.classList.add('-translate-y-32', 'opacity-0'), 3000);
+        }
+
+        function extractFolderId(url) {
+            const match = url.match(/folders\/([a-zA-Z0-9-_]+)/);
+            if (match && match[1]) return match[1];
+            const matchId = url.match(/id=([a-zA-Z0-9-_]+)/);
+            return matchId && matchId[1] ? matchId[1] : null;
+        }
+
+        async function loadFromDrive() {
+            if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey || CONFIG_APP.googleApiKey === 'ISI_DENGAN_API_KEY_ANDA_DI_SINI') {
+                return showAlert('Sistem belum dikonfigurasi. Harap isi API Key di pengaturan.js', 'error');
+            }
+
+            const link = document.getElementById('driveLink').value.trim();
+            if (!link) return showAlert('Harap masukkan link folder Google Drive.', 'error');
+            
+            const folderId = extractFolderId(link);
+            if (!folderId) return showAlert('Link tidak valid. Pastikan formatnya benar.', 'error');
+
+            showLoading(true);
+            appState.currentPage = 1; 
+            
+            try {
+                let fetchedFiles = []; let nextPageToken = "";
+                const query = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
+                
+                do {
+                    let apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=nextPageToken,files(id,name,thumbnailLink)&key=${CONFIG_APP.googleApiKey}&pageSize=1000`;
+                    if (nextPageToken) apiUrl += `&pageToken=${nextPageToken}`;
+                    
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    
+                    if (data.error) throw new Error(data.error.message);
+                    if (data.files && data.files.length > 0) fetchedFiles = fetchedFiles.concat(data.files);
+                    
+                    nextPageToken = data.nextPageToken;
+                    if (nextPageToken) document.getElementById('loadingText').textContent = `Menarik foto... (${fetchedFiles.length} dimuat)`;
+                } while (nextPageToken);
+
+                if (fetchedFiles.length > 0) {
+                    appState.photos = fetchedFiles.map(file => {
+                        let hdThumb = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : '';
+                        return { id: file.id, name: file.name, url: hdThumb };
+                    });
+                    appState.selectedIds.clear();
+                    renderGallery();
+                    showAlert(`${appState.photos.length} foto siap dipilih!`, 'success');
+                } else {
+                    showAlert('Folder kosong atau hak akses belum di-set Publik.', 'error');
+                    showLoading(false);
+                }
+            } catch (error) {
+                showAlert('Gagal mengambil data. Pastikan link Google Drive diset ke Publik.', 'error');
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingState').classList.toggle('hidden', !show);
+            document.getElementById('galleryContainer').classList.toggle('hidden', show);
+            document.getElementById('photoGrid').innerHTML = '';
+            document.getElementById('loadingText').textContent = "Menarik foto beresolusi tinggi...";
+            updateActionBar();
+        }
+
+        function renderGallery() {
+            showLoading(false);
+            const grid = document.getElementById('photoGrid'); grid.innerHTML = '';
+            const startIndex = (appState.currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = startIndex + ITEMS_PER_PAGE;
+            const photosToShow = appState.photos.slice(startIndex, endIndex);
+
+            photosToShow.forEach(photo => {
+                const card = document.createElement('div');
+                card.className = `photo-card relative cursor-pointer bg-slate-100 rounded-xl overflow-hidden aspect-square border-[3px] border-transparent shadow-sm hover:shadow-md ${appState.selectedIds.has(photo.id) ? 'selected border-slate-900' : ''}`;
+                card.onclick = () => toggleSelect(photo.id, card);
+                
+                const img = document.createElement('img');
+                img.src = photo.url; img.className = "w-full h-full object-cover transition-transform duration-300"; img.loading = "lazy";
+                
+                const overlay = document.createElement('div');
+                overlay.className = "selected-overlay absolute inset-0 bg-slate-900/10 z-10 flex items-start justify-end p-3 pointer-events-none";
+                const checkIcon = document.createElement('div');
+                checkIcon.className = "bg-slate-900 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg";
+                checkIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
+                overlay.appendChild(checkIcon);
+                
+                const nameLabel = document.createElement('div');
+                nameLabel.className = "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 pointer-events-none";
+                const nameText = document.createElement('p');
+                nameText.className = "text-white text-xs font-medium truncate drop-shadow-md";
+                nameText.textContent = photo.name;
+                nameLabel.appendChild(nameText);
+                
+                card.appendChild(img); card.appendChild(overlay); card.appendChild(nameLabel);
+                grid.appendChild(card);
+            });
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const container = document.getElementById('paginationContainer');
+            const totalPages = Math.ceil(appState.photos.length / ITEMS_PER_PAGE);
+            if (totalPages <= 1) { container.classList.add('hidden'); return; }
+            container.classList.remove('hidden'); container.innerHTML = '';
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `px-5 py-2.5 rounded-xl font-medium transition flex items-center gap-2 ${appState.currentPage === 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-sm'}`;
+            prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i> Prev';
+            prevBtn.disabled = appState.currentPage === 1;
+            prevBtn.onclick = () => changePage(appState.currentPage - 1);
+            container.appendChild(prevBtn);
+
+            const indicator = document.createElement('span');
+            indicator.className = 'px-5 py-2.5 text-sm font-bold text-slate-700 bg-slate-100 rounded-xl';
+            indicator.textContent = `Halaman ${appState.currentPage} dari ${totalPages}`;
+            container.appendChild(indicator);
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `px-5 py-2.5 rounded-xl font-medium transition flex items-center gap-2 ${appState.currentPage === totalPages ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-sm'}`;
+            nextBtn.innerHTML = 'Next <i class="fa-solid fa-chevron-right"></i>';
+            nextBtn.disabled = appState.currentPage === totalPages;
+            nextBtn.onclick = () => changePage(appState.currentPage + 1);
+            container.appendChild(nextBtn);
+        }
+
+        function changePage(newPage) {
+            const totalPages = Math.ceil(appState.photos.length / ITEMS_PER_PAGE);
+            if (newPage < 1 || newPage > totalPages) return;
+            appState.currentPage = newPage; renderGallery();
+            document.getElementById('galleryContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleSelect(id, cardElement) {
+            if (appState.selectedIds.has(id)) {
+                appState.selectedIds.delete(id); cardElement.classList.remove('selected', 'border-slate-900');
+            } else {
+                appState.selectedIds.add(id); cardElement.classList.add('selected', 'border-slate-900');
+            }
+            updateActionBar();
+        }
+
+        function selectAll() {
+            const startIndex = (appState.currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = startIndex + ITEMS_PER_PAGE;
+            const currentPhotos = appState.photos.slice(startIndex, endIndex);
+            const isAllCurrentSelected = currentPhotos.every(p => appState.selectedIds.has(p.id));
+            if (isAllCurrentSelected) { currentPhotos.forEach(p => appState.selectedIds.delete(p.id)); } 
+            else { currentPhotos.forEach(p => appState.selectedIds.add(p.id)); }
+            renderGallery(); updateActionBar();
+        }
+
+        function updateActionBar() {
+            const count = appState.selectedIds.size;
+            const bar = document.getElementById('actionBar');
+            document.getElementById('selectedCount').textContent = count;
+            if (count > 0) { bar.classList.remove('translate-y-full'); } 
+            else { bar.classList.add('translate-y-full'); }
+        }
+
+        function copyToClipboard() {
+            if (appState.selectedIds.size === 0) return;
+            const selectedNames = appState.photos.filter(p => appState.selectedIds.has(p.id)).map(p => p.name);
+            const vendor = (typeof CONFIG_APP !== 'undefined') ? CONFIG_APP.namaVendor : 'Studio';
+            
+            const textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nTotal: ${selectedNames.length} Foto\n\n${selectedNames.join('\n')}\n\n_Mohon segera diproses tim admin/project manager, terima kasih!_`;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy; textArea.style.position = "fixed"; textArea.style.top = "-9999px"; textArea.style.left = "-9999px";
+            document.body.appendChild(textArea); textArea.focus(); textArea.select();
+            
+            try {
+                if (document.execCommand('copy')) showAlert('List foto berhasil disalin! Silahkan tempel di chat WhatsApp.', 'success');
+                else showAlert('Gagal menyalin.', 'error');
+            } catch (err) { showAlert('Perangkat Anda tidak mendukung salin otomatis.', 'error'); }
+            document.body.removeChild(textArea);
+        }
+    </script>
+</body>
+</html>
