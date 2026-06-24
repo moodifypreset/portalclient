@@ -13,16 +13,19 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         .photo-card { transition: all 0.2s ease-in-out; }
         .photo-card:active { transform: scale(0.97); }
         .selected-overlay { opacity: 0; transition: opacity 0.2s ease; }
         .photo-card.selected .selected-overlay { opacity: 1; }
         .photo-card.selected img { transform: scale(0.95); border-radius: 0.5rem; }
     </style>
+    <!-- Memanggil file pengaturan.js -->
     <script src="pengaturan.js"></script>
 </head>
 <body class="text-slate-800 pb-24 flex flex-col min-h-screen">
 
+    <!-- Header Klien -->
     <header class="bg-white shadow-sm sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -37,7 +40,9 @@
         </div>
     </header>
 
+    <!-- Main Content -->
     <main id="clientView" class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+        <!-- Input Section -->
         <div id="inputSection" class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 mb-8 max-w-2xl mx-auto text-center relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 via-slate-800 to-slate-200"></div>
             
@@ -66,14 +71,20 @@
         </div>
 
         <div id="galleryContainer" class="hidden">
+            <!-- Filter & Action Controls -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4 border-b border-slate-200 pb-4">
                 <div>
                     <h3 class="font-bold text-xl text-slate-800">Koleksi Foto</h3>
-                    <p class="text-sm text-slate-500">Klik foto untuk memilih. Klik <i class="fa-solid fa-magnifying-glass mx-1"></i> untuk memperbesar.</p>
+                    <p class="text-sm text-slate-500">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
                 </div>
-                <button onclick="selectAll()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg font-medium transition flex items-center gap-2">
-                    <i class="fa-solid fa-check-double"></i> Pilih Semua (Hal Ini)
-                </button>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleViewMode()" id="viewModeBtn" class="text-sm bg-slate-800 text-white py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 shadow-sm hover:bg-slate-700">
+                        <i class="fa-solid fa-filter"></i> Lihat Pilihan (0)
+                    </button>
+                    <button onclick="selectAll()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg font-medium transition flex items-center gap-2">
+                        <i class="fa-solid fa-check-double"></i> Pilih Semua (Hal Ini)
+                    </button>
+                </div>
             </div>
             
             <div id="photoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8"></div>
@@ -85,6 +96,7 @@
         <p class="text-sm text-slate-400">&copy; <script>document.write(new Date().getFullYear())</script> Layanan eksklusif oleh <span id="footerVendorName" class="font-medium text-slate-500">Portal</span>.</p>
     </footer>
 
+    <!-- Floating Action Bar (WhatsApp Copy) -->
     <div id="actionBar" class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 z-50">
         <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-4">
@@ -100,49 +112,60 @@
         </div>
     </div>
 
-    <!-- LIGHTBOX / ZOOM MODAL -->
-    <div id="lightboxModal" class="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[100] hidden flex flex-col justify-center items-center opacity-0 transition-opacity duration-300">
-        
-        <!-- Header Lightbox -->
-        <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent z-10">
-            <p id="lightboxTitle" class="text-white text-sm md:text-base font-medium drop-shadow-md truncate max-w-[70%]">Nama Foto</p>
-            <button onclick="closeLightbox()" class="text-white hover:text-slate-300 w-10 h-10 flex justify-center items-center rounded-full bg-black/20 hover:bg-black/40 transition">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-        </div>
-
-        <!-- Tombol Geser -->
-        <button onclick="changeLightboxImage(-1)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 text-white hover:text-slate-300 w-12 h-12 md:w-16 md:h-16 flex justify-center items-center rounded-full bg-black/20 hover:bg-black/40 transition z-10">
-            <i class="fa-solid fa-chevron-left text-2xl md:text-4xl"></i>
-        </button>
-        
-        <button onclick="changeLightboxImage(1)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 text-white hover:text-slate-300 w-12 h-12 md:w-16 md:h-16 flex justify-center items-center rounded-full bg-black/20 hover:bg-black/40 transition z-10">
-            <i class="fa-solid fa-chevron-right text-2xl md:text-4xl"></i>
-        </button>
-
-        <!-- Gambar Zoom -->
-        <div class="w-full max-w-5xl px-4 md:px-12 h-[75vh] flex justify-center items-center mt-8">
-            <img id="lightboxImg" src="" alt="Preview" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-sm scale-95 transition-transform duration-300">
-        </div>
-
-        <!-- Tombol Pilih di dalam Lightbox -->
-        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
-            <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-8 py-3 bg-white text-slate-900 font-bold rounded-full transition shadow-2xl flex items-center gap-2 border-2 border-transparent hover:scale-105">
-                <i class="fa-regular fa-square text-slate-400"></i> Pilih Foto Ini
-            </button>
-        </div>
-    </div>
-
-    <div id="customAlert" class="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl z-[110] flex items-center gap-3 transition-all duration-300 transform -translate-y-32 opacity-0 min-w-[300px] justify-center">
+    <!-- Alert Sistem -->
+    <div id="customAlert" class="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl z-[99] flex items-center gap-3 transition-all duration-300 transform -translate-y-32 opacity-0 min-w-[300px] justify-center">
         <i id="alertIcon" class="fa-solid fa-circle-check text-green-400 text-lg"></i>
         <span id="alertText" class="text-sm font-bold tracking-wide">Notifikasi</span>
     </div>
 
+    <!-- Lightbox / Zoom Modal -->
+    <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm">
+        
+        <!-- Header Controls -->
+        <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
+            <p id="lightboxTitle" class="text-white font-medium drop-shadow-md text-sm md:text-base ml-2">Photo Name</p>
+            <button onclick="closeLightbox()" class="text-white hover:text-red-400 w-10 h-10 flex items-center justify-center text-2xl bg-black/50 hover:bg-white/20 rounded-full transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Tombol Geser Kiri / Kanan -->
+        <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button onclick="nextPhoto(event)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <!-- Container Gambar HD -->
+        <div class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24">
+            <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-transform duration-300">
+        </div>
+
+        <!-- Aksi di Dalam Lightbox (Pilih & Catatan) -->
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
+            <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
+                <i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini
+            </button>
+            <textarea id="lightboxNote" oninput="saveNote()" class="w-full bg-slate-800/90 text-white placeholder-slate-400 text-sm rounded-xl p-3 border border-slate-600 focus:outline-none focus:border-slate-400 hidden transition-all shadow-lg backdrop-blur-sm" rows="2" placeholder="Catatan untuk editor (opsional), misal: Tolong hapus jerawat..."></textarea>
+        </div>
+    </div>
+
+    <!-- LOGIKA JAVASCRIPT -->
     <script>
         const ITEMS_PER_PAGE = 200; 
-        let appState = { photos: [], selectedIds: new Set(), currentPage: 1 };
+        // Penambahan 'notes' untuk menyimpan catatan dan 'viewMode' untuk filter
+        let appState = { 
+            photos: [], 
+            selectedIds: new Set(), 
+            notes: {}, 
+            currentPage: 1, 
+            viewMode: 'all' // 'all' atau 'selected'
+        };
+        
+        let currentZoomIndex = 0;
+        let currentZoomPhoto = null;
 
-        // Menerapkan Branding dari file pengaturan.js
         document.addEventListener("DOMContentLoaded", () => {
             if (typeof CONFIG_APP !== 'undefined') {
                 const vendorName = CONFIG_APP.namaVendor || 'Studio Foto';
@@ -185,6 +208,8 @@
 
             showLoading(true);
             appState.currentPage = 1; 
+            appState.viewMode = 'all'; // Reset view
+            updateViewModeBtnText();
             
             try {
                 let fetchedFiles = []; let nextPageToken = "";
@@ -207,9 +232,11 @@
                 if (fetchedFiles.length > 0) {
                     appState.photos = fetchedFiles.map(file => {
                         let hdThumb = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : '';
-                        return { id: file.id, name: file.name, url: hdThumb };
+                        let hdFull = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s1600') : '';
+                        return { id: file.id, name: file.name, url: hdThumb, fullUrl: hdFull };
                     });
                     appState.selectedIds.clear();
+                    appState.notes = {}; // Clear notes on new folder load
                     renderGallery();
                     showAlert(`${appState.photos.length} foto siap dipilih!`, 'success');
                 } else {
@@ -219,6 +246,30 @@
             } catch (error) {
                 showAlert('Gagal mengambil data. Pastikan link Google Drive diset ke Publik.', 'error');
                 showLoading(false);
+            }
+        }
+
+        // Fitur 2: Filter View Mode
+        function toggleViewMode() {
+            if (appState.viewMode === 'all') {
+                if (appState.selectedIds.size === 0) {
+                    return showAlert('Belum ada foto yang dipilih.', 'info');
+                }
+                appState.viewMode = 'selected';
+                document.getElementById('viewModeBtn').innerHTML = '<i class="fa-solid fa-border-all"></i> Lihat Semua Foto';
+                document.getElementById('viewModeBtn').classList.replace('bg-slate-800', 'bg-blue-600');
+            } else {
+                appState.viewMode = 'all';
+                document.getElementById('viewModeBtn').classList.replace('bg-blue-600', 'bg-slate-800');
+                updateViewModeBtnText();
+            }
+            appState.currentPage = 1;
+            renderGallery();
+        }
+
+        function updateViewModeBtnText() {
+            if (appState.viewMode === 'all') {
+                document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
             }
         }
 
@@ -232,25 +283,31 @@
 
         function renderGallery() {
             showLoading(false);
-            const grid = document.getElementById('photoGrid'); grid.innerHTML = '';
+            const grid = document.getElementById('photoGrid'); 
+            grid.innerHTML = '';
+            
+            // Proses Filter Data sesuai View Mode
+            const photosToProcess = appState.viewMode === 'selected' 
+                ? appState.photos.filter(p => appState.selectedIds.has(p.id)) 
+                : appState.photos;
+
             const startIndex = (appState.currentPage - 1) * ITEMS_PER_PAGE;
             const endIndex = startIndex + ITEMS_PER_PAGE;
-            const photosToShow = appState.photos.slice(startIndex, endIndex);
+            const photosToShow = photosToProcess.slice(startIndex, endIndex);
 
             photosToShow.forEach((photo, index) => {
-                const card = document.createElement('div');
-                card.className = `photo-card relative cursor-pointer bg-slate-100 rounded-xl overflow-hidden aspect-square border-[3px] border-transparent shadow-sm hover:shadow-md ${appState.selectedIds.has(photo.id) ? 'selected border-slate-900' : ''}`;
+                const globalIndex = appState.photos.findIndex(p => p.id === photo.id); // Indeks untuk Lightbox
                 
-                // Klik area foto untuk menyeleksi
-                card.onclick = (e) => {
-                    // Cegah seleksi jika yang diklik adalah tombol zoom
-                    if(e.target.closest('.zoom-btn')) return; 
-                    toggleSelect(photo.id, card);
-                };
+                const card = document.createElement('div');
+                card.className = `photo-card relative bg-slate-100 rounded-xl overflow-hidden aspect-square border-[3px] border-transparent shadow-sm hover:shadow-md ${appState.selectedIds.has(photo.id) ? 'selected border-slate-900' : ''}`;
                 
                 const img = document.createElement('img');
-                img.src = photo.url; img.className = "w-full h-full object-cover transition-transform duration-300"; img.loading = "lazy";
+                img.src = photo.url; 
+                img.className = "w-full h-full object-cover cursor-pointer transition-transform duration-300"; 
+                img.loading = "lazy";
+                img.onclick = () => toggleSelect(photo.id, card);
                 
+                // Overlay Centang (klik di area selain tombol zoom akan menyeleksi foto)
                 const overlay = document.createElement('div');
                 overlay.className = "selected-overlay absolute inset-0 bg-slate-900/10 z-10 flex items-start justify-end p-3 pointer-events-none";
                 const checkIcon = document.createElement('div');
@@ -258,36 +315,46 @@
                 checkIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
                 overlay.appendChild(checkIcon);
 
-                // --- TOMBOL ZOOM ---
-                const zoomBtn = document.createElement('button');
-                zoomBtn.className = "zoom-btn absolute top-3 left-3 bg-black/40 hover:bg-black/70 backdrop-blur-sm text-white w-8 h-8 rounded-full flex items-center justify-center text-xs transition z-20 shadow-md";
-                zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
-                zoomBtn.title = "Zoom / Perbesar Foto"; // Menambahkan tooltip
-                zoomBtn.onclick = (e) => {
-                    e.stopPropagation(); // Mencegah trigger event onclick card (seleksi)
-                    openLightbox(photo.id);
-                };
+                // Badge Catatan (Fitur 3: Muncul jika foto diberi catatan)
+                if (appState.notes[photo.id]) {
+                    const noteBadge = document.createElement('div');
+                    noteBadge.className = "note-badge absolute top-3 right-14 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs shadow-md z-20 pointer-events-none";
+                    noteBadge.innerHTML = '<i class="fa-solid fa-comment-dots"></i>';
+                    overlay.appendChild(noteBadge);
+                }
                 
-                const nameLabel = document.createElement('div');
-                nameLabel.className = "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 pointer-events-none";
+                // Area Bawah: Nama Foto & Ikon Zoom
+                const bottomArea = document.createElement('div');
+                bottomArea.className = "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 flex justify-between items-end z-20";
+                
                 const nameText = document.createElement('p');
                 nameText.className = "text-white text-xs font-medium truncate drop-shadow-md";
                 nameText.textContent = photo.name;
-                nameLabel.appendChild(nameText);
+                
+                const zoomBtn = document.createElement('button');
+                zoomBtn.className = "text-white bg-black/40 hover:bg-blue-600 rounded-lg w-8 h-8 flex items-center justify-center transition-colors shadow-lg";
+                zoomBtn.title = "Zoom / Perbesar Foto";
+                zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
+                zoomBtn.onclick = (e) => {
+                    e.stopPropagation(); // Mencegah tercentang saat klik zoom
+                    openLightbox(globalIndex);
+                };
+
+                bottomArea.appendChild(nameText);
+                bottomArea.appendChild(zoomBtn);
                 
                 card.appendChild(img); 
                 card.appendChild(overlay); 
-                card.appendChild(zoomBtn); // Tambahkan tombol zoom ke card
-                card.appendChild(nameLabel);
-                
+                card.appendChild(bottomArea);
                 grid.appendChild(card);
             });
-            renderPagination();
+            renderPagination(photosToProcess.length);
         }
 
-        function renderPagination() {
+        function renderPagination(totalItems) {
             const container = document.getElementById('paginationContainer');
-            const totalPages = Math.ceil(appState.photos.length / ITEMS_PER_PAGE);
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            
             if (totalPages <= 1) { container.classList.add('hidden'); return; }
             container.classList.remove('hidden'); container.innerHTML = '';
 
@@ -312,7 +379,8 @@
         }
 
         function changePage(newPage) {
-            const totalPages = Math.ceil(appState.photos.length / ITEMS_PER_PAGE);
+            const photosToProcess = appState.viewMode === 'selected' ? appState.photos.filter(p => appState.selectedIds.has(p.id)) : appState.photos;
+            const totalPages = Math.ceil(photosToProcess.length / ITEMS_PER_PAGE);
             if (newPage < 1 || newPage > totalPages) return;
             appState.currentPage = newPage; renderGallery();
             document.getElementById('galleryContainer').scrollIntoView({ behavior: 'smooth' });
@@ -320,21 +388,35 @@
 
         function toggleSelect(id, cardElement) {
             if (appState.selectedIds.has(id)) {
-                appState.selectedIds.delete(id); cardElement.classList.remove('selected', 'border-slate-900');
+                appState.selectedIds.delete(id); 
+                cardElement.classList.remove('selected', 'border-slate-900');
+                delete appState.notes[id]; // Hapus catatan jika foto di-unselect
             } else {
-                appState.selectedIds.add(id); cardElement.classList.add('selected', 'border-slate-900');
+                appState.selectedIds.add(id); 
+                cardElement.classList.add('selected', 'border-slate-900');
             }
             updateActionBar();
+            updateViewModeBtnText();
         }
 
         function selectAll() {
+            const photosToProcess = appState.viewMode === 'selected' ? appState.photos.filter(p => appState.selectedIds.has(p.id)) : appState.photos;
             const startIndex = (appState.currentPage - 1) * ITEMS_PER_PAGE;
             const endIndex = startIndex + ITEMS_PER_PAGE;
-            const currentPhotos = appState.photos.slice(startIndex, endIndex);
+            const currentPhotos = photosToProcess.slice(startIndex, endIndex);
+            
             const isAllCurrentSelected = currentPhotos.every(p => appState.selectedIds.has(p.id));
-            if (isAllCurrentSelected) { currentPhotos.forEach(p => appState.selectedIds.delete(p.id)); } 
-            else { currentPhotos.forEach(p => appState.selectedIds.add(p.id)); }
-            renderGallery(); updateActionBar();
+            if (isAllCurrentSelected) { 
+                currentPhotos.forEach(p => {
+                    appState.selectedIds.delete(p.id);
+                    delete appState.notes[p.id];
+                }); 
+            } else { 
+                currentPhotos.forEach(p => appState.selectedIds.add(p.id)); 
+            }
+            renderGallery(); 
+            updateActionBar();
+            updateViewModeBtnText();
         }
 
         function updateActionBar() {
@@ -345,12 +427,19 @@
             else { bar.classList.add('translate-y-full'); }
         }
 
+        // Fitur 3: Menyertakan catatan di WhatsApp
         function copyToClipboard() {
             if (appState.selectedIds.size === 0) return;
-            const selectedNames = appState.photos.filter(p => appState.selectedIds.has(p.id)).map(p => p.name);
+            const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
             const vendor = (typeof CONFIG_APP !== 'undefined') ? CONFIG_APP.namaVendor : 'Studio';
             
-            const textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nTotal: ${selectedNames.length} Foto\n\n${selectedNames.join('\n')}\n\n_Mohon segera diproses tim admin/project manager, terima kasih!_`;
+            // Generate list foto beserta catatannya jika ada
+            const listText = selectedPhotos.map(p => {
+                const note = appState.notes[p.id];
+                return note ? `${p.name} (Catatan: ${note})` : p.name;
+            }).join('\n');
+            
+            const textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nTotal: ${selectedPhotos.length} Foto\n\n${listText}\n\n_Mohon segera diproses tim kreatif, terima kasih!_`;
             
             const textArea = document.createElement("textarea");
             textArea.value = textToCopy; textArea.style.position = "fixed"; textArea.style.top = "-9999px"; textArea.style.left = "-9999px";
@@ -363,97 +452,90 @@
             document.body.removeChild(textArea);
         }
 
-        // =========================================================================
-        // FITUR PREVIEW / ZOOM (LIGHTBOX)
-        // =========================================================================
-        let currentPreviewId = null;
-
-        function openLightbox(id) {
-            currentPreviewId = id;
+        // ==========================================
+        // SISTEM LIGHTBOX / ZOOM & CATATAN FOTO
+        // ==========================================
+        function openLightbox(index) {
+            currentZoomIndex = index;
+            currentZoomPhoto = appState.photos[index];
             
-            // Cari indeks foto secara global (bukan per halaman)
-            const index = appState.photos.findIndex(p => p.id === id);
-            if (index === -1) return;
-            
-            const photo = appState.photos[index];
-            const modal = document.getElementById('lightboxModal');
-            const img = document.getElementById('lightboxImg');
-            const title = document.getElementById('lightboxTitle');
-            
-            // Ubah resolusi GDrive dari =s800 menjadi =s1600 agar tidak pecah saat dizoom
-            img.src = photo.url.replace('=s800', '=s1600'); 
-            title.textContent = `Foto ${index + 1} dari ${appState.photos.length} - ${photo.name}`;
+            const lightbox = document.getElementById('lightbox');
+            document.getElementById('lightboxTitle').textContent = `${currentZoomPhoto.name} (${index + 1} of ${appState.photos.length})`;
+            document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
             
             updateLightboxSelectBtn();
-
-            modal.classList.remove('hidden');
-            // Sedikit delay agar animasi transisi opacity (fade in) terlihat
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                img.classList.remove('scale-95');
-                img.classList.add('scale-100');
-            }, 10);
-
-            // Mencegah background belakang ter-scroll saat lightbox terbuka
+            
+            lightbox.classList.remove('hidden');
+            setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
             document.body.style.overflow = 'hidden';
         }
 
         function closeLightbox() {
-            const modal = document.getElementById('lightboxModal');
-            const img = document.getElementById('lightboxImg');
-            
-            modal.classList.add('opacity-0');
-            img.classList.remove('scale-100');
-            img.classList.add('scale-95');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                document.body.style.overflow = 'auto'; // Kembalikan scroll body
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => { 
+                lightbox.classList.add('hidden'); 
+                currentZoomPhoto = null;
+                document.body.style.overflow = 'auto';
+                renderGallery(); // Render ulang untuk mengupdate badge indikator catatan jika berubah
             }, 300);
         }
 
-        function changeLightboxImage(direction) {
-            const index = appState.photos.findIndex(p => p.id === currentPreviewId);
-            let newIndex = index + direction;
-            
-            // Looping jika sudah di ujung
-            if (newIndex < 0) newIndex = appState.photos.length - 1;
-            if (newIndex >= appState.photos.length) newIndex = 0;
-            
-            openLightbox(appState.photos[newIndex].id);
+        function nextPhoto(e) {
+            if(e) e.stopPropagation();
+            if (currentZoomIndex < appState.photos.length - 1) {
+                openLightbox(currentZoomIndex + 1);
+            }
+        }
+
+        function prevPhoto(e) {
+            if(e) e.stopPropagation();
+            if (currentZoomIndex > 0) {
+                openLightbox(currentZoomIndex - 1);
+            }
         }
 
         function toggleLightboxSelect() {
-            if (!currentPreviewId) return;
-            
-            if (appState.selectedIds.has(currentPreviewId)) {
-                appState.selectedIds.delete(currentPreviewId);
+            if (!currentZoomPhoto) return;
+            if (appState.selectedIds.has(currentZoomPhoto.id)) {
+                appState.selectedIds.delete(currentZoomPhoto.id);
+                delete appState.notes[currentZoomPhoto.id]; // Hapus catatan jika tidak jadi dipilih
             } else {
-                appState.selectedIds.add(currentPreviewId);
+                appState.selectedIds.add(currentZoomPhoto.id);
             }
-            
             updateLightboxSelectBtn();
             updateActionBar();
-            renderGallery(); // Render ulang background grid agar bingkai card terupdate
+            updateViewModeBtnText();
         }
 
         function updateLightboxSelectBtn() {
             const btn = document.getElementById('lightboxSelectBtn');
-            if (appState.selectedIds.has(currentPreviewId)) {
-                btn.innerHTML = '<i class="fa-solid fa-check-double text-slate-800 text-lg"></i> <span>Telah Dipilih</span>';
-                btn.className = "px-6 md:px-8 py-3 bg-white text-slate-900 font-bold rounded-full transition shadow-2xl flex items-center gap-2 border-4 border-slate-900";
+            const noteArea = document.getElementById('lightboxNote');
+            const isSelected = appState.selectedIds.has(currentZoomPhoto.id);
+
+            if (isSelected) {
+                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Terpilih';
+                btn.className = "px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg w-full sm:w-auto";
+                
+                noteArea.classList.remove('hidden');
+                noteArea.value = appState.notes[currentZoomPhoto.id] || '';
             } else {
-                btn.innerHTML = '<i class="fa-regular fa-square text-slate-400 text-lg"></i> <span class="text-slate-700">Pilih Foto Ini</span>';
-                btn.className = "px-6 md:px-8 py-3 bg-white text-slate-900 font-bold rounded-full transition shadow-2xl flex items-center gap-2 border-4 border-transparent hover:scale-105";
+                btn.innerHTML = '<i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini';
+                btn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto";
+                
+                noteArea.classList.add('hidden');
             }
         }
-        
-        // Menutup lightbox dengan tombol ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !document.getElementById('lightboxModal').classList.contains('hidden')) {
-                closeLightbox();
+
+        function saveNote() {
+            if (!currentZoomPhoto) return;
+            const noteText = document.getElementById('lightboxNote').value.trim();
+            if (noteText) {
+                appState.notes[currentZoomPhoto.id] = noteText;
+            } else {
+                delete appState.notes[currentZoomPhoto.id];
             }
-        });
+        }
     </script>
 </body>
 </html>
