@@ -258,15 +258,15 @@
                 checkIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
                 overlay.appendChild(checkIcon);
 
-                // --- TOMBOL ZOOM BARU ---
+                // --- TOMBOL ZOOM ---
                 const zoomBtn = document.createElement('button');
                 zoomBtn.className = "zoom-btn absolute top-3 left-3 bg-black/40 hover:bg-black/70 backdrop-blur-sm text-white w-8 h-8 rounded-full flex items-center justify-center text-xs transition z-20 shadow-md";
-                zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>';
+                zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
+                zoomBtn.title = "Zoom / Perbesar Foto"; // Menambahkan tooltip
                 zoomBtn.onclick = (e) => {
                     e.stopPropagation(); // Mencegah trigger event onclick card (seleksi)
                     openLightbox(photo.id);
                 };
-                // -------------------------
                 
                 const nameLabel = document.createElement('div');
                 nameLabel.className = "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 pointer-events-none";
