@@ -42,7 +42,7 @@
 
     <!-- Main Content -->
     <main id="clientView" class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
-        <!-- Input Section (Akan disembunyikan otomatis jika pakai link Generator) -->
+        <!-- Input Section -->
         <div id="inputSection" class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 mb-8 max-w-2xl mx-auto text-center relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 via-slate-800 to-slate-200"></div>
             
@@ -72,17 +72,36 @@
 
         <div id="galleryContainer" class="hidden">
             <!-- Filter & Action Controls -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4 border-b border-slate-200 pb-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4 border-b border-slate-200 pb-4">
                 <div>
                     <h3 class="font-bold text-xl text-slate-800">Koleksi Foto</h3>
                     <p class="text-sm text-slate-500">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
                 </div>
-                <div class="flex flex-wrap gap-2">
+                
+                <!-- Kumpulan Tombol & Filter -->
+                <div class="flex flex-wrap items-center gap-2">
+                    
+                    <!-- Fitur Baru: Dropdown Sortir -->
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-arrow-down-a-z text-slate-400 text-sm"></i>
+                        </div>
+                        <select id="sortDropdown" onchange="applySort(this.value)" class="text-sm bg-white border border-slate-200 text-slate-700 py-2 pl-9 pr-8 rounded-lg font-medium cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-800 appearance-none transition hover:bg-slate-50">
+                            <option value="default">Urutan Asli</option>
+                            <option value="asc">A - Z</option>
+                            <option value="desc">Z - A</option>
+                            <option value="random">Acak (Random)</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                        </div>
+                    </div>
+
                     <button onclick="toggleViewMode()" id="viewModeBtn" class="text-sm bg-slate-800 text-white py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 shadow-sm hover:bg-slate-700">
                         <i class="fa-solid fa-filter"></i> Lihat Pilihan (0)
                     </button>
-                    <button onclick="selectAll()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg font-medium transition flex items-center gap-2">
-                        <i class="fa-solid fa-check-double"></i> Pilih Semua (Hal Ini)
+                    <button onclick="selectAll()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 border border-slate-200">
+                        <i class="fa-solid fa-check-double"></i> Pilih Semua
                     </button>
                 </div>
             </div>
@@ -155,10 +174,12 @@
             folderId: null, 
             clientName: '', 
             photos: [], 
+            originalPhotos: [], // Menyimpan urutan asli dari Google Drive
             selectedIds: new Set(), 
             notes: {}, 
             currentPage: 1, 
-            viewMode: 'all' 
+            viewMode: 'all',
+            sortOrder: 'default'
         };
         
         let currentZoomIndex = 0;
@@ -174,7 +195,6 @@
                 showAlert('File pengaturan.js tidak ditemukan atau salah format.', 'error');
             }
 
-            // Membaca URL Parameter untuk Fitur Auto-Load & Nama
             const urlParams = new URLSearchParams(window.location.search);
             const autoLink = urlParams.get('link');
             const urlName = urlParams.get('nama');
@@ -191,7 +211,6 @@
             if (autoLink) {
                 document.getElementById('driveLink').value = autoLink;
                 document.getElementById('inputSection').classList.add('hidden');
-                
                 setTimeout(() => { loadFromDrive(); }, 500);
             }
         });
@@ -226,7 +245,6 @@
                 }
             }
         }
-        // ==========================================
 
         function showAlert(message, type = 'success') {
             const alertBox = document.getElementById('customAlert');
@@ -260,6 +278,7 @@
             appState.folderId = folderId; 
             appState.currentPage = 1; 
             appState.viewMode = 'all';
+            document.getElementById('sortDropdown').value = 'default';
             updateViewModeBtnText();
             
             try {
@@ -287,6 +306,9 @@
                         return { id: file.id, name: file.name, url: hdThumb, fullUrl: hdFull };
                     });
                     
+                    // Simpan urutan asli agar bisa dikembalikan saat filter "Urutan Asli" dipilih
+                    appState.originalPhotos = [...appState.photos];
+                    
                     appState.selectedIds.clear();
                     appState.notes = {}; 
                     loadProgress(folderId); 
@@ -304,6 +326,36 @@
                 showAlert('Gagal mengambil data. Pastikan link Google Drive diset ke Publik.', 'error');
                 showLoading(false);
             }
+        }
+
+        // ==========================================
+        // FITUR SORTIR (A-Z, Z-A, RANDOM)
+        // ==========================================
+        function applySort(order) {
+            appState.sortOrder = order;
+            
+            if (order === 'default') {
+                appState.photos = [...appState.originalPhotos];
+            } else if (order === 'asc') {
+                // Numeric: true membuat DSC002 urut sebelum DSC0010
+                appState.photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+            } else if (order === 'desc') {
+                appState.photos.sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true, sensitivity: 'base'}));
+            } else if (order === 'random') {
+                // Fisher-Yates Shuffle Algorithm
+                let array = [...appState.photos];
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                appState.photos = array;
+            }
+            
+            appState.currentPage = 1;
+            renderGallery();
+            
+            const message = order === 'random' ? 'Foto berhasil diacak!' : 'Urutan foto diperbarui!';
+            showAlert(message, 'success');
         }
 
         function toggleViewMode() {
@@ -489,7 +541,6 @@
                 return note ? `${p.name} (Catatan: ${note})` : p.name;
             }).join('\n');
             
-            // Format WhatsApp Baru dengan Nama Klien
             let textToCopy = `*List Foto Pilihan Client*\n`;
             textToCopy += `Layanan: ${vendor}\n`;
             if (appState.clientName) {
