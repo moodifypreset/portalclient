@@ -242,10 +242,10 @@
             let urlName = urlParams.get('nama');
             let urlKuota = urlParams.get('kuota');
 
-           // --- Logika Decode Hash Versi Pendek ---
+          // --- Logika Decode Hash Versi Ringkas ---
             let hashData = urlParams.get('h');
             
-            // Antisipasi jika server langsung membaca dari path URL
+            // Mengambil kode dari path jika menggunakan sistem vercel rewrite (namaweb.com/kode)
             if (!hashData) {
                 const pathParts = window.location.pathname.split('/');
                 hashData = pathParts[pathParts.length - 1];
@@ -253,8 +253,13 @@
 
             if (hashData && hashData !== 'index.html' && hashData !== '') {
                 try {
-                    // Decode Base64 versi pendek
-                    const decodedStr = decodeURIComponent(atob(hashData));
+                    // Kembalikan karakter URL-Safe Base64 ke Base64 standar
+                    let base64Str = hashData.replace(/-/g, '+').replace(/_/g, '/');
+                    // Tambahkan padding '=' jika hilang saat digenerate
+                    while (base64Str.length % 4) { base64Str += '='; }
+                    
+                    // Decode Base64 ke teks asli
+                    const decodedStr = atob(base64Str);
                     const dataParts = decodedStr.split('|');
                     
                     if (dataParts[0]) autoId = dataParts[0];
