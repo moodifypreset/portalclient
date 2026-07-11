@@ -249,3 +249,423 @@
 
             lightboxEl.addEventListener('touchend', e => {
                 if (e.target.tagName.toLowerCase() === 'textarea') return;
+                touchendX = e.changedTouches[0].screenX;
+                handleSwipeGesture();
+            }, { passive: true });
+        });
+
+        function handleSwipeGesture() {
+            const minSwipeDistance = 50; 
+            if (touchendX < touchstartX - minSwipeDistance) {
+                if (currentZoomIndex < appState.photos.length - 1) nextPhoto();
+            }
+            if (touchendX > touchstartX + minSwipeDistance) {
+                if (currentZoomIndex > 0) prevPhoto();
+            }
+        }
+
+        function saveProgress() {
+            if (!appState.folderId) return;
+            const dataToSave = {
+                selected: Array.from(appState.selectedIds),
+                notes: appState.notes
+            };
+            localStorage.setItem(`client_portal_save_${appState.folderId}`, JSON.stringify(dataToSave));
+        }
+
+        function loadProgress(folderId) {
+            const savedData = localStorage.getItem(`client_portal_save_${folderId}`);
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    appState.selectedIds = new Set(data.selected || []);
+                    appState.notes = data.notes || {};
+                    if (appState.selectedIds.size > 0) {
+                        setTimeout(() => {
+                            showAlert(`Sesi dipulihkan! ${appState.selectedIds.size} foto sebelumnya berhasil dimuat.`, 'success');
+                            updateActionBar(); 
+                        }, 1000);
+                    }
+                } catch (e) {
+                    console.error("Gagal memuat data", e);
+                }
+            }
+        }
+
+        function showAlert(message, type = 'success') {
+            const alertBox = document.getElementById('customAlert');
+            const alertText = document.getElementById('alertText');
+            const alertIcon = document.getElementById('alertIcon');
+            alertText.textContent = message;
+            alertIcon.className = type === 'success' ? "fa-solid fa-circle-check text-green-400 text-lg" : "fa-solid fa-triangle-exclamation text-red-400 text-lg";
+            alertBox.classList.remove('-translate-y-32', 'opacity-0');
+            setTimeout(() => alertBox.classList.add('-translate-y-32', 'opacity-0'), 3000);
+        }
+
+        function extractFolderId(url) {
+            const match = url.match(/folders\/([a-zA-Z0-9-_]+)/);
+            if (match && match[1]) return match[1];
+            return url.match(/id=([a-zA-Z0-9-_]+)/)?.[1] || null;
+        }
+
+        async function loadFromDrive() {
+            if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey) return showAlert('Sistem belum dikonfigurasi. Harap isi API Key.', 'error');
+            
+            const link = document.getElementById('driveLink').value.trim();
+            const folderId = extractFolderId(link) || link;
+            if (!folderId) return showAlert('Link Google Drive tidak valid.', 'error');
+
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('loadingState').classList.add('flex');
+            appState.folderId = folderId; 
+            appState.currentPage = 1; 
+            appState.viewMode = 'all';
+            document.getElementById('sortDropdown').value = 'default';
+            
+            try {
+                let fetchedFiles = []; let nextPageToken = "";
+                const query = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
+                do {
+                    let apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=nextPageToken,files(id,name,thumbnailLink)&key=${CONFIG_APP.googleApiKey}&pageSize=1000`;
+                    if (nextPageToken) apiUrl += `&pageToken=${nextPageToken}`;
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    if (data.files) fetchedFiles = fetchedFiles.concat(data.files);
+                    nextPageToken = data.nextPageToken;
+                } while (nextPageToken);
+
+                if (fetchedFiles.length > 0) {
+                    appState.photos = fetchedFiles.map(f => ({ 
+                        id: f.id, name: f.name, 
+                        url: f.thumbnailLink?.replace('=s220', '=s800'), 
+                        fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') 
+                    }));
+                    appState.originalPhotos = [...appState.photos];
+                    appState.selectedIds.clear();
+                    appState.notes = {}; 
+                    loadProgress(folderId); 
+                    renderGallery();
+                } else {
+                    showAlert('Folder kosong atau hak akses bukan Publik.', 'error');
+                    document.getElementById('loadingState').classList.add('hidden');
+                }
+            } catch (error) {
+                showAlert('Gagal terhubung ke Google Drive.', 'error');
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        function applySort(order) {
+            appState.sortOrder = order;
+            if (order === 'default') {
+                appState.photos = [...appState.originalPhotos];
+            } else if (order === 'asc') {
+                appState.photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+            } else if (order === 'desc') {
+                appState.photos.sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true, sensitivity: 'base'}));
+            } else if (order === 'random') {
+                let array = [...appState.photos];
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                appState.photos = array;
+            }
+            appState.currentPage = 1;
+            renderGallery();
+            const message = order === 'random' ? 'Foto berhasil diacak!' : 'Urutan foto diperbarui!';
+            showAlert(message, 'success');
+        }
+
+        function toggleViewMode() {
+            if (appState.viewMode === 'all') {
+                if (appState.selectedIds.size === 0) return showAlert('Belum ada foto yang dipilih.', 'error');
+                appState.viewMode = 'selected';
+                document.getElementById('viewModeBtn').innerHTML = '<i class="fa-solid fa-border-all"></i> Lihat Semua Foto';
+                document.getElementById('viewModeBtn').classList.replace('bg-slate-800', 'bg-blue-600');
+            } else {
+                appState.viewMode = 'all';
+                document.getElementById('viewModeBtn').classList.replace('bg-blue-600', 'bg-slate-800');
+                if (appState.viewMode === 'all') {
+                    document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
+                }
+            }
+            appState.currentPage = 1;
+            renderGallery();
+        }
+
+        function renderGallery() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('flex');
+            document.getElementById('galleryContainer').classList.remove('hidden');
+            const grid = document.getElementById('photoGrid'); grid.innerHTML = '';
+            
+            const photosToProcess = appState.viewMode === 'selected' 
+                ? appState.photos.filter(p => appState.selectedIds.has(p.id)) 
+                : appState.photos;
+
+            const startIndex = (appState.currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = startIndex + ITEMS_PER_PAGE;
+            const photosToShow = photosToProcess.slice(startIndex, endIndex);
+
+            photosToShow.forEach((photo, index) => {
+                const globalIndex = appState.photos.findIndex(p => p.id === photo.id); 
+
+                const card = document.createElement('div');
+                card.className = `photo-card relative bg-slate-100 rounded-xl overflow-hidden aspect-square border-[3px] border-transparent shadow-sm hover:shadow-md ${appState.selectedIds.has(photo.id) ? 'selected border-slate-900' : ''}`;
+                
+                const img = document.createElement('img');
+                img.src = photo.url; 
+                img.className = "w-full h-full object-cover cursor-pointer transition-transform duration-300"; 
+                img.loading = "lazy";
+                img.onclick = () => toggleSelect(photo.id, card);
+                
+                const overlay = document.createElement('div');
+                overlay.className = "selected-overlay absolute inset-0 bg-slate-900/10 z-10 flex items-start justify-end p-3 pointer-events-none";
+                overlay.innerHTML = '<div class="bg-slate-900 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg"><i class="fa-solid fa-check"></i></div>';
+                
+                // MUNCULKAN KEMBALI BADGE CATATAN
+                if (appState.notes[photo.id]) {
+                    const noteBadge = document.createElement('div');
+                    noteBadge.className = "note-badge absolute top-3 right-14 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs shadow-md z-20 pointer-events-none";
+                    noteBadge.innerHTML = '<i class="fa-solid fa-comment-dots"></i>';
+                    overlay.appendChild(noteBadge);
+                }
+
+                const bottomArea = document.createElement('div');
+                bottomArea.className = "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 flex justify-between items-end z-20";
+                
+                const nameText = document.createElement('p');
+                nameText.className = "text-white text-xs font-medium truncate drop-shadow-md w-3/4";
+                nameText.textContent = photo.name;
+
+                const zoomBtn = document.createElement('button');
+                zoomBtn.className = "text-white bg-black/40 hover:bg-blue-600 rounded-lg w-8 h-8 flex items-center justify-center shadow-lg transition-colors";
+                zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
+                zoomBtn.onclick = (e) => { e.stopPropagation(); openLightbox(globalIndex); };
+
+                bottomArea.appendChild(nameText); bottomArea.appendChild(zoomBtn);
+                card.appendChild(img); card.appendChild(overlay); card.appendChild(bottomArea);
+                grid.appendChild(card);
+            });
+            renderPagination(photosToProcess.length);
+        }
+
+        function renderPagination(totalItems) {
+            const container = document.getElementById('paginationContainer');
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            
+            if (totalPages <= 1) { container.classList.add('hidden'); return; }
+            container.classList.remove('hidden'); container.innerHTML = '';
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `px-5 py-2.5 rounded-xl font-medium transition flex items-center gap-2 ${appState.currentPage === 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-sm'}`;
+            prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i> Prev';
+            prevBtn.disabled = appState.currentPage === 1;
+            prevBtn.onclick = () => changePage(appState.currentPage - 1);
+            container.appendChild(prevBtn);
+
+            const indicator = document.createElement('span');
+            indicator.className = 'px-5 py-2.5 text-sm font-bold text-slate-700 bg-slate-100 rounded-xl';
+            indicator.textContent = `Halaman ${appState.currentPage} dari ${totalPages}`;
+            container.appendChild(indicator);
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `px-5 py-2.5 rounded-xl font-medium transition flex items-center gap-2 ${appState.currentPage === totalPages ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-sm'}`;
+            nextBtn.innerHTML = 'Next <i class="fa-solid fa-chevron-right"></i>';
+            nextBtn.disabled = appState.currentPage === totalPages;
+            nextBtn.onclick = () => changePage(appState.currentPage + 1);
+            container.appendChild(nextBtn);
+        }
+
+        function changePage(newPage) {
+            const photosToProcess = appState.viewMode === 'selected' ? appState.photos.filter(p => appState.selectedIds.has(p.id)) : appState.photos;
+            const totalPages = Math.ceil(photosToProcess.length / ITEMS_PER_PAGE);
+            if (newPage < 1 || newPage > totalPages) return;
+            appState.currentPage = newPage; renderGallery();
+            document.getElementById('galleryContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleSelect(id, cardElement) {
+            if (appState.selectedIds.has(id)) {
+                appState.selectedIds.delete(id); 
+                delete appState.notes[id]; // HAPUS CATATAN JIKA BATAL PILIH
+                cardElement.classList.remove('selected', 'border-slate-900');
+            } else {
+                if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
+                    return showAlert(`Batas maksimal ${appState.kuota} foto telah tercapai!`, 'error');
+                }
+                appState.selectedIds.add(id); 
+                cardElement.classList.add('selected', 'border-slate-900');
+            }
+            updateActionBar(); saveProgress();
+            if (appState.viewMode === 'all') {
+                document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
+            }
+        }
+
+        function selectAll() {
+            const photosToProcess = appState.viewMode === 'selected' ? appState.photos.filter(p => appState.selectedIds.has(p.id)) : appState.photos;
+            const startIndex = (appState.currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = startIndex + ITEMS_PER_PAGE;
+            const currentPhotos = photosToProcess.slice(startIndex, endIndex);
+            
+            const isAllCurrentSelected = currentPhotos.every(p => appState.selectedIds.has(p.id));
+            if (isAllCurrentSelected) { 
+                currentPhotos.forEach(p => {
+                    appState.selectedIds.delete(p.id);
+                    delete appState.notes[p.id];
+                }); 
+            } else { 
+                currentPhotos.forEach(p => {
+                    if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) return; 
+                    appState.selectedIds.add(p.id);
+                });
+                if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
+                    showAlert(`Hanya terpilih sampai batas kuota (${appState.kuota} foto).`, 'error');
+                }
+            }
+            renderGallery(); updateActionBar(); saveProgress();
+            if (appState.viewMode === 'all') {
+                document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
+            }
+        }
+
+        function updateActionBar() {
+            const count = appState.selectedIds.size;
+            const bar = document.getElementById('actionBar');
+            document.getElementById('selectedCount').textContent = count;
+            
+            if (appState.kuota !== null) {
+                const percentage = Math.min((count / appState.kuota) * 100, 100);
+                const quotaBar = document.getElementById('quotaBar');
+                
+                document.getElementById('quotaText').textContent = `${count} / ${appState.kuota}`;
+                quotaBar.style.width = `${percentage}%`;
+                
+                if (percentage >= 100) {
+                    quotaBar.classList.replace('bg-blue-600', 'bg-green-500');
+                    quotaBar.classList.replace('bg-yellow-500', 'bg-green-500');
+                    document.getElementById('quotaText').classList.add('text-green-600');
+                } else if (percentage >= 80) {
+                    quotaBar.classList.replace('bg-blue-600', 'bg-yellow-500');
+                    quotaBar.classList.replace('bg-green-500', 'bg-yellow-500');
+                    document.getElementById('quotaText').classList.remove('text-green-600');
+                } else {
+                    quotaBar.classList.replace('bg-green-500', 'bg-blue-600');
+                    quotaBar.classList.replace('bg-yellow-500', 'bg-blue-600');
+                    document.getElementById('quotaText').classList.remove('text-green-600');
+                }
+            }
+            
+            if (count > 0) { bar.classList.remove('translate-y-full'); } else { bar.classList.add('translate-y-full'); }
+        }
+
+        // SALIN WHATSAPP MENGAMBIL CATATAN
+        function copyToClipboard() {
+            if (appState.selectedIds.size === 0) return;
+            const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
+            const vendor = (typeof CONFIG_APP !== 'undefined') ? CONFIG_APP.namaVendor : 'Studio';
+            
+            const listText = selectedPhotos.map(p => {
+                const note = appState.notes[p.id];
+                return note ? `${p.name} (Catatan: ${note})` : p.name;
+            }).join('\n');
+            
+            let textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${selectedPhotos.length} Foto\n\n${listText}\n\n_Segera diproses, terima kasih!_`;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy; 
+            textArea.style.position = "fixed"; textArea.style.top = "-9999px"; textArea.style.left = "-9999px";
+            document.body.appendChild(textArea); textArea.focus(); textArea.select();
+            
+            try {
+                if (document.execCommand('copy')) showAlert('List foto berhasil disalin! Silahkan tempel di chat WhatsApp.', 'success');
+            } catch (err) { showAlert('Perangkat Anda tidak mendukung salin otomatis.', 'error'); }
+            document.body.removeChild(textArea);
+        }
+
+        function openLightbox(index) {
+            currentZoomIndex = index; currentZoomPhoto = appState.photos[index];
+            const lightbox = document.getElementById('lightbox');
+            document.getElementById('lightboxTitle').textContent = `${currentZoomPhoto.name} (${index + 1} of ${appState.photos.length})`;
+            document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
+            
+            updateLightboxSelectBtn();
+            
+            lightbox.classList.remove('hidden'); 
+            setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => { 
+                lightbox.classList.add('hidden'); 
+                currentZoomPhoto = null;
+                document.body.style.overflow = 'auto';
+                renderGallery(); 
+            }, 300);
+        }
+
+        function nextPhoto(e) { if(e) e.stopPropagation(); if (currentZoomIndex < appState.photos.length - 1) openLightbox(currentZoomIndex + 1); }
+        function prevPhoto(e) { if(e) e.stopPropagation(); if (currentZoomIndex > 0) openLightbox(currentZoomIndex - 1); }
+
+        function toggleLightboxSelect() {
+            if (!currentZoomPhoto) return;
+            const globalIndex = appState.photos.findIndex(p => p.id === currentZoomPhoto.id);
+            // Mencari elemen kartu yang sedang aktif
+            const cards = document.getElementsByClassName('photo-card');
+            
+            // Kita gunakan toggle logic langsung ke appState
+            if (appState.selectedIds.has(currentZoomPhoto.id)) {
+                appState.selectedIds.delete(currentZoomPhoto.id);
+                delete appState.notes[currentZoomPhoto.id]; 
+            } else {
+                if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
+                    return showAlert(`Batas maksimal ${appState.kuota} foto telah tercapai!`, 'error');
+                }
+                appState.selectedIds.add(currentZoomPhoto.id);
+            }
+            updateLightboxSelectBtn();
+            updateActionBar();
+            saveProgress(); 
+            if (appState.viewMode === 'all') {
+                document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
+            }
+        }
+
+        // UPDATE UI MODAL TERMASUK TEXTAREA CATATAN
+        function updateLightboxSelectBtn() {
+            const btn = document.getElementById('lightboxSelectBtn');
+            const noteArea = document.getElementById('lightboxNote');
+            const isSelected = appState.selectedIds.has(currentZoomPhoto.id);
+
+            if (isSelected) {
+                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Terpilih';
+                btn.className = "px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg w-full sm:w-auto";
+                noteArea.classList.remove('hidden');
+                noteArea.value = appState.notes[currentZoomPhoto.id] || '';
+            } else {
+                btn.innerHTML = '<i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini';
+                btn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto";
+                noteArea.classList.add('hidden');
+            }
+        }
+
+        // FUNGSI SIMPAN CATATAN
+        function saveNote() {
+            if (!currentZoomPhoto) return;
+            const noteText = document.getElementById('lightboxNote').value.trim();
+            if (noteText) {
+                appState.notes[currentZoomPhoto.id] = noteText;
+            } else {
+                delete appState.notes[currentZoomPhoto.id];
+            }
+            saveProgress(); 
+        }
+    </script>
+</body>
+</html>
