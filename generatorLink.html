@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Auto Link Generator</title>
+    <title>Buat Gallery Baru - X Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -11,118 +11,83 @@
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
     </style>
 </head>
-<body class="text-slate-800 flex items-center justify-center min-h-screen p-4">
+<body class="text-slate-800 flex items-center justify-center min-h-screen p-4 md:p-8">
 
-    <div class="bg-white max-w-xl w-full rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-        <div class="bg-slate-900 px-6 py-5 flex items-center gap-4">
-            <div class="bg-white/20 text-white w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-inner">
-                <i class="fa-solid fa-link"></i>
-            </div>
+    <div class="bg-white max-w-3xl w-full rounded-3xl shadow-xl border border-slate-100 overflow-hidden p-8 md:p-10">
+        
+        <div class="mb-8 border-b border-slate-100 pb-4">
+            <h1 class="font-bold text-slate-800 text-2xl">Buat Gallery Baru</h1>
+            <p class="text-slate-500 text-sm mt-1">Smart URL Masking Tool</p>
+        </div>
+
+        <!-- Input Tersembunyi untuk URL Portal -->
+        <input type="hidden" id="baseUrl">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Nama Klien -->
             <div>
-                <h1 class="font-bold text-white text-lg">Auto Link Generator</h1>
-                <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Admin Tool - Smart URL Builder</p>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nama Client</label>
+                <input type="text" id="clientName" placeholder="Contoh: hihi"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800">
+            </div>
+
+            <!-- Universitas / Kategori -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Universitas / Kategori</label>
+                <input type="text" id="univName" placeholder="Contoh: uin"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800">
+            </div>
+
+            <!-- Tanggal -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tanggal</label>
+                <input type="date" id="dateInfo"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800 cursor-pointer">
+            </div>
+
+            <!-- Kuota -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jumlah Pilihan (Kuota)</label>
+                <input type="number" id="kuota" placeholder="0"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800">
             </div>
         </div>
 
-        <div class="p-6 md:p-8 space-y-5">
+        <!-- Link Google Drive -->
+        <div class="mb-8">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Link Google Drive</label>
+            <input type="text" id="driveLink" placeholder="https://drive.google.com/..."
+                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800">
+        </div>
+
+        <button onclick="generateLink()" class="w-full py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+            Generate Link
+        </button>
+
+        <!-- Hasil Link -->
+        <div id="resultBox" class="hidden mt-6 bg-slate-50 border border-slate-200 rounded-2xl p-5 transition-all text-center">
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Link Premium Berhasil Dibuat!</p>
+            <div class="bg-white border border-slate-200 rounded-xl p-3 mb-4 overflow-x-auto">
+                <code id="displayUrl" class="text-sm font-bold text-slate-800 whitespace-nowrap"></code>
+            </div>
+            <!-- Input tersembunyi berisi URL lengkap beserta hash datanya -->
+            <input type="hidden" id="finalUrl">
             
-            <!-- Input 1: Base URL -->
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">1. Alamat Website Portal (Auto-Detect)</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-globe text-slate-400"></i>
-                    </div>
-                    <input type="text" id="baseUrl" 
-                        class="w-full pl-10 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl outline-none text-sm text-slate-600 focus:ring-2 focus:ring-blue-600 transition shadow-inner">
-                </div>
-            </div>
-
-            <!-- Input 2: Nama Klien -->
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">2. Nama Klien / Project (Tanpa Spasi Lebih Baik)</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-user-tag text-slate-400"></i>
-                    </div>
-                    <input type="text" id="clientName" placeholder="Contoh: Jimmy-Josephine"
-                        class="w-full pl-10 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:border-blue-600 outline-none transition text-sm">
-                </div>
-            </div>
-
-            <!-- Input 3: Link Drive -->
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">3. Link Google Drive</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="fa-brands fa-google-drive text-slate-400"></i>
-                    </div>
-                    <input type="text" id="driveLink" placeholder="Paste link folder di sini..."
-                        class="w-full pl-10 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:border-blue-600 outline-none transition text-sm">
-                </div>
-            </div>
-
-            <!-- Input 4: Fitur Kuota -->
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">4. Batas Maksimal Kuota (Opsional)</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-chart-pie text-slate-400"></i>
-                    </div>
-                    <input type="number" id="kuota" placeholder="Contoh: 50 (Kosongkan jika unlimited)"
-                        class="w-full pl-10 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:border-blue-600 outline-none transition text-sm">
-                </div>
-                <p class="text-[11px] text-slate-400 mt-1">Jika diisi, klien tidak akan bisa memilih lebih dari angka tersebut.</p>
-            </div>
-
-            <button onclick="generateLink()" class="w-full py-4 mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Buat Link & Salin
+            <button onclick="copyToClipboard()" class="px-8 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition shadow-md inline-flex items-center gap-2">
+                Salin Link
             </button>
-
-            <div id="resultBox" class="hidden mt-4 bg-green-50 border border-green-200 rounded-xl p-4 transition-all">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-bold text-green-700 uppercase tracking-wider">Berhasil Dibuat!</span>
-                </div>
-                <textarea id="finalUrl" readonly class="w-full bg-white border border-green-200 rounded-lg p-3 text-sm text-slate-700 outline-none resize-none h-24 font-mono font-medium shadow-inner"></textarea>
-                <button onclick="copyToClipboard()" class="mt-3 w-full py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition flex justify-center items-center gap-2 shadow-md">
-                    <i class="fa-brands fa-whatsapp text-lg"></i> Salin ke WhatsApp
-                </button>
-            </div>
-
         </div>
-    </div>
 
-    <!-- Alert Notifikasi -->
-    <div id="customAlert" class="fixed top-4 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 transition-all duration-300 transform -translate-y-32 opacity-0">
-        <i id="alertIcon" class="fa-solid fa-circle-check text-green-400"></i>
-        <span id="alertText" class="text-sm font-bold">Link tersalin!</span>
     </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             let currentUrl = window.location.href.split('?')[0].split('#')[0];
-            let portalUrl = "";
-            
-            if (currentUrl.includes("generatorLink.html")) {
-                portalUrl = currentUrl.replace("generatorLink.html", "");
-            } else {
-                const lastSlash = currentUrl.lastIndexOf("/");
-                portalUrl = currentUrl.substring(0, lastSlash + 1);
-            }
-            
+            let portalUrl = currentUrl.includes("generatorLink.html") ? 
+                            currentUrl.replace("generatorLink.html", "") : 
+                            currentUrl.substring(0, currentUrl.lastIndexOf("/") + 1);
             document.getElementById('baseUrl').value = portalUrl;
         });
-
-        function showAlert(message, isError = false) {
-            const alertBox = document.getElementById('customAlert');
-            const alertIcon = document.getElementById('alertIcon');
-            
-            document.getElementById('alertText').textContent = message;
-            alertIcon.className = isError ? "fa-solid fa-triangle-exclamation text-red-400" : "fa-solid fa-circle-check text-green-400";
-            
-            alertBox.classList.remove('-translate-y-32', 'opacity-0');
-            setTimeout(() => alertBox.classList.add('-translate-y-32', 'opacity-0'), 3000);
-        }
 
         function extractFolderId(url) {
             const match = url.match(/folders\/([a-zA-Z0-9-_]+)/);
@@ -133,48 +98,59 @@
 
         function generateLink() {
             const baseUrl = document.getElementById('baseUrl').value.trim();
-            const clientName = document.getElementById('clientName').value.trim();
-            const driveLink = document.getElementById('driveLink').value.trim();
+            const clientName = document.getElementById('clientName').value.trim().toLowerCase();
+            const univName = document.getElementById('univName').value.trim().toLowerCase();
+            const dateInfo = document.getElementById('dateInfo').value;
             const kuota = document.getElementById('kuota').value.trim();
+            const driveLink = document.getElementById('driveLink').value.trim();
 
-            if (!baseUrl || !driveLink) return alert('Website Portal dan Link Drive wajib diisi!');
-
+            if (!driveLink) return alert('Link Google Drive wajib diisi!');
             const folderId = extractFolderId(driveLink);
-            if (!folderId) {
-                return showAlert('Link Google Drive tidak valid!', true);
-            }
+            if (!folderId) return alert('Link Google Drive tidak valid!');
 
-            // Trik Estetika: Menyusun parameter agar Nama dan Kuota tampil pertama
-            let finalUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-            let params = [];
+            // Membentuk nama URL cantik (misal: hihi-uin)
+            let cleanUrlName = '';
+            if (clientName && univName) cleanUrlName = `${clientName}-${univName}`;
+            else if (clientName) cleanUrlName = clientName;
             
-            if (clientName) {
-                // Gunakan format nama tanpa spasi %20 jika memungkinkan agar lebih rapi
-                const cleanName = clientName.replace(/\s+/g, '-');
-                params.push(`nama=${encodeURIComponent(cleanName)}`);
-            }
+            cleanUrlName = cleanUrlName.replace(/\s+/g, '-'); // Ganti spasi dengan strip
+
+            // Menyusun Data Rahasia
+            const payload = {
+                id: folderId,
+                q: kuota ? parseInt(kuota) : null,
+                d: dateInfo || null
+            };
             
-            if (kuota && parseInt(kuota) > 0) {
-                params.push(`kuota=${parseInt(kuota)}`);
-            }
+            // Enkripsi ringan data menjadi format Base64
+            const secretData = btoa(JSON.stringify(payload));
+
+            // Merakit URL Final
+            let base = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
             
-            // Masukkan ID panjang di posisi paling akhir
-            params.push(`id=${folderId}`);
+            // Tampilan URL yang akan dikopi lengkap dengan Hash tersembunyinya
+            const finalFullUrl = `${base}?${cleanUrlName}#_d=${secretData}`;
             
-            finalUrl += '?' + params.join('&');
+            // Tampilan "Palsu" (Clean) untuk ditunjukkan di layar admin
+            const cleanDisplayUrl = `${base}?${cleanUrlName}`;
 
             document.getElementById('resultBox').classList.remove('hidden');
-            document.getElementById('finalUrl').value = finalUrl;
-            copyToClipboard(finalUrl);
+            document.getElementById('displayUrl').textContent = cleanDisplayUrl;
+            document.getElementById('finalUrl').value = finalFullUrl;
         }
 
-        function copyToClipboard(text = null) {
-            const finalUrl = text || document.getElementById('finalUrl').value;
-            if (!finalUrl) return;
-            navigator.clipboard.writeText(finalUrl).then(() => showAlert('Link berhasil disalin!')).catch(() => {
-                document.getElementById('finalUrl').select();
-                document.execCommand('copy');
-                showAlert('Link berhasil disalin!');
+        function copyToClipboard() {
+            const finalUrl = document.getElementById('finalUrl').value;
+            navigator.clipboard.writeText(finalUrl).then(() => {
+                alert('Tautan disalin! Klien akan melihat link ini menjadi sangat pendek saat diklik.');
+            }).catch(() => {
+                const tempInput = document.createElement("input");
+                tempInput.value = finalUrl;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                alert('Tautan berhasil disalin!');
             });
         }
     </script>
