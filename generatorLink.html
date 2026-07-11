@@ -125,6 +125,12 @@
             return matchId && matchId[1] ? matchId[1] : null;
         }
 
+        // Base64URL: versi Base64 standar tanpa padding '=' dan tanpa karakter +/ /
+        // (yang biasanya harus di-percent-encode di URL, sehingga bikin link lebih panjang).
+        function toBase64Url(str) {
+            return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
         function generateLink() {
             const baseUrl = document.getElementById('baseUrl').value.trim();
             const clientName = document.getElementById('clientName').value.trim();
@@ -140,20 +146,14 @@
 
             let finalUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
             
-            // --- Enkripsi Kompresi Ringkas ---
-            // Gabungkan data menggunakan tanda pipa '|' langsung tanpa JSON stringify
-            let rawData = folderId;
-            if (clientName || kuota) rawData += '|' + clientName;
-            if (kuota) rawData += '|' + kuota;
+            // --- Format ringkas: id|nama|kuota, lalu di-encode Base64URL ---
+            // Karakter '|' dibuang dari nama klien agar tidak merusak posisi saat di-split nanti.
+            const safeName = clientName ? clientName.replace(/\|/g, ' ').trim() : '';
+            const safeKuota = (kuota && parseInt(kuota) > 0) ? parseInt(kuota) : '';
+            const rawStr = [folderId, safeName, safeKuota].join('|');
 
-            // Enkripsi ke Base64, lalu ubah karakter '+' dan '/' agar aman di URL (URL-Safe Base64)
-            // Serta buang tanda '=' di akhir untuk memperpendek link
-            let encodedHash = btoa(rawData)
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_')
-                .replace(/=+$/, '');
-            
-            finalUrl += encodedHash;
+            const encodedHash = toBase64Url(rawStr);
+            finalUrl += '?h=' + encodedHash;
 
             document.getElementById('resultBox').classList.remove('hidden');
             document.getElementById('finalUrl').value = finalUrl;
