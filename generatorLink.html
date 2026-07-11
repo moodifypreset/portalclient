@@ -140,14 +140,17 @@
 
             let finalUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
             
-            // --- Menggunakan Encode Hash Base64 ---
-            const dataObj = {};
-            dataObj.id = folderId;
-            if (clientName) dataObj.n = clientName;
-            if (kuota && parseInt(kuota) > 0) dataObj.k = parseInt(kuota);
+            // --- Enkripsi Base64 Versi Pendek ---
+            // Menggabungkan data dengan pemisah '|' agar karakter aslinya sedikit
+            let rawData = folderId;
+            if (clientName || kuota) rawData += '|' + clientName;
+            if (kuota) rawData += '|' + kuota;
+
+            // Enkripsi ke Base64 dan buang karakter '=' di akhir agar lebih rapi
+            const encodedHash = btoa(encodeURIComponent(rawData)).replace(/=+$/, '');
             
-            const encodedHash = btoa(encodeURIComponent(JSON.stringify(dataObj)));
-            finalUrl += '?h=' + encodedHash;
+            // Hasilnya langsung digabung setelah nama domain tanpa tanda tanya (?)
+            finalUrl += encodedHash;
 
             document.getElementById('resultBox').classList.remove('hidden');
             document.getElementById('finalUrl').value = finalUrl;
