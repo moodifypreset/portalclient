@@ -20,7 +20,7 @@
             </div>
             <div>
                 <h1 class="font-bold text-white text-lg">Auto Link Generator</h1>
-                <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Admin Tool</p>
+                <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Admin Tool - Short Link</p>
             </div>
         </div>
 
@@ -36,7 +36,6 @@
                     <input type="text" id="baseUrl" 
                         class="w-full pl-10 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl outline-none text-sm text-slate-600 focus:ring-2 focus:ring-blue-600 transition">
                 </div>
-                <p class="text-[11px] text-slate-500 mt-1"><i class="fa-solid fa-magic text-blue-500 mr-1"></i> Sistem mendeteksi URL root Anda secara otomatis.</p>
             </div>
 
             <!-- Input 2: Nama Klien -->
@@ -87,14 +86,13 @@
     </div>
 
     <script>
-        // Fitur Auto-Detect URL tanpa memunculkan index.html
         document.addEventListener("DOMContentLoaded", () => {
             let currentUrl = window.location.href.split('?')[0].split('#')[0];
             let portalUrl = "";
             
-            // Hapus nama file admin-generator.html dari URL
-            if (currentUrl.includes("admin-generator.html")) {
-                portalUrl = currentUrl.replace("admin-generator.html", "");
+            // Perbaikan URL Deteksi
+            if (currentUrl.includes("generatorLink.html")) {
+                portalUrl = currentUrl.replace("generatorLink.html", "");
             } else {
                 const lastSlash = currentUrl.lastIndexOf("/");
                 portalUrl = currentUrl.substring(0, lastSlash + 1);
@@ -103,11 +101,23 @@
             document.getElementById('baseUrl').value = portalUrl;
         });
 
-        function showAlert(message) {
+        function showAlert(message, isError = false) {
             const alertBox = document.getElementById('customAlert');
+            const alertIcon = document.getElementById('alertIcon');
+            
             document.getElementById('alertText').textContent = message;
+            alertIcon.className = isError ? "fa-solid fa-triangle-exclamation text-red-400" : "fa-solid fa-circle-check text-green-400";
+            
             alertBox.classList.remove('-translate-y-32', 'opacity-0');
             setTimeout(() => alertBox.classList.add('-translate-y-32', 'opacity-0'), 3000);
+        }
+
+        // Fungsi baru untuk mengambil ID unik Google Drive
+        function extractFolderId(url) {
+            const match = url.match(/folders\/([a-zA-Z0-9-_]+)/);
+            if (match && match[1]) return match[1];
+            const matchId = url.match(/id=([a-zA-Z0-9-_]+)/);
+            return matchId && matchId[1] ? matchId[1] : null;
         }
 
         function generateLink() {
@@ -117,13 +127,16 @@
 
             if (!baseUrl || !driveLink) return alert('Website Portal dan Link Drive wajib diisi!');
 
-            const encodedDrive = encodeURIComponent(driveLink);
-            
-            // Perbaikan format URL: Pastikan apakah baseUrl sudah berakhiran '/' atau belum
-            // Menggunakan ternary operator untuk memastikan format URL rapi
+            // Ambil ID-nya saja, bukan seluruh linknya
+            const folderId = extractFolderId(driveLink);
+            if (!folderId) {
+                return showAlert('Link Google Drive tidak valid!', true);
+            }
+
+            // Gunakan parameter ?id= (bukan ?link=)
             let finalUrl = baseUrl.endsWith('/') ? 
-                           `${baseUrl}?link=${encodedDrive}` : 
-                           `${baseUrl}/?link=${encodedDrive}`;
+                           `${baseUrl}?id=${folderId}` : 
+                           `${baseUrl}/?id=${folderId}`;
             
             if (clientName) {
                 const encodedName = encodeURIComponent(clientName);
