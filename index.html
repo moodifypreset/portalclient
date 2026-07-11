@@ -13,7 +13,6 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
         .photo-card { transition: all 0.2s ease-in-out; }
         .photo-card:active { transform: scale(0.97); }
         .selected-overlay { opacity: 0; transition: opacity 0.2s ease; }
@@ -113,10 +112,7 @@
                         <button onclick="toggleViewMode()" id="viewModeBtn" class="text-sm bg-slate-800 text-white py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 shadow-sm hover:bg-slate-700">
                             <i class="fa-solid fa-filter"></i> Lihat Pilihan (0)
                         </button>
-                        <button onclick="selectAll()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 border border-slate-200">
-                            <i class="fa-solid fa-check-double"></i> Pilih Semua
-                        </button>
-                    </div>
+                        </div>
                 </div>
                 <div id="photoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8"></div>
                 <div id="paginationContainer" class="flex justify-center items-center gap-3 mt-10 pb-8 hidden"></div>
@@ -140,21 +136,55 @@
         </div>
         <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <div class="bg-slate-900 text-white font-bold w-12 h-12 rounded-full flex items-center justify-center text-lg shadow-md" id="selectedCount">0</div>
-                <div>
+                <div class="bg-slate-900 text-white font-bold w-12 h-12 rounded-full flex items-center justify-center text-lg shadow-md shrink-0" id="selectedCount">0</div>
+                <div class="hidden sm:block">
                     <p class="font-bold text-slate-800">Foto Terpilih</p>
-                    <p class="text-xs text-slate-500 hidden md:block">Kirim daftar ini ke tim kami</p>
+                    <p class="text-xs text-slate-500">Kirim daftar ini ke tim kami</p>
                 </div>
             </div>
-            <button onclick="copyToClipboard()" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center gap-2 shadow-lg">
-                <i class="fa-brands fa-whatsapp text-xl"></i> <span class="hidden md:inline">Salin Format WhatsApp</span><span class="md:hidden">Salin List</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="downloadList()" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition flex items-center gap-2 border border-slate-300 shadow-sm" title="Download file .txt">
+                    <i class="fa-solid fa-file-arrow-down text-lg"></i> <span class="hidden md:inline">Download List</span>
+                </button>
+                <button onclick="copyToClipboard()" class="px-5 md:px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center gap-2 shadow-lg">
+                    <i class="fa-brands fa-whatsapp text-xl"></i> <span class="hidden md:inline">Kirim WA</span><span class="md:hidden">Kirim WA</span>
+                </button>
+            </div>
         </div>
     </div>
 
     <div id="customAlert" class="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl z-[99] flex items-center gap-3 transition-all duration-300 transform -translate-y-32 opacity-0 min-w-[300px] justify-center">
         <i id="alertIcon" class="fa-solid fa-circle-check text-green-400 text-lg"></i>
         <span id="alertText" class="text-sm font-bold tracking-wide">Notifikasi</span>
+    </div>
+
+    <div id="tutorialModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 px-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl transform scale-95 transition-transform duration-300" id="tutorialContent">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800">Cara Memilih Foto</h3>
+                <p class="text-slate-500 text-sm mt-2">Ikuti 3 langkah mudah ini untuk memilih foto favorit Anda:</p>
+            </div>
+            <ul class="space-y-5 mb-8">
+                <li class="flex items-start gap-4">
+                    <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">1</div>
+                    <p class="text-sm text-slate-600 pt-1"><strong>Pilih Foto:</strong> Klik (tap) langsung pada gambar foto untuk memilihnya.</p>
+                </li>
+                <li class="flex items-start gap-4">
+                    <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">2</div>
+                    <p class="text-sm text-slate-600 pt-1"><strong>Zoom & Catatan:</strong> Klik ikon <i class="fa-solid fa-magnifying-glass-plus text-slate-800 mx-1"></i> untuk memperbesar gambar & menambahkan instruksi edit (opsional).</p>
+                </li>
+                <li class="flex items-start gap-4">
+                    <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">3</div>
+                    <p class="text-sm text-slate-600 pt-1"><strong>Kirim List:</strong> Jika sudah selesai, klik tombol Kirim WA atau Download di bagian bawah layar.</p>
+                </li>
+            </ul>
+            <button onclick="closeTutorial()" class="w-full py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition shadow-lg text-sm uppercase tracking-wider">
+                Mengerti, Mulai Memilih!
+            </button>
+        </div>
     </div>
 
     <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm touch-pan-y">
@@ -172,7 +202,7 @@
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
                 <i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini
             </button>
-            <textarea id="lightboxNote" oninput="saveNote()" class="w-full bg-slate-800/90 text-white placeholder-slate-400 text-sm rounded-xl p-3 border border-slate-600 focus:outline-none focus:border-slate-400 hidden transition-all shadow-lg backdrop-blur-sm" rows="2" placeholder="Catatan untuk editor (opsional)..."></textarea>
+            <textarea id="lightboxNote" oninput="saveNote()" class="w-full bg-slate-800/90 text-white placeholder-slate-400 text-sm rounded-xl p-3 border border-slate-600 focus:outline-none focus:border-slate-400 hidden transition-all shadow-lg backdrop-blur-sm" rows="2" placeholder="Catatan edit (opsional), misal: hapus jerawat..."></textarea>
         </div>
     </div>
 
@@ -189,6 +219,7 @@
         let currentZoomPhoto = null;
         let touchstartX = 0;
         let touchendX = 0;
+        let hasSeenTutorial = false; // Flag untuk memastikan tutorial muncul sekali
 
         document.addEventListener("DOMContentLoaded", () => {
             if (typeof CONFIG_APP !== 'undefined') {
@@ -198,8 +229,6 @@
             }
 
             const urlParams = new URLSearchParams(window.location.search);
-            
-            // Menerima parameter super ringkas: n (Nama), k (Kuota Hash), i (ID Drive)
             const urlName = urlParams.get('n');
             const urlKuota = urlParams.get('k');
             const autoId = urlParams.get('i');
@@ -240,7 +269,6 @@
                 document.getElementById('inputSection').classList.remove('hidden');
             }
 
-            // TOUCH SWIPE LISTENER
             const lightboxEl = document.getElementById('lightbox');
             lightboxEl.addEventListener('touchstart', e => {
                 if (e.target.tagName.toLowerCase() === 'textarea') return;
@@ -253,6 +281,31 @@
                 handleSwipeGesture();
             }, { passive: true });
         });
+
+        // FUNGSI POP-UP TUTORIAL
+        function showTutorial() {
+            if (hasSeenTutorial) return;
+            const modal = document.getElementById('tutorialModal');
+            const content = document.getElementById('tutorialContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.replace('opacity-0', 'opacity-100');
+                content.classList.replace('scale-95', 'scale-100');
+            }, 10);
+            hasSeenTutorial = true;
+        }
+
+        function closeTutorial() {
+            const modal = document.getElementById('tutorialModal');
+            const content = document.getElementById('tutorialContent');
+            modal.classList.replace('opacity-100', 'opacity-0');
+            content.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
 
         function handleSwipeGesture() {
             const minSwipeDistance = 50; 
@@ -346,6 +399,9 @@
                     appState.notes = {}; 
                     loadProgress(folderId); 
                     renderGallery();
+                    
+                    // TAMPILKAN TUTORIAL JIKA BERHASIL LOAD PERTAMA KALI
+                    setTimeout(() => { showTutorial(); }, 800);
                 } else {
                     showAlert('Folder kosong atau hak akses bukan Publik.', 'error');
                     document.getElementById('loadingState').classList.add('hidden');
@@ -425,7 +481,6 @@
                 overlay.className = "selected-overlay absolute inset-0 bg-slate-900/10 z-10 flex items-start justify-end p-3 pointer-events-none";
                 overlay.innerHTML = '<div class="bg-slate-900 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg"><i class="fa-solid fa-check"></i></div>';
                 
-                // MUNCULKAN KEMBALI BADGE CATATAN
                 if (appState.notes[photo.id]) {
                     const noteBadge = document.createElement('div');
                     noteBadge.className = "note-badge absolute top-3 right-14 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs shadow-md z-20 pointer-events-none";
@@ -490,7 +545,7 @@
         function toggleSelect(id, cardElement) {
             if (appState.selectedIds.has(id)) {
                 appState.selectedIds.delete(id); 
-                delete appState.notes[id]; // HAPUS CATATAN JIKA BATAL PILIH
+                delete appState.notes[id]; 
                 cardElement.classList.remove('selected', 'border-slate-900');
             } else {
                 if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
@@ -500,33 +555,6 @@
                 cardElement.classList.add('selected', 'border-slate-900');
             }
             updateActionBar(); saveProgress();
-            if (appState.viewMode === 'all') {
-                document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
-            }
-        }
-
-        function selectAll() {
-            const photosToProcess = appState.viewMode === 'selected' ? appState.photos.filter(p => appState.selectedIds.has(p.id)) : appState.photos;
-            const startIndex = (appState.currentPage - 1) * ITEMS_PER_PAGE;
-            const endIndex = startIndex + ITEMS_PER_PAGE;
-            const currentPhotos = photosToProcess.slice(startIndex, endIndex);
-            
-            const isAllCurrentSelected = currentPhotos.every(p => appState.selectedIds.has(p.id));
-            if (isAllCurrentSelected) { 
-                currentPhotos.forEach(p => {
-                    appState.selectedIds.delete(p.id);
-                    delete appState.notes[p.id];
-                }); 
-            } else { 
-                currentPhotos.forEach(p => {
-                    if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) return; 
-                    appState.selectedIds.add(p.id);
-                });
-                if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
-                    showAlert(`Hanya terpilih sampai batas kuota (${appState.kuota} foto).`, 'error');
-                }
-            }
-            renderGallery(); updateActionBar(); saveProgress();
             if (appState.viewMode === 'all') {
                 document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
             }
@@ -560,6 +588,44 @@
             }
             
             if (count > 0) { bar.classList.remove('translate-y-full'); } else { bar.classList.add('translate-y-full'); }
+        }
+
+        // FUNGSI DOWNLOAD FILE TXT (DAFTAR FOTO TERPILIH)
+        function downloadList() {
+            if (appState.selectedIds.size === 0) return;
+            const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
+            const vendor = (typeof CONFIG_APP !== 'undefined') ? CONFIG_APP.namaVendor : 'Studio';
+            
+            let textContent = `LIST FOTO PILIHAN KLIEN\n`;
+            textContent += `=======================\n`;
+            textContent += `Layanan : ${vendor}\n`;
+            textContent += `Klien   : ${appState.clientName || 'Klien'}\n`;
+            textContent += `Total   : ${selectedPhotos.length} Foto\n`;
+            textContent += `=======================\n\n`;
+            
+            selectedPhotos.forEach((p, index) => {
+                const note = appState.notes[p.id];
+                textContent += `${index + 1}. ${p.name}\n`;
+                if (note) textContent += `   Catatan: ${note}\n`;
+            });
+            
+            textContent += `\n=======================\n`;
+            textContent += `Dicetak otomatis melalui X Studio Portal\n`;
+
+            const blob = new Blob([textContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const safeName = appState.clientName ? appState.clientName.replace(/\s+/g, '_') : 'klien';
+            a.download = `List_Pilihan_${safeName}.txt`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showAlert('File daftar foto berhasil didownload (.txt)', 'success');
         }
 
         // SALIN WHATSAPP MENGAMBIL CATATAN
@@ -616,10 +682,7 @@
         function toggleLightboxSelect() {
             if (!currentZoomPhoto) return;
             const globalIndex = appState.photos.findIndex(p => p.id === currentZoomPhoto.id);
-            // Mencari elemen kartu yang sedang aktif
-            const cards = document.getElementsByClassName('photo-card');
             
-            // Kita gunakan toggle logic langsung ke appState
             if (appState.selectedIds.has(currentZoomPhoto.id)) {
                 appState.selectedIds.delete(currentZoomPhoto.id);
                 delete appState.notes[currentZoomPhoto.id]; 
@@ -637,7 +700,6 @@
             }
         }
 
-        // UPDATE UI MODAL TERMASUK TEXTAREA CATATAN
         function updateLightboxSelectBtn() {
             const btn = document.getElementById('lightboxSelectBtn');
             const noteArea = document.getElementById('lightboxNote');
@@ -655,7 +717,6 @@
             }
         }
 
-        // FUNGSI SIMPAN CATATAN
         function saveNote() {
             if (!currentZoomPhoto) return;
             const noteText = document.getElementById('lightboxNote').value.trim();
