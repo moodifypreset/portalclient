@@ -139,20 +139,15 @@
             }
 
             let finalUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-            let params = [];
             
-            // Nama di-encode secara murni (Spasi menjadi + atau %20), TANPA tanda strip
-            if (clientName) {
-                params.push(`nama=${encodeURIComponent(clientName)}`);
-            }
+            // --- Menggunakan Encode Hash Base64 ---
+            const dataObj = {};
+            dataObj.id = folderId;
+            if (clientName) dataObj.n = clientName;
+            if (kuota && parseInt(kuota) > 0) dataObj.k = parseInt(kuota);
             
-            // Kuota hanya dimasukkan jika form kuota diisi
-            if (kuota && parseInt(kuota) > 0) {
-                params.push(`kuota=${parseInt(kuota)}`);
-            }
-            
-            params.push(`id=${folderId}`);
-            finalUrl += '?' + params.join('&');
+            const encodedHash = btoa(encodeURIComponent(JSON.stringify(dataObj)));
+            finalUrl += '?h=' + encodedHash;
 
             document.getElementById('resultBox').classList.remove('hidden');
             document.getElementById('finalUrl').value = finalUrl;
