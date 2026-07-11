@@ -26,7 +26,7 @@
 
         <div class="p-6 md:p-8 space-y-5">
             
-            <!-- Input 1: Base URL (Terisi Otomatis) -->
+            <!-- Input 1: Base URL (Terisi Otomatis tanpa index.html) -->
             <div>
                 <label class="block text-sm font-bold text-slate-700 mb-2">1. Alamat Website Portal (Auto-Detect)</label>
                 <div class="relative">
@@ -36,7 +36,7 @@
                     <input type="text" id="baseUrl" 
                         class="w-full pl-10 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl outline-none text-sm text-slate-600 focus:ring-2 focus:ring-blue-600 transition">
                 </div>
-                <p class="text-[11px] text-slate-500 mt-1"><i class="fa-solid fa-magic text-blue-500 mr-1"></i> Sistem otomatis mendeteksi lokasi file <b>index.html</b> di server Anda.</p>
+                <p class="text-[11px] text-slate-500 mt-1"><i class="fa-solid fa-magic text-blue-500 mr-1"></i> Sistem mendeteksi URL root Anda secara otomatis.</p>
             </div>
 
             <!-- Input 2: Nama Klien -->
@@ -87,23 +87,19 @@
     </div>
 
     <script>
-        // Fitur Auto-Detect URL saat halaman dimuat
+        // Fitur Auto-Detect URL tanpa memunculkan index.html
         document.addEventListener("DOMContentLoaded", () => {
-            // Ambil URL saat ini (tanpa parameter atau hash)
             let currentUrl = window.location.href.split('?')[0].split('#')[0];
             let portalUrl = "";
             
-            // Asumsi file generator bernama admin-generator.html
-            // Kita otomatis mengganti nama file tersebut menjadi index.html (File portal klien)
+            // Hapus nama file admin-generator.html dari URL
             if (currentUrl.includes("admin-generator.html")) {
-                portalUrl = currentUrl.replace("admin-generator.html", "index.html");
+                portalUrl = currentUrl.replace("admin-generator.html", "");
             } else {
-                // Fallback jika nama file diubah oleh admin
                 const lastSlash = currentUrl.lastIndexOf("/");
-                portalUrl = currentUrl.substring(0, lastSlash + 1) + "index.html";
+                portalUrl = currentUrl.substring(0, lastSlash + 1);
             }
             
-            // Masukkan ke kolom input
             document.getElementById('baseUrl').value = portalUrl;
         });
 
@@ -121,11 +117,14 @@
 
             if (!baseUrl || !driveLink) return alert('Website Portal dan Link Drive wajib diisi!');
 
-            // Encode data agar format link aman
             const encodedDrive = encodeURIComponent(driveLink);
-            let finalUrl = `${baseUrl}?link=${encodedDrive}`;
             
-            // Tambahkan parameter nama jika admin mengisinya
+            // Perbaikan format URL: Pastikan apakah baseUrl sudah berakhiran '/' atau belum
+            // Menggunakan ternary operator untuk memastikan format URL rapi
+            let finalUrl = baseUrl.endsWith('/') ? 
+                           `${baseUrl}?link=${encodedDrive}` : 
+                           `${baseUrl}/?link=${encodedDrive}`;
+            
             if (clientName) {
                 const encodedName = encodeURIComponent(clientName);
                 finalUrl += `&nama=${encodedName}`;
