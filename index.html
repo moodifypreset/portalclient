@@ -225,6 +225,14 @@
         let touchstartX = 0;
         let touchendX = 0;
 
+        // Kebalikan dari toBase64Url() di generatorLink.html:
+        // kembalikan karakter -/_ ke +/ dan tambahkan padding '=' yang dibuang saat encode.
+        function fromBase64Url(str) {
+            let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4) base64 += '=';
+            return atob(base64);
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             let vendorName = 'Studio Foto';
             if (typeof CONFIG_APP !== 'undefined') {
@@ -242,29 +250,17 @@
             let urlName = urlParams.get('nama');
             let urlKuota = urlParams.get('kuota');
 
-          // --- Logika Decode Hash Versi Ringkas ---
-            let hashData = urlParams.get('h');
-            
-            // Mengambil kode dari path jika menggunakan sistem vercel rewrite (namaweb.com/kode)
-            if (!hashData) {
-                const pathParts = window.location.pathname.split('/');
-                hashData = pathParts[pathParts.length - 1];
-            }
-
-            if (hashData && hashData !== 'index.html' && hashData !== '') {
+            // --- Logika Decode Hash (format ringkas: id|nama|kuota, Base64URL) ---
+            const hashData = urlParams.get('h');
+            if (hashData) {
                 try {
-                    // Kembalikan karakter URL-Safe Base64 ke Base64 standar
-                    let base64Str = hashData.replace(/-/g, '+').replace(/_/g, '/');
-                    // Tambahkan padding '=' jika hilang saat digenerate
-                    while (base64Str.length % 4) { base64Str += '='; }
-                    
-                    // Decode Base64 ke teks asli
-                    const decodedStr = atob(base64Str);
-                    const dataParts = decodedStr.split('|');
-                    
-                    if (dataParts[0]) autoId = dataParts[0];
-                    if (dataParts[1]) urlName = dataParts[1];
-                    if (dataParts[2]) urlKuota = dataParts[2];
+                    const decodedStr = fromBase64Url(hashData);
+                    const parts = decodedStr.split('|');
+                    const [id, n, k] = parts;
+
+                    if (id) autoId = id;
+                    if (n) urlName = n;
+                    if (k) urlKuota = k;
                 } catch (e) {
                     console.error("Gagal membaca link terenkripsi", e);
                     showAlert('Link tidak valid atau rusak.', 'error');
