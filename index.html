@@ -242,17 +242,24 @@
             let urlName = urlParams.get('nama');
             let urlKuota = urlParams.get('kuota');
 
-            // --- Logika Decode Hash ---
-            const hashData = urlParams.get('h');
-            if (hashData) {
+           // --- Logika Decode Hash Versi Pendek ---
+            let hashData = urlParams.get('h');
+            
+            // Antisipasi jika server langsung membaca dari path URL
+            if (!hashData) {
+                const pathParts = window.location.pathname.split('/');
+                hashData = pathParts[pathParts.length - 1];
+            }
+
+            if (hashData && hashData !== 'index.html' && hashData !== '') {
                 try {
-                    // Menerjemahkan kembali Base64 menjadi objek JSON
+                    // Decode Base64 versi pendek
                     const decodedStr = decodeURIComponent(atob(hashData));
-                    const data = JSON.parse(decodedStr);
+                    const dataParts = decodedStr.split('|');
                     
-                    if (data.id) autoId = data.id;
-                    if (data.n) urlName = data.n;
-                    if (data.k) urlKuota = data.k;
+                    if (dataParts[0]) autoId = dataParts[0];
+                    if (dataParts[1]) urlName = dataParts[1];
+                    if (dataParts[2]) urlKuota = dataParts[2];
                 } catch (e) {
                     console.error("Gagal membaca link terenkripsi", e);
                     showAlert('Link tidak valid atau rusak.', 'error');
