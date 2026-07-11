@@ -8,7 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -78,10 +78,8 @@
                     <p class="text-sm text-slate-500">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
                 </div>
                 
-                <!-- Kumpulan Tombol & Filter -->
                 <div class="flex flex-wrap items-center gap-2">
-                    
-                    <!-- Fitur Baru: Dropdown Sortir -->
+                    <!-- Dropdown Sortir -->
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-arrow-down-a-z text-slate-400 text-sm"></i>
@@ -138,7 +136,7 @@
     </div>
 
     <!-- Lightbox / Zoom Modal -->
-    <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm">
+    <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm touch-pan-y">
         
         <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
             <p id="lightboxTitle" class="text-white font-medium drop-shadow-md text-sm md:text-base ml-2">Photo Name</p>
@@ -147,18 +145,19 @@
             </button>
         </div>
 
-        <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition">
+        <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex">
             <i class="fa-solid fa-chevron-left"></i>
         </button>
-        <button onclick="nextPhoto(event)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition">
+        <button onclick="nextPhoto(event)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex">
             <i class="fa-solid fa-chevron-right"></i>
         </button>
 
-        <div class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24">
-            <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-transform duration-300">
+        <div class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24 pointer-events-none">
+            <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-transform duration-300 pointer-events-auto select-none">
         </div>
 
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
+            <p class="text-white/50 text-xs md:hidden text-center mb-[-5px] animate-pulse"><i class="fa-solid fa-arrows-left-right"></i> Geser kiri/kanan</p>
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
                 <i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini
             </button>
@@ -174,7 +173,7 @@
             folderId: null, 
             clientName: '', 
             photos: [], 
-            originalPhotos: [], // Menyimpan urutan asli dari Google Drive
+            originalPhotos: [], 
             selectedIds: new Set(), 
             notes: {}, 
             currentPage: 1, 
@@ -184,6 +183,10 @@
         
         let currentZoomIndex = 0;
         let currentZoomPhoto = null;
+
+        // VARIABEL UNTUK SWIPE GESTURE
+        let touchstartX = 0;
+        let touchendX = 0;
 
         document.addEventListener("DOMContentLoaded", () => {
             let vendorName = 'Studio Foto';
@@ -213,11 +216,41 @@
                 document.getElementById('inputSection').classList.add('hidden');
                 setTimeout(() => { loadFromDrive(); }, 500);
             }
+
+            // MENGAKTIFKAN DETEKSI SWIPE PADA LIGHTBOX
+            const lightboxEl = document.getElementById('lightbox');
+            
+            lightboxEl.addEventListener('touchstart', e => {
+                // Jangan aktifkan swipe jika klien sedang menyentuh kotak catatan
+                if (e.target.tagName.toLowerCase() === 'textarea') return;
+                touchstartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            lightboxEl.addEventListener('touchend', e => {
+                if (e.target.tagName.toLowerCase() === 'textarea') return;
+                touchendX = e.changedTouches[0].screenX;
+                handleSwipeGesture();
+            }, { passive: true });
         });
 
-        // ==========================================
-        // FITUR AUTO-SAVE (LOCAL STORAGE)
-        // ==========================================
+        // FUNGSI LOGIKA SWIPE KANAN / KIRI
+        function handleSwipeGesture() {
+            const minSwipeDistance = 50; // Jarak minimal gesekan jari (pixel)
+            
+            if (touchendX < touchstartX - minSwipeDistance) {
+                // Geser ke kiri (Next)
+                if (currentZoomIndex < appState.photos.length - 1) {
+                    nextPhoto();
+                }
+            }
+            if (touchendX > touchstartX + minSwipeDistance) {
+                // Geser ke kanan (Prev)
+                if (currentZoomIndex > 0) {
+                    prevPhoto();
+                }
+            }
+        }
+
         function saveProgress() {
             if (!appState.folderId) return;
             const dataToSave = {
@@ -306,13 +339,10 @@
                         return { id: file.id, name: file.name, url: hdThumb, fullUrl: hdFull };
                     });
                     
-                    // Simpan urutan asli agar bisa dikembalikan saat filter "Urutan Asli" dipilih
                     appState.originalPhotos = [...appState.photos];
-                    
                     appState.selectedIds.clear();
                     appState.notes = {}; 
                     loadProgress(folderId); 
-                    
                     renderGallery();
                     
                     if (appState.selectedIds.size === 0) {
@@ -328,21 +358,15 @@
             }
         }
 
-        // ==========================================
-        // FITUR SORTIR (A-Z, Z-A, RANDOM)
-        // ==========================================
         function applySort(order) {
             appState.sortOrder = order;
-            
             if (order === 'default') {
                 appState.photos = [...appState.originalPhotos];
             } else if (order === 'asc') {
-                // Numeric: true membuat DSC002 urut sebelum DSC0010
                 appState.photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
             } else if (order === 'desc') {
                 appState.photos.sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true, sensitivity: 'base'}));
             } else if (order === 'random') {
-                // Fisher-Yates Shuffle Algorithm
                 let array = [...appState.photos];
                 for (let i = array.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -350,10 +374,8 @@
                 }
                 appState.photos = array;
             }
-            
             appState.currentPage = 1;
             renderGallery();
-            
             const message = order === 'random' ? 'Foto berhasil diacak!' : 'Urutan foto diperbarui!';
             showAlert(message, 'success');
         }
@@ -560,8 +582,23 @@
         }
 
         // ==========================================
-        // SISTEM LIGHTBOX / ZOOM & CATATAN FOTO
+        // SISTEM LIGHTBOX DENGAN SMART PRE-LOADING
         // ==========================================
+        
+        // FUNGSI BARU: Smart Preload
+        function preloadAdjacentPhotos(currentIndex) {
+            // Kita menyuruh browser men-download diam-diam 2 foto ke depan, dan 1 foto ke belakang
+            const indicesToPreload = [currentIndex + 1, currentIndex + 2, currentIndex - 1];
+            
+            indicesToPreload.forEach(idx => {
+                if (idx >= 0 && idx < appState.photos.length) {
+                    const photo = appState.photos[idx];
+                    const img = new Image(); // Memori gaib browser
+                    img.src = photo.fullUrl || photo.url; // Trigger download di background
+                }
+            });
+        }
+
         function openLightbox(index) {
             currentZoomIndex = index;
             currentZoomPhoto = appState.photos[index];
@@ -571,6 +608,7 @@
             document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
             
             updateLightboxSelectBtn();
+            preloadAdjacentPhotos(index); // Panggil fungsi pre-load saat foto terbuka
             
             lightbox.classList.remove('hidden');
             setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
