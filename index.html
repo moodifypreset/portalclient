@@ -13,6 +13,7 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         .photo-card { transition: all 0.2s ease-in-out; }
         .photo-card:active { transform: scale(0.97); }
         .selected-overlay { opacity: 0; transition: opacity 0.2s ease; }
@@ -94,12 +95,31 @@
                         <p class="text-sm text-slate-500">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-arrow-down-a-z text-slate-400 text-sm"></i>
+                            </div>
+                            <select id="sortDropdown" onchange="applySort(this.value)" class="text-sm bg-white border border-slate-200 text-slate-700 py-2 pl-9 pr-8 rounded-lg font-medium cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-800 appearance-none transition hover:bg-slate-50">
+                                <option value="default">Urutan Asli</option>
+                                <option value="asc">A - Z</option>
+                                <option value="desc">Z - A</option>
+                                <option value="random">Acak (Random)</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                            </div>
+                        </div>
+
+                        <button onclick="toggleViewMode()" id="viewModeBtn" class="text-sm bg-slate-800 text-white py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 shadow-sm hover:bg-slate-700">
+                            <i class="fa-solid fa-filter"></i> Lihat Pilihan (0)
+                        </button>
                         <button onclick="selectAll()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 border border-slate-200">
                             <i class="fa-solid fa-check-double"></i> Pilih Semua
                         </button>
                     </div>
                 </div>
                 <div id="photoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8"></div>
+                <div id="paginationContainer" class="flex justify-center items-center gap-3 mt-10 pb-8 hidden"></div>
             </div>
         </div>
     </main>
@@ -148,6 +168,7 @@
             <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-transform duration-300 pointer-events-auto select-none">
         </div>
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
+            <p class="text-white/50 text-xs md:hidden text-center mb-[-5px] animate-pulse"><i class="fa-solid fa-arrows-left-right"></i> Geser kiri/kanan</p>
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
                 <i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini
             </button>
@@ -158,8 +179,16 @@
     <script>
         const ITEMS_PER_PAGE = 200; 
         
-        let appState = { folderId: null, clientName: '', photos: [], originalPhotos: [], selectedIds: new Set(), notes: {}, currentPage: 1, kuota: null };
-        let currentZoomIndex = 0; let currentZoomPhoto = null;
+        let appState = { 
+            folderId: null, clientName: '', photos: [], originalPhotos: [], 
+            selectedIds: new Set(), notes: {}, currentPage: 1, kuota: null, 
+            viewMode: 'all', sortOrder: 'default' 
+        };
+        
+        let currentZoomIndex = 0; 
+        let currentZoomPhoto = null;
+        let touchstartX = 0;
+        let touchendX = 0;
 
         document.addEventListener("DOMContentLoaded", () => {
             if (typeof CONFIG_APP !== 'undefined') {
@@ -170,13 +199,12 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             
-            // Mengambil Parameter Ringkas 'n', 'k', dan 'i'
+            // Menerima parameter super ringkas: n (Nama), k (Kuota Hash), i (ID Drive)
             const urlName = urlParams.get('n');
             const urlKuota = urlParams.get('k');
             const autoId = urlParams.get('i');
 
             if (urlName) {
-                // Decode nama klien
                 appState.clientName = decodeURIComponent(urlName).replace(/-/g, ' ');
                 document.getElementById('displayClientName').textContent = appState.clientName;
                 document.getElementById('greetingSection').classList.remove('hidden');
@@ -184,10 +212,8 @@
                 document.getElementById('displayClientName').textContent = "Kakak";
             }
             
-            // Dekripsi / Un-Hash Kuota (MTAw -> 100)
             if (urlKuota) {
                 try {
-                    // Tambahkan '=' jika panjangnya tidak kelipatan 4 (karena tadi dipotong agar rapi)
                     let paddedKuota = urlKuota;
                     const pad = urlKuota.length % 4;
                     if (pad > 0) paddedKuota += '='.repeat(4 - pad);
@@ -213,180 +239,13 @@
             } else {
                 document.getElementById('inputSection').classList.remove('hidden');
             }
-        });
 
-        function saveProgress() {
-            if (!appState.folderId) return;
-            localStorage.setItem(`client_portal_save_${appState.folderId}`, JSON.stringify({selected: Array.from(appState.selectedIds), notes: appState.notes}));
-        }
+            // TOUCH SWIPE LISTENER
+            const lightboxEl = document.getElementById('lightbox');
+            lightboxEl.addEventListener('touchstart', e => {
+                if (e.target.tagName.toLowerCase() === 'textarea') return;
+                touchstartX = e.changedTouches[0].screenX;
+            }, { passive: true });
 
-        function loadProgress(folderId) {
-            const savedData = localStorage.getItem(`client_portal_save_${folderId}`);
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    appState.selectedIds = new Set(data.selected || []);
-                    appState.notes = data.notes || {};
-                    if (appState.selectedIds.size > 0) setTimeout(() => { updateActionBar(); }, 1000);
-                } catch (e) {}
-            }
-        }
-
-        function showAlert(message, type = 'success') {
-            const alertBox = document.getElementById('customAlert');
-            document.getElementById('alertText').textContent = message;
-            document.getElementById('alertIcon').className = type === 'success' ? "fa-solid fa-circle-check text-green-400 text-lg" : "fa-solid fa-triangle-exclamation text-red-400 text-lg";
-            alertBox.classList.remove('-translate-y-32', 'opacity-0');
-            setTimeout(() => alertBox.classList.add('-translate-y-32', 'opacity-0'), 3000);
-        }
-
-        function extractFolderId(url) {
-            const match = url.match(/folders\/([a-zA-Z0-9-_]+)/);
-            if (match && match[1]) return match[1];
-            return url.match(/id=([a-zA-Z0-9-_]+)/)?.[1] || null;
-        }
-
-        async function loadFromDrive() {
-            if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey) return showAlert('Sistem belum dikonfigurasi. Harap isi API Key.', 'error');
-            
-            const link = document.getElementById('driveLink').value.trim();
-            const folderId = extractFolderId(link) || link; // Bisa baca langsung ID-nya
-            if (!folderId) return showAlert('Link Google Drive tidak valid.', 'error');
-
-            document.getElementById('inputSection').classList.add('hidden');
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('loadingState').classList.add('flex');
-            appState.folderId = folderId; 
-            
-            try {
-                let fetchedFiles = []; let nextPageToken = "";
-                const query = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
-                do {
-                    let apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=nextPageToken,files(id,name,thumbnailLink)&key=${CONFIG_APP.googleApiKey}&pageSize=1000`;
-                    if (nextPageToken) apiUrl += `&pageToken=${nextPageToken}`;
-                    const response = await fetch(apiUrl);
-                    const data = await response.json();
-                    if (data.files) fetchedFiles = fetchedFiles.concat(data.files);
-                    nextPageToken = data.nextPageToken;
-                } while (nextPageToken);
-
-                if (fetchedFiles.length > 0) {
-                    appState.photos = fetchedFiles.map(f => ({ id: f.id, name: f.name, url: f.thumbnailLink?.replace('=s220', '=s800'), fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') }));
-                    appState.originalPhotos = [...appState.photos];
-                    loadProgress(folderId); 
-                    renderGallery();
-                } else {
-                    showAlert('Folder kosong atau hak akses bukan Publik.', 'error');
-                    document.getElementById('loadingState').classList.add('hidden');
-                }
-            } catch (error) {
-                showAlert('Gagal terhubung ke Google Drive.', 'error');
-                document.getElementById('loadingState').classList.add('hidden');
-            }
-        }
-
-        function renderGallery() {
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('loadingState').classList.remove('flex');
-            document.getElementById('galleryContainer').classList.remove('hidden');
-            const grid = document.getElementById('photoGrid'); grid.innerHTML = '';
-            
-            appState.photos.slice(0, ITEMS_PER_PAGE).forEach((photo, index) => {
-                const card = document.createElement('div');
-                card.className = `photo-card relative bg-slate-100 rounded-xl overflow-hidden aspect-square border-[3px] border-transparent shadow-sm hover:shadow-md ${appState.selectedIds.has(photo.id) ? 'selected border-slate-900' : ''}`;
-                
-                const img = document.createElement('img');
-                img.src = photo.url; img.className = "w-full h-full object-cover cursor-pointer transition-transform duration-300"; img.loading = "lazy";
-                img.onclick = () => toggleSelect(photo.id, card);
-                
-                const overlay = document.createElement('div');
-                overlay.className = "selected-overlay absolute inset-0 bg-slate-900/10 z-10 flex items-start justify-end p-3 pointer-events-none";
-                overlay.innerHTML = '<div class="bg-slate-900 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg"><i class="fa-solid fa-check"></i></div>';
-                
-                const bottomArea = document.createElement('div');
-                bottomArea.className = "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 flex justify-between items-end z-20";
-                bottomArea.innerHTML = `<p class="text-white text-xs font-medium truncate drop-shadow-md w-3/4">${photo.name}</p>
-                                        <button class="text-white bg-black/40 hover:bg-blue-600 rounded-lg w-8 h-8 flex items-center justify-center shadow-lg" onclick="event.stopPropagation(); openLightbox(${index})"><i class="fa-solid fa-magnifying-glass-plus"></i></button>`;
-
-                card.appendChild(img); card.appendChild(overlay); card.appendChild(bottomArea);
-                grid.appendChild(card);
-            });
-        }
-
-        function toggleSelect(id, cardElement) {
-            if (appState.selectedIds.has(id)) {
-                appState.selectedIds.delete(id); 
-                cardElement.classList.remove('selected', 'border-slate-900');
-            } else {
-                if (appState.kuota && appState.selectedIds.size >= appState.kuota) return showAlert(`Batas maksimal ${appState.kuota} foto telah tercapai!`, 'error');
-                appState.selectedIds.add(id); 
-                cardElement.classList.add('selected', 'border-slate-900');
-            }
-            updateActionBar(); saveProgress();
-        }
-
-        function selectAll() {
-            appState.photos.slice(0, ITEMS_PER_PAGE).forEach(p => {
-                if (appState.kuota && appState.selectedIds.size >= appState.kuota) return;
-                appState.selectedIds.add(p.id);
-            });
-            renderGallery(); updateActionBar(); saveProgress();
-        }
-
-        function updateActionBar() {
-            const count = appState.selectedIds.size;
-            document.getElementById('selectedCount').textContent = count;
-            
-            if (appState.kuota !== null) {
-                const perc = Math.min((count / appState.kuota) * 100, 100);
-                document.getElementById('quotaText').textContent = `${count} / ${appState.kuota}`;
-                document.getElementById('quotaBar').style.width = `${perc}%`;
-            }
-            const bar = document.getElementById('actionBar');
-            if (count > 0) bar.classList.remove('translate-y-full'); else bar.classList.add('translate-y-full');
-        }
-
-        function copyToClipboard() {
-            if (appState.selectedIds.size === 0) return;
-            const vendor = (typeof CONFIG_APP !== 'undefined') ? CONFIG_APP.namaVendor : 'Studio';
-            const listText = appState.photos.filter(p => appState.selectedIds.has(p.id)).map(p => p.name).join('\n');
-            let textToCopy = `*List Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${appState.selectedIds.size} Foto\n\n${listText}\n\n_Segera diproses, terima kasih!_`;
-            
-            const ta = document.createElement("textarea"); ta.value = textToCopy; 
-            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-            showAlert('List foto disalin! Silakan paste di WhatsApp.');
-        }
-
-        function openLightbox(index) {
-            currentZoomIndex = index; currentZoomPhoto = appState.photos[index];
-            const lightbox = document.getElementById('lightbox');
-            document.getElementById('lightboxTitle').textContent = `${currentZoomPhoto.name} (${index + 1} of ${appState.photos.length})`;
-            document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl;
-            
-            const btn = document.getElementById('lightboxSelectBtn');
-            if (appState.selectedIds.has(currentZoomPhoto.id)) {
-                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Terpilih';
-                btn.className = "px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition w-full sm:w-auto";
-            } else {
-                btn.innerHTML = '<i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini';
-                btn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition border border-slate-600 w-full sm:w-auto";
-            }
-            lightbox.classList.remove('hidden'); setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
-        }
-
-        function closeLightbox() {
-            const lightbox = document.getElementById('lightbox');
-            lightbox.classList.replace('opacity-100', 'opacity-0');
-            setTimeout(() => { lightbox.classList.add('hidden'); renderGallery(); }, 300);
-        }
-
-        function nextPhoto(e) { if(e) e.stopPropagation(); if (currentZoomIndex < appState.photos.length - 1) openLightbox(currentZoomIndex + 1); }
-        function prevPhoto(e) { if(e) e.stopPropagation(); if (currentZoomIndex > 0) openLightbox(currentZoomIndex - 1); }
-
-        function toggleLightboxSelect() {
-            toggleSelect(currentZoomPhoto.id, document.getElementsByClassName('photo-card')[currentZoomIndex]);
-            openLightbox(currentZoomIndex); // refresh btn
-        }
-    </script>
-</body>
-</html>
+            lightboxEl.addEventListener('touchend', e => {
+                if (e.target.tagName.toLowerCase() === 'textarea') return;
