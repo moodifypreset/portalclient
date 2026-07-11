@@ -140,16 +140,19 @@
 
             let finalUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
             
-            // --- Enkripsi Base64 Versi Pendek ---
-            // Menggabungkan data dengan pemisah '|' agar karakter aslinya sedikit
+            // --- Enkripsi Kompresi Ringkas ---
+            // Gabungkan data menggunakan tanda pipa '|' langsung tanpa JSON stringify
             let rawData = folderId;
             if (clientName || kuota) rawData += '|' + clientName;
             if (kuota) rawData += '|' + kuota;
 
-            // Enkripsi ke Base64 dan buang karakter '=' di akhir agar lebih rapi
-            const encodedHash = btoa(encodeURIComponent(rawData)).replace(/=+$/, '');
+            // Enkripsi ke Base64, lalu ubah karakter '+' dan '/' agar aman di URL (URL-Safe Base64)
+            // Serta buang tanda '=' di akhir untuk memperpendek link
+            let encodedHash = btoa(rawData)
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
             
-            // Hasilnya langsung digabung setelah nama domain tanpa tanda tanya (?)
             finalUrl += encodedHash;
 
             document.getElementById('resultBox').classList.remove('hidden');
