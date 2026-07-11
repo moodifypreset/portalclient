@@ -42,7 +42,7 @@
 
     <!-- Main Content -->
     <main id="clientView" class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
-        <!-- Input Section -->
+        <!-- Input Section (Akan disembunyikan otomatis jika pakai link Generator) -->
         <div id="inputSection" class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 mb-8 max-w-2xl mx-auto text-center relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 via-slate-800 to-slate-200"></div>
             
@@ -121,7 +121,6 @@
     <!-- Lightbox / Zoom Modal -->
     <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm">
         
-        <!-- Header Controls -->
         <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
             <p id="lightboxTitle" class="text-white font-medium drop-shadow-md text-sm md:text-base ml-2">Photo Name</p>
             <button onclick="closeLightbox()" class="text-white hover:text-red-400 w-10 h-10 flex items-center justify-center text-2xl bg-black/50 hover:bg-white/20 rounded-full transition">
@@ -129,7 +128,6 @@
             </button>
         </div>
 
-        <!-- Tombol Geser Kiri / Kanan -->
         <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition">
             <i class="fa-solid fa-chevron-left"></i>
         </button>
@@ -137,12 +135,10 @@
             <i class="fa-solid fa-chevron-right"></i>
         </button>
 
-        <!-- Container Gambar HD -->
         <div class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24">
             <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-transform duration-300">
         </div>
 
-        <!-- Aksi di Dalam Lightbox (Pilih & Catatan) -->
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
                 <i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini
@@ -154,29 +150,83 @@
     <!-- LOGIKA JAVASCRIPT -->
     <script>
         const ITEMS_PER_PAGE = 200; 
-        // Penambahan 'notes' untuk menyimpan catatan dan 'viewMode' untuk filter
+        
         let appState = { 
+            folderId: null, 
+            clientName: '', 
             photos: [], 
             selectedIds: new Set(), 
             notes: {}, 
             currentPage: 1, 
-            viewMode: 'all' // 'all' atau 'selected'
+            viewMode: 'all' 
         };
         
         let currentZoomIndex = 0;
         let currentZoomPhoto = null;
 
         document.addEventListener("DOMContentLoaded", () => {
+            let vendorName = 'Studio Foto';
             if (typeof CONFIG_APP !== 'undefined') {
-                const vendorName = CONFIG_APP.namaVendor || 'Studio Foto';
-                document.getElementById('headerVendorName').textContent = vendorName;
-                document.getElementById('greetingVendorName').textContent = vendorName;
+                vendorName = CONFIG_APP.namaVendor || 'Studio Foto';
                 document.getElementById('footerVendorName').textContent = vendorName;
                 document.getElementById('pageTitle').textContent = `Client Portal - ${vendorName}`;
             } else {
                 showAlert('File pengaturan.js tidak ditemukan atau salah format.', 'error');
             }
+
+            // Membaca URL Parameter untuk Fitur Auto-Load & Nama
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoLink = urlParams.get('link');
+            const urlName = urlParams.get('nama');
+
+            if (urlName) {
+                appState.clientName = urlName;
+                document.getElementById('headerVendorName').textContent = `Portal: ${urlName}`;
+                document.getElementById('greetingVendorName').textContent = urlName;
+            } else {
+                document.getElementById('headerVendorName').textContent = vendorName;
+                document.getElementById('greetingVendorName').textContent = vendorName;
+            }
+
+            if (autoLink) {
+                document.getElementById('driveLink').value = autoLink;
+                document.getElementById('inputSection').classList.add('hidden');
+                
+                setTimeout(() => { loadFromDrive(); }, 500);
+            }
         });
+
+        // ==========================================
+        // FITUR AUTO-SAVE (LOCAL STORAGE)
+        // ==========================================
+        function saveProgress() {
+            if (!appState.folderId) return;
+            const dataToSave = {
+                selected: Array.from(appState.selectedIds),
+                notes: appState.notes
+            };
+            localStorage.setItem(`client_portal_save_${appState.folderId}`, JSON.stringify(dataToSave));
+        }
+
+        function loadProgress(folderId) {
+            const savedData = localStorage.getItem(`client_portal_save_${folderId}`);
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    appState.selectedIds = new Set(data.selected || []);
+                    appState.notes = data.notes || {};
+                    
+                    if (appState.selectedIds.size > 0) {
+                        setTimeout(() => {
+                            showAlert(`Sesi dipulihkan! ${appState.selectedIds.size} foto sebelumnya berhasil dimuat.`, 'success');
+                        }, 1000);
+                    }
+                } catch (e) {
+                    console.error("Gagal memuat data yang tersimpan", e);
+                }
+            }
+        }
+        // ==========================================
 
         function showAlert(message, type = 'success') {
             const alertBox = document.getElementById('customAlert');
@@ -207,8 +257,9 @@
             if (!folderId) return showAlert('Link tidak valid. Pastikan formatnya benar.', 'error');
 
             showLoading(true);
+            appState.folderId = folderId; 
             appState.currentPage = 1; 
-            appState.viewMode = 'all'; // Reset view
+            appState.viewMode = 'all';
             updateViewModeBtnText();
             
             try {
@@ -235,10 +286,16 @@
                         let hdFull = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s1600') : '';
                         return { id: file.id, name: file.name, url: hdThumb, fullUrl: hdFull };
                     });
+                    
                     appState.selectedIds.clear();
-                    appState.notes = {}; // Clear notes on new folder load
+                    appState.notes = {}; 
+                    loadProgress(folderId); 
+                    
                     renderGallery();
-                    showAlert(`${appState.photos.length} foto siap dipilih!`, 'success');
+                    
+                    if (appState.selectedIds.size === 0) {
+                        showAlert(`${appState.photos.length} foto siap dipilih!`, 'success');
+                    }
                 } else {
                     showAlert('Folder kosong atau hak akses belum di-set Publik.', 'error');
                     showLoading(false);
@@ -249,12 +306,9 @@
             }
         }
 
-        // Fitur 2: Filter View Mode
         function toggleViewMode() {
             if (appState.viewMode === 'all') {
-                if (appState.selectedIds.size === 0) {
-                    return showAlert('Belum ada foto yang dipilih.', 'info');
-                }
+                if (appState.selectedIds.size === 0) return showAlert('Belum ada foto yang dipilih.', 'info');
                 appState.viewMode = 'selected';
                 document.getElementById('viewModeBtn').innerHTML = '<i class="fa-solid fa-border-all"></i> Lihat Semua Foto';
                 document.getElementById('viewModeBtn').classList.replace('bg-slate-800', 'bg-blue-600');
@@ -286,7 +340,6 @@
             const grid = document.getElementById('photoGrid'); 
             grid.innerHTML = '';
             
-            // Proses Filter Data sesuai View Mode
             const photosToProcess = appState.viewMode === 'selected' 
                 ? appState.photos.filter(p => appState.selectedIds.has(p.id)) 
                 : appState.photos;
@@ -296,7 +349,7 @@
             const photosToShow = photosToProcess.slice(startIndex, endIndex);
 
             photosToShow.forEach((photo, index) => {
-                const globalIndex = appState.photos.findIndex(p => p.id === photo.id); // Indeks untuk Lightbox
+                const globalIndex = appState.photos.findIndex(p => p.id === photo.id); 
                 
                 const card = document.createElement('div');
                 card.className = `photo-card relative bg-slate-100 rounded-xl overflow-hidden aspect-square border-[3px] border-transparent shadow-sm hover:shadow-md ${appState.selectedIds.has(photo.id) ? 'selected border-slate-900' : ''}`;
@@ -307,7 +360,6 @@
                 img.loading = "lazy";
                 img.onclick = () => toggleSelect(photo.id, card);
                 
-                // Overlay Centang (klik di area selain tombol zoom akan menyeleksi foto)
                 const overlay = document.createElement('div');
                 overlay.className = "selected-overlay absolute inset-0 bg-slate-900/10 z-10 flex items-start justify-end p-3 pointer-events-none";
                 const checkIcon = document.createElement('div');
@@ -315,7 +367,6 @@
                 checkIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
                 overlay.appendChild(checkIcon);
 
-                // Badge Catatan (Fitur 3: Muncul jika foto diberi catatan)
                 if (appState.notes[photo.id]) {
                     const noteBadge = document.createElement('div');
                     noteBadge.className = "note-badge absolute top-3 right-14 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs shadow-md z-20 pointer-events-none";
@@ -323,7 +374,6 @@
                     overlay.appendChild(noteBadge);
                 }
                 
-                // Area Bawah: Nama Foto & Ikon Zoom
                 const bottomArea = document.createElement('div');
                 bottomArea.className = "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 flex justify-between items-end z-20";
                 
@@ -336,7 +386,7 @@
                 zoomBtn.title = "Zoom / Perbesar Foto";
                 zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
                 zoomBtn.onclick = (e) => {
-                    e.stopPropagation(); // Mencegah tercentang saat klik zoom
+                    e.stopPropagation(); 
                     openLightbox(globalIndex);
                 };
 
@@ -390,13 +440,14 @@
             if (appState.selectedIds.has(id)) {
                 appState.selectedIds.delete(id); 
                 cardElement.classList.remove('selected', 'border-slate-900');
-                delete appState.notes[id]; // Hapus catatan jika foto di-unselect
+                delete appState.notes[id]; 
             } else {
                 appState.selectedIds.add(id); 
                 cardElement.classList.add('selected', 'border-slate-900');
             }
             updateActionBar();
             updateViewModeBtnText();
+            saveProgress();
         }
 
         function selectAll() {
@@ -417,6 +468,7 @@
             renderGallery(); 
             updateActionBar();
             updateViewModeBtnText();
+            saveProgress();
         }
 
         function updateActionBar() {
@@ -427,19 +479,23 @@
             else { bar.classList.add('translate-y-full'); }
         }
 
-        // Fitur 3: Menyertakan catatan di WhatsApp
         function copyToClipboard() {
             if (appState.selectedIds.size === 0) return;
             const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
             const vendor = (typeof CONFIG_APP !== 'undefined') ? CONFIG_APP.namaVendor : 'Studio';
             
-            // Generate list foto beserta catatannya jika ada
             const listText = selectedPhotos.map(p => {
                 const note = appState.notes[p.id];
                 return note ? `${p.name} (Catatan: ${note})` : p.name;
             }).join('\n');
             
-            const textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nTotal: ${selectedPhotos.length} Foto\n\n${listText}\n\n_Mohon segera diproses tim kreatif, terima kasih!_`;
+            // Format WhatsApp Baru dengan Nama Klien
+            let textToCopy = `*List Foto Pilihan Client*\n`;
+            textToCopy += `Layanan: ${vendor}\n`;
+            if (appState.clientName) {
+                textToCopy += `Klien: *${appState.clientName}*\n`;
+            }
+            textToCopy += `Total: ${selectedPhotos.length} Foto\n\n${listText}\n\n_Mohon segera diproses tim kreatif, terima kasih!_`;
             
             const textArea = document.createElement("textarea");
             textArea.value = textToCopy; textArea.style.position = "fixed"; textArea.style.top = "-9999px"; textArea.style.left = "-9999px";
@@ -477,7 +533,7 @@
                 lightbox.classList.add('hidden'); 
                 currentZoomPhoto = null;
                 document.body.style.overflow = 'auto';
-                renderGallery(); // Render ulang untuk mengupdate badge indikator catatan jika berubah
+                renderGallery(); 
             }, 300);
         }
 
@@ -499,13 +555,14 @@
             if (!currentZoomPhoto) return;
             if (appState.selectedIds.has(currentZoomPhoto.id)) {
                 appState.selectedIds.delete(currentZoomPhoto.id);
-                delete appState.notes[currentZoomPhoto.id]; // Hapus catatan jika tidak jadi dipilih
+                delete appState.notes[currentZoomPhoto.id]; 
             } else {
                 appState.selectedIds.add(currentZoomPhoto.id);
             }
             updateLightboxSelectBtn();
             updateActionBar();
             updateViewModeBtnText();
+            saveProgress(); 
         }
 
         function updateLightboxSelectBtn() {
@@ -535,6 +592,7 @@
             } else {
                 delete appState.notes[currentZoomPhoto.id];
             }
+            saveProgress(); 
         }
     </script>
 </body>
