@@ -20,7 +20,6 @@
         .photo-card.selected .selected-overlay { opacity: 1; }
         .photo-card.selected img { transform: scale(0.95); border-radius: 0.5rem; }
     </style>
-    <!-- Memanggil file pengaturan.js -->
     <script src="pengaturan.js"></script>
 </head>
 <body class="text-slate-800 pb-24 flex flex-col min-h-screen">
@@ -71,7 +70,6 @@
         </div>
 
         <div id="galleryContainer" class="hidden">
-            <!-- Filter & Action Controls -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4 border-b border-slate-200 pb-4">
                 <div>
                     <h3 class="font-bold text-xl text-slate-800">Koleksi Foto</h3>
@@ -113,7 +111,7 @@
         <p class="text-sm text-slate-400">&copy; <script>document.write(new Date().getFullYear())</script> Layanan eksklusif oleh <span id="footerVendorName" class="font-medium text-slate-500">Portal</span>.</p>
     </footer>
 
-    <!-- Floating Action Bar (WhatsApp Copy) -->
+    <!-- Floating Action Bar -->
     <div id="actionBar" class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 z-50">
         <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-4">
@@ -184,7 +182,6 @@
         let currentZoomIndex = 0;
         let currentZoomPhoto = null;
 
-        // VARIABEL UNTUK SWIPE GESTURE
         let touchstartX = 0;
         let touchendX = 0;
 
@@ -199,7 +196,12 @@
             }
 
             const urlParams = new URLSearchParams(window.location.search);
+            
+            // Mengambil ID pendek dari Generator Baru
+            const autoId = urlParams.get('id');
+            // Menjaga kompatibilitas dengan Link Panjang versi Lama
             const autoLink = urlParams.get('link');
+            
             const urlName = urlParams.get('nama');
 
             if (urlName) {
@@ -211,17 +213,21 @@
                 document.getElementById('greetingVendorName').textContent = vendorName;
             }
 
-            if (autoLink) {
+            // Logika Pembacaan Link Pintar
+            if (autoId) {
+                // Jika pakai Link Pendek, sistem merakit URL Google Drive palsu di balik layar
+                document.getElementById('driveLink').value = `https://drive.google.com/drive/folders/${autoId}`;
+                document.getElementById('inputSection').classList.add('hidden');
+                setTimeout(() => { loadFromDrive(); }, 500);
+            } else if (autoLink) {
+                // Fallback untuk membaca link versi lama
                 document.getElementById('driveLink').value = autoLink;
                 document.getElementById('inputSection').classList.add('hidden');
                 setTimeout(() => { loadFromDrive(); }, 500);
             }
 
-            // MENGAKTIFKAN DETEKSI SWIPE PADA LIGHTBOX
             const lightboxEl = document.getElementById('lightbox');
-            
             lightboxEl.addEventListener('touchstart', e => {
-                // Jangan aktifkan swipe jika klien sedang menyentuh kotak catatan
                 if (e.target.tagName.toLowerCase() === 'textarea') return;
                 touchstartX = e.changedTouches[0].screenX;
             }, { passive: true });
@@ -233,21 +239,13 @@
             }, { passive: true });
         });
 
-        // FUNGSI LOGIKA SWIPE KANAN / KIRI
         function handleSwipeGesture() {
-            const minSwipeDistance = 50; // Jarak minimal gesekan jari (pixel)
-            
+            const minSwipeDistance = 50; 
             if (touchendX < touchstartX - minSwipeDistance) {
-                // Geser ke kiri (Next)
-                if (currentZoomIndex < appState.photos.length - 1) {
-                    nextPhoto();
-                }
+                if (currentZoomIndex < appState.photos.length - 1) nextPhoto();
             }
             if (touchendX > touchstartX + minSwipeDistance) {
-                // Geser ke kanan (Prev)
-                if (currentZoomIndex > 0) {
-                    prevPhoto();
-                }
+                if (currentZoomIndex > 0) prevPhoto();
             }
         }
 
@@ -267,7 +265,6 @@
                     const data = JSON.parse(savedData);
                     appState.selectedIds = new Set(data.selected || []);
                     appState.notes = data.notes || {};
-                    
                     if (appState.selectedIds.size > 0) {
                         setTimeout(() => {
                             showAlert(`Sesi dipulihkan! ${appState.selectedIds.size} foto sebelumnya berhasil dimuat.`, 'success');
@@ -580,21 +577,14 @@
             } catch (err) { showAlert('Perangkat Anda tidak mendukung salin otomatis.', 'error'); }
             document.body.removeChild(textArea);
         }
-
-        // ==========================================
-        // SISTEM LIGHTBOX DENGAN SMART PRE-LOADING
-        // ==========================================
         
-        // FUNGSI BARU: Smart Preload
         function preloadAdjacentPhotos(currentIndex) {
-            // Kita menyuruh browser men-download diam-diam 2 foto ke depan, dan 1 foto ke belakang
             const indicesToPreload = [currentIndex + 1, currentIndex + 2, currentIndex - 1];
-            
             indicesToPreload.forEach(idx => {
                 if (idx >= 0 && idx < appState.photos.length) {
                     const photo = appState.photos[idx];
-                    const img = new Image(); // Memori gaib browser
-                    img.src = photo.fullUrl || photo.url; // Trigger download di background
+                    const img = new Image(); 
+                    img.src = photo.fullUrl || photo.url; 
                 }
             });
         }
@@ -608,7 +598,7 @@
             document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
             
             updateLightboxSelectBtn();
-            preloadAdjacentPhotos(index); // Panggil fungsi pre-load saat foto terbuka
+            preloadAdjacentPhotos(index); 
             
             lightbox.classList.remove('hidden');
             setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
