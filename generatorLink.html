@@ -19,59 +19,81 @@
                 <i class="fa-solid fa-link"></i>
             </div>
             <div>
-                <h1 class="font-bold text-white text-lg">Stable Link Generator</h1>
-                <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Tanpa Risiko Salah Ketik Folder</p>
+                <h1 class="font-bold text-white text-lg">Auto Link Generator</h1>
+                <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Clean URL Builder</p>
             </div>
         </div>
 
         <div class="p-6 md:p-8 space-y-5">
             
-            <div class="hidden">
-                <input type="text" id="baseUrl">
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">1. Alamat Website Portal (Auto-Detect)</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-globe text-slate-400"></i>
+                    </div>
+                    <input type="text" id="baseUrl" 
+                        class="w-full pl-10 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl outline-none text-sm text-slate-600 focus:ring-2 focus:ring-blue-600 transition shadow-inner">
+                </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">Nama Klien / Project</label>
+                <label class="block text-sm font-bold text-slate-700 mb-2">2. Nama Klien / Project</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fa-solid fa-user-tag text-slate-400"></i>
                     </div>
                     <input type="text" id="clientName" placeholder="Contoh: Deni & Maria"
-                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none transition text-sm">
+                        class="w-full pl-10 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:border-blue-600 outline-none transition text-sm">
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">Link Google Drive Asli</label>
+                <label class="block text-sm font-bold text-slate-700 mb-2">3. Link Google Drive</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fa-brands fa-google-drive text-slate-400"></i>
                     </div>
                     <input type="text" id="driveLink" placeholder="Paste link folder di sini..."
-                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none transition text-sm">
+                        class="w-full pl-10 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:border-blue-600 outline-none transition text-sm">
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">Batas Kuota (Opsional)</label>
+                <label class="block text-sm font-bold text-slate-700 mb-2">4. Batas Kuota (Kosongkan Jika Tidak Perlu)</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fa-solid fa-chart-pie text-slate-400"></i>
                     </div>
-                    <input type="number" id="kuota" placeholder="Kosongkan jika unlimited"
-                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none transition text-sm">
+                    <input type="number" id="kuota" placeholder="Jika dikosongkan, parameter kuota tidak akan muncul"
+                        class="w-full pl-10 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:border-blue-600 outline-none transition text-sm">
                 </div>
             </div>
 
-            <button onclick="generateLink()" class="w-full py-4 mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Buat Link Stabil & Salin
+            <button onclick="generateLink()" class="w-full py-4 mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Buat Link & Salin
             </button>
 
-            <div id="resultBox" class="hidden mt-4 bg-green-50 border border-green-200 rounded-xl p-4 transition-all">
-                <span class="text-xs font-bold text-green-700 uppercase tracking-wider mb-2 block">Link Siap Dikirim!</span>
-                <textarea id="finalUrl" readonly class="w-full bg-white border border-green-200 rounded-lg p-3 text-sm text-slate-700 outline-none resize-none h-24 font-mono font-medium shadow-inner"></textarea>
-                <button onclick="copyToClipboard()" class="mt-3 w-full py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition flex justify-center items-center gap-2 shadow-md">
-                    <i class="fa-brands fa-whatsapp text-lg"></i> Salin ke WhatsApp
+            <div id="resultBox" class="hidden mt-4 bg-green-50 border border-green-200 rounded-xl p-4 transition-all space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-green-700 uppercase tracking-wider">Link Portal</span>
+                        <button onclick="copyLinkOnly()" class="text-xs font-bold text-blue-600 hover:text-blue-800">
+                            <i class="fa-regular fa-copy"></i> Salin Link Saja
+                        </button>
+                    </div>
+                    <textarea id="finalUrl" readonly class="w-full bg-white border border-green-200 rounded-lg p-3 text-sm text-slate-700 outline-none resize-none h-20 font-mono font-medium shadow-inner"></textarea>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-green-700 uppercase tracking-wider">Preview Pesan (Bisa Diedit)</span>
+                    </div>
+                    <textarea id="waMessage" class="w-full bg-white border border-green-200 rounded-lg p-3 text-sm text-slate-700 outline-none resize-none h-40 shadow-inner"></textarea>
+                </div>
+
+                <button onclick="copyToClipboard()" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition flex justify-center items-center gap-2 shadow-md">
+                    <i class="fa-brands fa-whatsapp text-lg"></i> Salin Pesan ke WhatsApp
                 </button>
             </div>
 
@@ -86,15 +108,25 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             let currentUrl = window.location.href.split('?')[0].split('#')[0];
-            let portalUrl = currentUrl.includes("generatorLink.html") ? currentUrl.replace("generatorLink.html", "") : currentUrl.substring(0, currentUrl.lastIndexOf("/") + 1);
+            let portalUrl = "";
+            
+            if (currentUrl.includes("generatorLink.html")) {
+                portalUrl = currentUrl.replace("generatorLink.html", "");
+            } else {
+                const lastSlash = currentUrl.lastIndexOf("/");
+                portalUrl = currentUrl.substring(0, lastSlash + 1);
+            }
+            
             document.getElementById('baseUrl').value = portalUrl;
         });
 
         function showAlert(message, isError = false) {
             const alertBox = document.getElementById('customAlert');
             const alertIcon = document.getElementById('alertIcon');
+            
             document.getElementById('alertText').textContent = message;
             alertIcon.className = isError ? "fa-solid fa-triangle-exclamation text-red-400" : "fa-solid fa-circle-check text-green-400";
+            
             alertBox.classList.remove('-translate-y-32', 'opacity-0');
             setTimeout(() => alertBox.classList.add('-translate-y-32', 'opacity-0'), 3000);
         }
@@ -106,49 +138,71 @@
             return matchId && matchId[1] ? matchId[1] : null;
         }
 
+        // Base64URL: versi Base64 standar tanpa padding '=' dan tanpa karakter +/ /
+        // (yang biasanya harus di-percent-encode di URL, sehingga bikin link lebih panjang).
+        function toBase64Url(str) {
+            return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
         function generateLink() {
             const baseUrl = document.getElementById('baseUrl').value.trim();
             const clientName = document.getElementById('clientName').value.trim();
             const driveLink = document.getElementById('driveLink').value.trim();
             const kuota = document.getElementById('kuota').value.trim();
 
-            if (!driveLink) return alert('Link Google Drive wajib diisi!');
+            if (!baseUrl || !driveLink) return alert('Website Portal dan Link Drive wajib diisi!');
 
             const folderId = extractFolderId(driveLink);
-            if (!folderId) return showAlert('Link Google Drive tidak valid!', true);
+            if (!folderId) {
+                return showAlert('Link Google Drive tidak valid!', true);
+            }
 
             let finalUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-            let params = [];
             
-            // Format rapi tanpa kata "nama=". Hanya menggunakan teks nama asli (spasi diganti - otomatis)
-            if (clientName) {
-                const cleanName = clientName.replace(/\s+/g, '-');
-                params.push(encodeURIComponent(cleanName));
-            } else {
-                params.push("Klien-X-Studio");
-            }
-            
-            // ID Google Drive dimasukkan sebagai jaminan 100% jalan
-            params.push(`id=${folderId}`);
-            
-            // Kuota (Opsional)
-            if (kuota && parseInt(kuota) > 0) {
-                params.push(`q=${parseInt(kuota)}`);
-            }
+            // --- Format ringkas: id|nama|kuota, lalu di-encode Base64URL ---
+            // Karakter '|' dibuang dari nama klien agar tidak merusak posisi saat di-split nanti.
+            const safeName = clientName ? clientName.replace(/\|/g, ' ').trim() : '';
+            const safeKuota = (kuota && parseInt(kuota) > 0) ? parseInt(kuota) : '';
+            const rawStr = [folderId, safeName, safeKuota].join('|');
 
-            finalUrl += '?' + params.join('&');
+            const encodedHash = toBase64Url(rawStr);
+            finalUrl += '?h=' + encodedHash;
+
+            // --- Susun pesan WhatsApp yang rapi, supaya fokus klien ke pesan, bukan ke panjang link ---
+            const greetingName = safeName ? safeName : 'Kakak';
+            let waMessage = `Halo Kak ${greetingName} 👋\n`;
+            waMessage += `Galeri foto Anda sudah siap untuk diseleksi.\n\n`;
+            waMessage += `🔗 Klik link berikut untuk mulai memilih:\n${finalUrl}\n`;
+            if (safeKuota) {
+                waMessage += `\n📌 Kuota pilihan: ${safeKuota} foto`;
+            }
+            waMessage += `\n\nTerima kasih! 🙏`;
 
             document.getElementById('resultBox').classList.remove('hidden');
             document.getElementById('finalUrl').value = finalUrl;
+            document.getElementById('waMessage').value = waMessage;
+            copyToClipboard(waMessage);
+        }
+
+        function copyLinkOnly() {
+            const finalUrl = document.getElementById('finalUrl').value;
+            if (!finalUrl) return;
             copyToClipboard(finalUrl);
         }
 
-        function copyToClipboard() {
-            const finalUrl = document.getElementById('finalUrl').value;
-            navigator.clipboard.writeText(finalUrl).then(() => showAlert('Link berhasil disalin!')).catch(() => {
-                document.getElementById('finalUrl').select();
+        function copyToClipboard(text = null) {
+            const toCopy = text || document.getElementById('waMessage').value;
+            if (!toCopy) return;
+            navigator.clipboard.writeText(toCopy).then(() => showAlert('Berhasil disalin!')).catch(() => {
+                const tempArea = document.createElement('textarea');
+                tempArea.value = toCopy;
+                tempArea.style.position = 'fixed';
+                tempArea.style.left = '-9999px';
+                document.body.appendChild(tempArea);
+                tempArea.select();
                 document.execCommand('copy');
-                showAlert('Link berhasil disalin!');
+                document.body.removeChild(tempArea);
+                showAlert('Berhasil disalin!');
             });
         }
     </script>
