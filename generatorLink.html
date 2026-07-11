@@ -3,77 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buat Gallery Baru - X Studio</title>
+    <title>X STUDIO - Link Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Montserrat', sans-serif; background-color: #09090b; color: #fafafa; }
+        .glass-panel { background: rgba(24, 24, 27, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
     </style>
 </head>
-<body class="text-slate-800 flex items-center justify-center min-h-screen p-4 md:p-8">
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8 selection:bg-zinc-700">
 
-    <div class="bg-white max-w-3xl w-full rounded-3xl shadow-xl border border-slate-100 overflow-hidden p-8 md:p-10">
+    <div class="glass-panel max-w-3xl w-full rounded-2xl shadow-2xl overflow-hidden p-8 md:p-12 relative">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-800 via-zinc-400 to-zinc-800"></div>
         
-        <div class="mb-8 border-b border-slate-100 pb-4">
-            <h1 class="font-bold text-slate-800 text-2xl">Buat Gallery Baru</h1>
-            <p class="text-slate-500 text-sm mt-1">Smart URL Masking Tool</p>
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-light tracking-widest uppercase mb-2">X Studio</h1>
+            <p class="text-xs text-zinc-500 tracking-[0.2em]">Secure Link Generator</p>
         </div>
 
-        <!-- Input Tersembunyi untuk URL Portal -->
         <input type="hidden" id="baseUrl">
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <!-- Nama Klien -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nama Client</label>
-                <input type="text" id="clientName" placeholder="Contoh: hihi"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800">
+                <label class="block text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-2">Nama Klien</label>
+                <input type="text" id="clientName" placeholder="Contoh: Raka & Sisil"
+                    class="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-lg focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 outline-none transition text-sm">
             </div>
 
-            <!-- Universitas / Kategori -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Universitas / Kategori</label>
-                <input type="text" id="univName" placeholder="Contoh: uin"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800">
+                <label class="block text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-2">Kategori Sesi</label>
+                <input type="text" id="categoryName" placeholder="Contoh: Wedding"
+                    class="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-lg focus:border-zinc-400 outline-none transition text-sm">
             </div>
 
-            <!-- Tanggal -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tanggal</label>
+                <label class="block text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-2">Tanggal Sesi</label>
                 <input type="date" id="dateInfo"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800 cursor-pointer">
+                    class="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-lg focus:border-zinc-400 outline-none transition text-sm text-zinc-300 [color-scheme:dark]">
             </div>
 
-            <!-- Kuota -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jumlah Pilihan (Kuota)</label>
-                <input type="number" id="kuota" placeholder="0"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800">
+                <label class="block text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-2">Batas Kuota Foto</label>
+                <input type="number" id="kuota" placeholder="Kosongkan jika unlimited"
+                    class="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-lg focus:border-zinc-400 outline-none transition text-sm">
             </div>
         </div>
 
-        <!-- Link Google Drive -->
-        <div class="mb-8">
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Link Google Drive</label>
-            <input type="text" id="driveLink" placeholder="https://drive.google.com/..."
-                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-slate-800 outline-none transition text-sm font-medium text-slate-800">
+        <div class="mb-10">
+            <label class="block text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-2">Link Folder Google Drive</label>
+            <input type="text" id="driveLink" placeholder="Paste link G-Drive di sini..."
+                class="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-lg focus:border-zinc-400 outline-none transition text-sm">
         </div>
 
-        <button onclick="generateLink()" class="w-full py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2">
-            Generate Link
+        <button onclick="generateLink()" class="w-full py-4 bg-zinc-100 hover:bg-white text-zinc-900 font-bold uppercase tracking-widest text-xs rounded-lg transition shadow-lg">
+            Generate Secure Link
         </button>
 
-        <!-- Hasil Link -->
-        <div id="resultBox" class="hidden mt-6 bg-slate-50 border border-slate-200 rounded-2xl p-5 transition-all text-center">
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Link Premium Berhasil Dibuat!</p>
-            <div class="bg-white border border-slate-200 rounded-xl p-3 mb-4 overflow-x-auto">
-                <code id="displayUrl" class="text-sm font-bold text-slate-800 whitespace-nowrap"></code>
+        <div id="resultBox" class="hidden mt-8 pt-8 border-t border-zinc-800 text-center">
+            <p class="text-[10px] text-zinc-400 uppercase tracking-widest mb-4">Link Klien Siap Dikirim</p>
+            <div class="bg-zinc-900 border border-zinc-700 rounded-lg p-4 mb-4 overflow-x-auto text-left">
+                <code id="displayUrl" class="text-sm font-medium text-zinc-300 whitespace-nowrap"></code>
             </div>
-            <!-- Input tersembunyi berisi URL lengkap beserta hash datanya -->
-            <input type="hidden" id="finalUrl">
-            
-            <button onclick="copyToClipboard()" class="px-8 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition shadow-md inline-flex items-center gap-2">
+            <button onclick="copyToClipboard()" class="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-white text-xs uppercase tracking-widest font-bold rounded-lg transition border border-zinc-600">
                 Salin Link
             </button>
         </div>
@@ -98,8 +89,8 @@
 
         function generateLink() {
             const baseUrl = document.getElementById('baseUrl').value.trim();
-            const clientName = document.getElementById('clientName').value.trim().toLowerCase();
-            const univName = document.getElementById('univName').value.trim().toLowerCase();
+            const clientName = document.getElementById('clientName').value.trim();
+            const categoryName = document.getElementById('categoryName').value.trim();
             const dateInfo = document.getElementById('dateInfo').value;
             const kuota = document.getElementById('kuota').value.trim();
             const driveLink = document.getElementById('driveLink').value.trim();
@@ -108,49 +99,27 @@
             const folderId = extractFolderId(driveLink);
             if (!folderId) return alert('Link Google Drive tidak valid!');
 
-            // Membentuk nama URL cantik (misal: hihi-uin)
-            let cleanUrlName = '';
-            if (clientName && univName) cleanUrlName = `${clientName}-${univName}`;
-            else if (clientName) cleanUrlName = clientName;
+            // Menyusun format nama klien untuk URL (contoh: Raka-Sisil)
+            let cleanName = clientName.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
             
-            cleanUrlName = cleanUrlName.replace(/\s+/g, '-'); // Ganti spasi dengan strip
+            // Menggabungkan data rahasia dengan pemisah |
+            // Format: folderId|kuota|tanggal|kategori
+            const payload = `${folderId}|${kuota || ''}|${dateInfo || ''}|${categoryName || ''}`;
+            const secureToken = btoa(unescape(encodeURIComponent(payload))); // Enkripsi Base64 yang aman
 
-            // Menyusun Data Rahasia
-            const payload = {
-                id: folderId,
-                q: kuota ? parseInt(kuota) : null,
-                d: dateInfo || null
-            };
-            
-            // Enkripsi ringan data menjadi format Base64
-            const secretData = btoa(JSON.stringify(payload));
-
-            // Merakit URL Final
             let base = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-            
-            // Tampilan URL yang akan dikopi lengkap dengan Hash tersembunyinya
-            const finalFullUrl = `${base}?${cleanUrlName}#_d=${secretData}`;
-            
-            // Tampilan "Palsu" (Clean) untuk ditunjukkan di layar admin
-            const cleanDisplayUrl = `${base}?${cleanUrlName}`;
+            const finalUrl = `${base}?klien=${cleanName}&_k=${secureToken}`;
 
             document.getElementById('resultBox').classList.remove('hidden');
-            document.getElementById('displayUrl').textContent = cleanDisplayUrl;
-            document.getElementById('finalUrl').value = finalFullUrl;
+            document.getElementById('displayUrl').textContent = finalUrl;
         }
 
         function copyToClipboard() {
-            const finalUrl = document.getElementById('finalUrl').value;
+            const finalUrl = document.getElementById('displayUrl').textContent;
             navigator.clipboard.writeText(finalUrl).then(() => {
-                alert('Tautan disalin! Klien akan melihat link ini menjadi sangat pendek saat diklik.');
-            }).catch(() => {
-                const tempInput = document.createElement("input");
-                tempInput.value = finalUrl;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand("copy");
-                document.body.removeChild(tempInput);
                 alert('Tautan berhasil disalin!');
+            }).catch(() => {
+                alert('Gagal menyalin. Silakan copy manual teks di dalam kotak.');
             });
         }
     </script>
