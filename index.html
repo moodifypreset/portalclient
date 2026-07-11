@@ -64,11 +64,27 @@
 
         <div class="max-w-6xl mx-auto px-4 py-8 w-full">
             <div id="inputSection" class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 mb-8 max-w-2xl mx-auto text-center relative overflow-hidden hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 via-slate-800 to-slate-200"></div>
+                <h2 class="text-xl font-bold mb-2 text-slate-800">Akses Manual Galeri</h2>
+                <p class="text-slate-500 text-sm mb-8">Silakan tempel (paste) link folder Google Drive Anda di bawah ini.</p>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fa-brands fa-google-drive text-slate-400 text-lg"></i>
+                    </div>
+                    <input type="text" id="driveLink" 
+                        class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none transition" 
+                        placeholder="Contoh: https://drive.google.com/drive/folders/xxxxx">
                 </div>
+                <div class="mt-6 flex justify-center">
+                    <button onclick="loadFromDrive()" class="px-8 py-3.5 bg-slate-900 hover:bg-black text-white font-medium rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-folder-open"></i> Buka Galeri
+                    </button>
+                </div>
+            </div>
 
             <div id="loadingState" class="hidden flex-col items-center justify-center py-16">
                 <i class="fa-solid fa-circle-notch fa-spin text-4xl text-slate-800 mb-4"></i>
-                <p id="loadingText" class="text-slate-500 font-medium">Mencari folder klien...</p>
+                <p id="loadingText" class="text-slate-500 font-medium">Menarik foto beresolusi tinggi...</p>
             </div>
 
             <div id="galleryContainer" class="hidden">
@@ -77,16 +93,13 @@
                         <h3 class="font-bold text-xl text-slate-800">Koleksi Foto</h3>
                         <p class="text-sm text-slate-500">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
                     </div>
-                    
                     <div class="flex flex-wrap items-center gap-2">
                         <button onclick="selectAll()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 border border-slate-200">
                             <i class="fa-solid fa-check-double"></i> Pilih Semua
                         </button>
                     </div>
                 </div>
-                
                 <div id="photoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8"></div>
-                <div id="paginationContainer" class="flex justify-center items-center gap-3 mt-10 pb-8 hidden"></div>
             </div>
         </div>
     </main>
@@ -105,7 +118,6 @@
                 <div id="quotaBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
             </div>
         </div>
-
         <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <div class="bg-slate-900 text-white font-bold w-12 h-12 rounded-full flex items-center justify-center text-lg shadow-md" id="selectedCount">0</div>
@@ -128,9 +140,7 @@
     <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm touch-pan-y">
         <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
             <p id="lightboxTitle" class="text-white font-medium drop-shadow-md text-sm md:text-base ml-2">Photo Name</p>
-            <button onclick="closeLightbox()" class="text-white hover:text-red-400 w-10 h-10 flex items-center justify-center text-2xl bg-black/50 hover:bg-white/20 rounded-full transition">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <button onclick="closeLightbox()" class="text-white hover:text-red-400 w-10 h-10 flex items-center justify-center text-2xl bg-black/50 hover:bg-white/20 rounded-full transition"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-left"></i></button>
         <button onclick="nextPhoto(event)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-right"></i></button>
@@ -141,6 +151,7 @@
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
                 <i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini
             </button>
+            <textarea id="lightboxNote" oninput="saveNote()" class="w-full bg-slate-800/90 text-white placeholder-slate-400 text-sm rounded-xl p-3 border border-slate-600 focus:outline-none focus:border-slate-400 hidden transition-all shadow-lg backdrop-blur-sm" rows="2" placeholder="Catatan untuk editor (opsional)..."></textarea>
         </div>
     </div>
 
@@ -157,38 +168,56 @@
                 document.getElementById('headerVendorName').textContent = CONFIG_APP.namaVendor || 'Studio Foto';
             }
 
-            // MENGAMBIL PARAMETER URL (Contoh: /?deni-maria&q=50)
-            const queryString = window.location.search.substring(1);
-            if (!queryString) return;
-
-            // Parameter pertama adalah nama folder (deni-maria)
-            const urlName = queryString.split('&')[0];
             const urlParams = new URLSearchParams(window.location.search);
-            const urlKuota = urlParams.get('q');
+            
+            // Mengambil Parameter Ringkas 'n', 'k', dan 'i'
+            const urlName = urlParams.get('n');
+            const urlKuota = urlParams.get('k');
+            const autoId = urlParams.get('i');
 
-            if (urlName && urlName.indexOf('=') === -1) {
-                // Ubah deni-maria jadi "Deni Maria" untuk ditampilkan di sapaan
-                appState.clientName = urlName.replace(/-/g, ' ');
+            if (urlName) {
+                // Decode nama klien
+                appState.clientName = decodeURIComponent(urlName).replace(/-/g, ' ');
                 document.getElementById('displayClientName').textContent = appState.clientName;
                 document.getElementById('greetingSection').classList.remove('hidden');
-
-                if (urlKuota && !isNaN(urlKuota)) {
-                    appState.kuota = parseInt(urlKuota);
-                    document.getElementById('quotaContainer').classList.remove('hidden');
-                    document.getElementById('quotaContainer').classList.add('block');
-                    document.getElementById('greetingQuotaInfo').classList.remove('hidden');
-                    document.getElementById('greetingQuotaInfo').classList.add('flex');
-                    document.getElementById('greetingQuotaLimit').textContent = appState.kuota;
+            } else {
+                document.getElementById('displayClientName').textContent = "Kakak";
+            }
+            
+            // Dekripsi / Un-Hash Kuota (MTAw -> 100)
+            if (urlKuota) {
+                try {
+                    // Tambahkan '=' jika panjangnya tidak kelipatan 4 (karena tadi dipotong agar rapi)
+                    let paddedKuota = urlKuota;
+                    const pad = urlKuota.length % 4;
+                    if (pad > 0) paddedKuota += '='.repeat(4 - pad);
+                    
+                    const decodedKuota = parseInt(atob(paddedKuota));
+                    if (!isNaN(decodedKuota) && decodedKuota > 0) {
+                        appState.kuota = decodedKuota;
+                        document.getElementById('quotaContainer').classList.remove('hidden');
+                        document.getElementById('quotaContainer').classList.add('block');
+                        document.getElementById('greetingQuotaInfo').classList.remove('hidden');
+                        document.getElementById('greetingQuotaInfo').classList.add('flex');
+                        document.getElementById('greetingQuotaLimit').textContent = appState.kuota;
+                    }
+                } catch (e) {
+                    console.error("Hash kuota tidak valid.");
                 }
+            }
 
-                // MULAI PENCARIAN GOOGLE DRIVE OTOMATIS
-                setTimeout(() => { searchFolderInDrive(urlName); }, 500);
+            if (autoId) {
+                document.getElementById('driveLink').value = `https://drive.google.com/drive/folders/${autoId}`;
+                document.getElementById('inputSection').classList.add('hidden');
+                setTimeout(() => { loadFromDrive(); }, 500);
+            } else {
+                document.getElementById('inputSection').classList.remove('hidden');
             }
         });
 
         function saveProgress() {
             if (!appState.folderId) return;
-            localStorage.setItem(`client_portal_save_${appState.folderId}`, JSON.stringify({selected: Array.from(appState.selectedIds)}));
+            localStorage.setItem(`client_portal_save_${appState.folderId}`, JSON.stringify({selected: Array.from(appState.selectedIds), notes: appState.notes}));
         }
 
         function loadProgress(folderId) {
@@ -197,6 +226,7 @@
                 try {
                     const data = JSON.parse(savedData);
                     appState.selectedIds = new Set(data.selected || []);
+                    appState.notes = data.notes || {};
                     if (appState.selectedIds.size > 0) setTimeout(() => { updateActionBar(); }, 1000);
                 } catch (e) {}
             }
@@ -210,38 +240,24 @@
             setTimeout(() => alertBox.classList.add('-translate-y-32', 'opacity-0'), 3000);
         }
 
-        // FUNGSI BARU: MENCARI FOLDER BERDASARKAN NAMA
-        async function searchFolderInDrive(folderName) {
-            if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey) return showAlert('Sistem belum dikonfigurasi. Harap isi API Key.', 'error');
-            
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('loadingState').classList.add('flex');
-
-            try {
-                // Mencari folder yang namanya persis dengan parameter (deni-maria)
-                const searchQuery = encodeURIComponent(`mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`);
-                const apiUrl = `https://www.googleapis.com/drive/v3/files?q=${searchQuery}&fields=files(id,name)&key=${CONFIG_APP.googleApiKey}`;
-                
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                
-                if (data.files && data.files.length > 0) {
-                    const foundFolderId = data.files[0].id;
-                    document.getElementById('loadingText').textContent = "Folder ditemukan! Menarik foto...";
-                    loadPhotos(foundFolderId);
-                } else {
-                    showAlert(`Error: Folder "${folderName}" tidak ditemukan di Google Drive!`, 'error');
-                    document.getElementById('loadingState').classList.add('hidden');
-                }
-            } catch (error) {
-                showAlert('Gagal mencari folder. Pastikan API Key benar.', 'error');
-                document.getElementById('loadingState').classList.add('hidden');
-            }
+        function extractFolderId(url) {
+            const match = url.match(/folders\/([a-zA-Z0-9-_]+)/);
+            if (match && match[1]) return match[1];
+            return url.match(/id=([a-zA-Z0-9-_]+)/)?.[1] || null;
         }
 
-        // MENARIK FOTO (Seperti biasa)
-        async function loadPhotos(folderId) {
+        async function loadFromDrive() {
+            if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey) return showAlert('Sistem belum dikonfigurasi. Harap isi API Key.', 'error');
+            
+            const link = document.getElementById('driveLink').value.trim();
+            const folderId = extractFolderId(link) || link; // Bisa baca langsung ID-nya
+            if (!folderId) return showAlert('Link Google Drive tidak valid.', 'error');
+
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('loadingState').classList.add('flex');
             appState.folderId = folderId; 
+            
             try {
                 let fetchedFiles = []; let nextPageToken = "";
                 const query = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
@@ -255,11 +271,7 @@
                 } while (nextPageToken);
 
                 if (fetchedFiles.length > 0) {
-                    appState.photos = fetchedFiles.map(file => {
-                        let hdThumb = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : '';
-                        let hdFull = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s1600') : '';
-                        return { id: file.id, name: file.name, url: hdThumb, fullUrl: hdFull };
-                    });
+                    appState.photos = fetchedFiles.map(f => ({ id: f.id, name: f.name, url: f.thumbnailLink?.replace('=s220', '=s800'), fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') }));
                     appState.originalPhotos = [...appState.photos];
                     loadProgress(folderId); 
                     renderGallery();
@@ -268,7 +280,7 @@
                     document.getElementById('loadingState').classList.add('hidden');
                 }
             } catch (error) {
-                showAlert('Gagal memuat isi folder.', 'error');
+                showAlert('Gagal terhubung ke Google Drive.', 'error');
                 document.getElementById('loadingState').classList.add('hidden');
             }
         }
@@ -279,9 +291,7 @@
             document.getElementById('galleryContainer').classList.remove('hidden');
             const grid = document.getElementById('photoGrid'); grid.innerHTML = '';
             
-            const photosToShow = appState.photos.slice(0, ITEMS_PER_PAGE);
-
-            photosToShow.forEach((photo, index) => {
+            appState.photos.slice(0, ITEMS_PER_PAGE).forEach((photo, index) => {
                 const card = document.createElement('div');
                 card.className = `photo-card relative bg-slate-100 rounded-xl overflow-hidden aspect-square border-[3px] border-transparent shadow-sm hover:shadow-md ${appState.selectedIds.has(photo.id) ? 'selected border-slate-900' : ''}`;
                 
@@ -295,17 +305,9 @@
                 
                 const bottomArea = document.createElement('div');
                 bottomArea.className = "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 flex justify-between items-end z-20";
-                
-                const nameText = document.createElement('p');
-                nameText.className = "text-white text-xs font-medium truncate drop-shadow-md";
-                nameText.textContent = photo.name;
-                
-                const zoomBtn = document.createElement('button');
-                zoomBtn.className = "text-white bg-black/40 hover:bg-blue-600 rounded-lg w-8 h-8 flex items-center justify-center transition-colors shadow-lg";
-                zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
-                zoomBtn.onclick = (e) => { e.stopPropagation(); openLightbox(index); };
+                bottomArea.innerHTML = `<p class="text-white text-xs font-medium truncate drop-shadow-md w-3/4">${photo.name}</p>
+                                        <button class="text-white bg-black/40 hover:bg-blue-600 rounded-lg w-8 h-8 flex items-center justify-center shadow-lg" onclick="event.stopPropagation(); openLightbox(${index})"><i class="fa-solid fa-magnifying-glass-plus"></i></button>`;
 
-                bottomArea.appendChild(nameText); bottomArea.appendChild(zoomBtn);
                 card.appendChild(img); card.appendChild(overlay); card.appendChild(bottomArea);
                 grid.appendChild(card);
             });
@@ -316,9 +318,7 @@
                 appState.selectedIds.delete(id); 
                 cardElement.classList.remove('selected', 'border-slate-900');
             } else {
-                if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
-                    return showAlert(`Batas maksimal ${appState.kuota} foto telah tercapai!`, 'error');
-                }
+                if (appState.kuota && appState.selectedIds.size >= appState.kuota) return showAlert(`Batas maksimal ${appState.kuota} foto telah tercapai!`, 'error');
                 appState.selectedIds.add(id); 
                 cardElement.classList.add('selected', 'border-slate-900');
             }
@@ -326,8 +326,8 @@
         }
 
         function selectAll() {
-            appState.photos.forEach(p => {
-                if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) return;
+            appState.photos.slice(0, ITEMS_PER_PAGE).forEach(p => {
+                if (appState.kuota && appState.selectedIds.size >= appState.kuota) return;
                 appState.selectedIds.add(p.id);
             });
             renderGallery(); updateActionBar(); saveProgress();
@@ -335,30 +335,26 @@
 
         function updateActionBar() {
             const count = appState.selectedIds.size;
-            const bar = document.getElementById('actionBar');
             document.getElementById('selectedCount').textContent = count;
             
             if (appState.kuota !== null) {
-                const percentage = Math.min((count / appState.kuota) * 100, 100);
+                const perc = Math.min((count / appState.kuota) * 100, 100);
                 document.getElementById('quotaText').textContent = `${count} / ${appState.kuota}`;
-                document.getElementById('quotaBar').style.width = `${percentage}%`;
+                document.getElementById('quotaBar').style.width = `${perc}%`;
             }
-            
-            if (count > 0) { bar.classList.remove('translate-y-full'); } else { bar.classList.add('translate-y-full'); }
+            const bar = document.getElementById('actionBar');
+            if (count > 0) bar.classList.remove('translate-y-full'); else bar.classList.add('translate-y-full');
         }
 
         function copyToClipboard() {
             if (appState.selectedIds.size === 0) return;
-            const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
             const vendor = (typeof CONFIG_APP !== 'undefined') ? CONFIG_APP.namaVendor : 'Studio';
+            const listText = appState.photos.filter(p => appState.selectedIds.has(p.id)).map(p => p.name).join('\n');
+            let textToCopy = `*List Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${appState.selectedIds.size} Foto\n\n${listText}\n\n_Segera diproses, terima kasih!_`;
             
-            const listText = selectedPhotos.map(p => p.name).join('\n');
-            let textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${selectedPhotos.length} Foto\n\n${listText}\n\n_Mohon segera diproses tim kreatif, terima kasih!_`;
-            
-            const textArea = document.createElement("textarea");
-            textArea.value = textToCopy; document.body.appendChild(textArea); textArea.select();
-            try { document.execCommand('copy'); showAlert('List foto berhasil disalin! Silahkan tempel di chat WhatsApp.', 'success'); } catch (err) {}
-            document.body.removeChild(textArea);
+            const ta = document.createElement("textarea"); ta.value = textToCopy; 
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            showAlert('List foto disalin! Silakan paste di WhatsApp.');
         }
 
         function openLightbox(index) {
@@ -375,7 +371,6 @@
                 btn.innerHTML = '<i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini';
                 btn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition border border-slate-600 w-full sm:w-auto";
             }
-
             lightbox.classList.remove('hidden'); setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
         }
 
@@ -390,7 +385,7 @@
 
         function toggleLightboxSelect() {
             toggleSelect(currentZoomPhoto.id, document.getElementsByClassName('photo-card')[currentZoomIndex]);
-            openLightbox(currentZoomIndex); // refresh button state
+            openLightbox(currentZoomIndex); // refresh btn
         }
     </script>
 </body>
