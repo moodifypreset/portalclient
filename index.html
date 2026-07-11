@@ -22,9 +22,8 @@
     </style>
     <script src="pengaturan.js"></script>
 </head>
-<body class="text-slate-800 pb-24 flex flex-col min-h-screen">
+<body class="text-slate-800 pb-32 flex flex-col min-h-screen">
 
-    <!-- Header Klien -->
     <header class="bg-white shadow-sm sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -39,9 +38,7 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main id="clientView" class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
-        <!-- Input Section -->
         <div id="inputSection" class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 mb-8 max-w-2xl mx-auto text-center relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 via-slate-800 to-slate-200"></div>
             
@@ -77,7 +74,6 @@
                 </div>
                 
                 <div class="flex flex-wrap items-center gap-2">
-                    <!-- Dropdown Sortir -->
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-arrow-down-a-z text-slate-400 text-sm"></i>
@@ -111,8 +107,20 @@
         <p class="text-sm text-slate-400">&copy; <script>document.write(new Date().getFullYear())</script> Layanan eksklusif oleh <span id="footerVendorName" class="font-medium text-slate-500">Portal</span>.</p>
     </footer>
 
-    <!-- Floating Action Bar -->
+    <!-- Floating Action Bar dengan UI Kuota -->
     <div id="actionBar" class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 z-50">
+        
+        <!-- Barisan Progress Kuota (Akan dimunculkan otomatis jika ada parameter kuota) -->
+        <div id="quotaContainer" class="hidden w-full px-4 md:px-8 pt-3 pb-1 max-w-6xl mx-auto border-b border-slate-100">
+            <div class="flex justify-between items-end mb-1.5">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kuota Paket Anda</span>
+                <span id="quotaText" class="text-sm font-bold text-slate-800">0 / 0</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden shadow-inner">
+                <div id="quotaBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+            </div>
+        </div>
+
         <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <div class="bg-slate-900 text-white font-bold w-12 h-12 rounded-full flex items-center justify-center text-lg shadow-md" id="selectedCount">0</div>
@@ -176,12 +184,12 @@
             notes: {}, 
             currentPage: 1, 
             viewMode: 'all',
-            sortOrder: 'default'
+            sortOrder: 'default',
+            kuota: null // Penambahan State Kuota
         };
         
         let currentZoomIndex = 0;
         let currentZoomPhoto = null;
-
         let touchstartX = 0;
         let touchendX = 0;
 
@@ -191,18 +199,14 @@
                 vendorName = CONFIG_APP.namaVendor || 'Studio Foto';
                 document.getElementById('footerVendorName').textContent = vendorName;
                 document.getElementById('pageTitle').textContent = `Client Portal - ${vendorName}`;
-            } else {
-                showAlert('File pengaturan.js tidak ditemukan atau salah format.', 'error');
             }
 
             const urlParams = new URLSearchParams(window.location.search);
             
-            // Mengambil ID pendek dari Generator Baru
             const autoId = urlParams.get('id');
-            // Menjaga kompatibilitas dengan Link Panjang versi Lama
             const autoLink = urlParams.get('link');
-            
             const urlName = urlParams.get('nama');
+            const urlKuota = urlParams.get('kuota'); // Menarik data kuota dari link
 
             if (urlName) {
                 appState.clientName = urlName;
@@ -213,14 +217,18 @@
                 document.getElementById('greetingVendorName').textContent = vendorName;
             }
 
-            // Logika Pembacaan Link Pintar
+            if (urlKuota && !isNaN(urlKuota)) {
+                appState.kuota = parseInt(urlKuota);
+                // Memunculkan kotak kuota UI
+                document.getElementById('quotaContainer').classList.remove('hidden');
+                document.getElementById('quotaContainer').classList.add('block');
+            }
+
             if (autoId) {
-                // Jika pakai Link Pendek, sistem merakit URL Google Drive palsu di balik layar
                 document.getElementById('driveLink').value = `https://drive.google.com/drive/folders/${autoId}`;
                 document.getElementById('inputSection').classList.add('hidden');
                 setTimeout(() => { loadFromDrive(); }, 500);
             } else if (autoLink) {
-                // Fallback untuk membaca link versi lama
                 document.getElementById('driveLink').value = autoLink;
                 document.getElementById('inputSection').classList.add('hidden');
                 setTimeout(() => { loadFromDrive(); }, 500);
@@ -268,10 +276,11 @@
                     if (appState.selectedIds.size > 0) {
                         setTimeout(() => {
                             showAlert(`Sesi dipulihkan! ${appState.selectedIds.size} foto sebelumnya berhasil dimuat.`, 'success');
+                            updateActionBar(); // Update bar kuota langsung setelah dipulihkan
                         }, 1000);
                     }
                 } catch (e) {
-                    console.error("Gagal memuat data yang tersimpan", e);
+                    console.error("Gagal memuat data", e);
                 }
             }
         }
@@ -295,14 +304,14 @@
 
         async function loadFromDrive() {
             if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey || CONFIG_APP.googleApiKey === 'ISI_DENGAN_API_KEY_ANDA_DI_SINI') {
-                return showAlert('Sistem belum dikonfigurasi. Harap isi API Key di pengaturan.js', 'error');
+                return showAlert('Sistem belum dikonfigurasi. Harap isi API Key.', 'error');
             }
 
             const link = document.getElementById('driveLink').value.trim();
-            if (!link) return showAlert('Harap masukkan link folder Google Drive.', 'error');
+            if (!link) return showAlert('Harap masukkan link Google Drive.', 'error');
             
             const folderId = extractFolderId(link);
-            if (!folderId) return showAlert('Link tidak valid. Pastikan formatnya benar.', 'error');
+            if (!folderId) return showAlert('Link tidak valid.', 'error');
 
             showLoading(true);
             appState.folderId = folderId; 
@@ -346,11 +355,11 @@
                         showAlert(`${appState.photos.length} foto siap dipilih!`, 'success');
                     }
                 } else {
-                    showAlert('Folder kosong atau hak akses belum di-set Publik.', 'error');
+                    showAlert('Folder kosong atau hak akses belum diset Publik.', 'error');
                     showLoading(false);
                 }
             } catch (error) {
-                showAlert('Gagal mengambil data. Pastikan link Google Drive diset ke Publik.', 'error');
+                showAlert('Gagal mengambil data. Pastikan link Drive Publik.', 'error');
                 showLoading(false);
             }
         }
@@ -379,7 +388,7 @@
 
         function toggleViewMode() {
             if (appState.viewMode === 'all') {
-                if (appState.selectedIds.size === 0) return showAlert('Belum ada foto yang dipilih.', 'info');
+                if (appState.selectedIds.size === 0) return showAlert('Belum ada foto yang dipilih.', 'error');
                 appState.viewMode = 'selected';
                 document.getElementById('viewModeBtn').innerHTML = '<i class="fa-solid fa-border-all"></i> Lihat Semua Foto';
                 document.getElementById('viewModeBtn').classList.replace('bg-slate-800', 'bg-blue-600');
@@ -513,6 +522,11 @@
                 cardElement.classList.remove('selected', 'border-slate-900');
                 delete appState.notes[id]; 
             } else {
+                // Logika Pengecekan Kuota
+                if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
+                    showAlert(`Batas maksimal ${appState.kuota} foto telah tercapai!`, 'error');
+                    return; // Mencegah foto dipilih
+                }
                 appState.selectedIds.add(id); 
                 cardElement.classList.add('selected', 'border-slate-900');
             }
@@ -534,7 +548,17 @@
                     delete appState.notes[p.id];
                 }); 
             } else { 
-                currentPhotos.forEach(p => appState.selectedIds.add(p.id)); 
+                // Logika Pengecekan Kuota Massal (Pilih Semua)
+                currentPhotos.forEach(p => {
+                    if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
+                        return; // Jika kuota penuh, sisa foto tidak ikut terpilih
+                    }
+                    appState.selectedIds.add(p.id);
+                });
+                
+                if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
+                    showAlert(`Hanya terpilih sampai batas kuota (${appState.kuota} foto).`, 'error');
+                }
             }
             renderGallery(); 
             updateActionBar();
@@ -546,6 +570,30 @@
             const count = appState.selectedIds.size;
             const bar = document.getElementById('actionBar');
             document.getElementById('selectedCount').textContent = count;
+            
+            // Logika UI Bar Kuota
+            if (appState.kuota !== null) {
+                const percentage = Math.min((count / appState.kuota) * 100, 100);
+                const quotaBar = document.getElementById('quotaBar');
+                
+                document.getElementById('quotaText').textContent = `${count} / ${appState.kuota}`;
+                quotaBar.style.width = `${percentage}%`;
+                
+                if (percentage >= 100) {
+                    quotaBar.classList.replace('bg-blue-600', 'bg-green-500');
+                    quotaBar.classList.replace('bg-yellow-500', 'bg-green-500');
+                    document.getElementById('quotaText').classList.add('text-green-600');
+                } else if (percentage >= 80) {
+                    quotaBar.classList.replace('bg-blue-600', 'bg-yellow-500');
+                    quotaBar.classList.replace('bg-green-500', 'bg-yellow-500');
+                    document.getElementById('quotaText').classList.remove('text-green-600');
+                } else {
+                    quotaBar.classList.replace('bg-green-500', 'bg-blue-600');
+                    quotaBar.classList.replace('bg-yellow-500', 'bg-blue-600');
+                    document.getElementById('quotaText').classList.remove('text-green-600');
+                }
+            }
+            
             if (count > 0) { bar.classList.remove('translate-y-full'); } 
             else { bar.classList.add('translate-y-full'); }
         }
@@ -636,6 +684,11 @@
                 appState.selectedIds.delete(currentZoomPhoto.id);
                 delete appState.notes[currentZoomPhoto.id]; 
             } else {
+                // Logika Pengecekan Kuota di Mode Zoom
+                if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
+                    showAlert(`Batas maksimal ${appState.kuota} foto telah tercapai!`, 'error');
+                    return; 
+                }
                 appState.selectedIds.add(currentZoomPhoto.id);
             }
             updateLightboxSelectBtn();
@@ -652,13 +705,11 @@
             if (isSelected) {
                 btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Terpilih';
                 btn.className = "px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg w-full sm:w-auto";
-                
                 noteArea.classList.remove('hidden');
                 noteArea.value = appState.notes[currentZoomPhoto.id] || '';
             } else {
                 btn.innerHTML = '<i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini';
                 btn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto";
-                
                 noteArea.classList.add('hidden');
             }
         }
