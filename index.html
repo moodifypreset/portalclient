@@ -594,7 +594,9 @@
         function downloadList() {
             if (appState.selectedIds.size === 0) return;
             const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
-            const vendor = (typeof CONFIG_APP !== 'undefined') ? CONFIG_APP.namaVendor : 'Studio';
+            
+            // MENGAMBIL NAMA VENDOR DARI CONFIG_APP ATAU DEFAULT
+            const vendor = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Studio Foto';
             
             let textContent = `LIST FOTO PILIHAN KLIEN\n`;
             textContent += `=======================\n`;
@@ -610,7 +612,7 @@
             });
             
             textContent += `\n=======================\n`;
-            textContent += `Dicetak otomatis melalui X Studio Portal\n`;
+            textContent += `Dicetak otomatis melalui ${vendor} Portal\n`;
 
             const blob = new Blob([textContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -628,11 +630,11 @@
             showAlert('File daftar foto berhasil didownload (.txt)', 'success');
         }
 
-        // SALIN WHATSAPP MENGAMBIL CATATAN
+        // SALIN WHATSAPP MENGAMBIL CATATAN DAN NAMA VENDOR
         function copyToClipboard() {
             if (appState.selectedIds.size === 0) return;
             const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
-            const vendor = (typeof CONFIG_APP !== 'undefined') ? CONFIG_APP.namaVendor : 'Studio';
+            const vendor = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Studio Foto';
             
             const listText = selectedPhotos.map(p => {
                 const note = appState.notes[p.id];
