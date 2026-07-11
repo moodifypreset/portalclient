@@ -3,157 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="sorterTitle">RAW Sorter</title>
+    <title>Auto RAW Sorter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        textarea::-webkit-scrollbar { width: 8px; }
-        textarea::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        textarea::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .log-container {
+            font-family: 'Courier New', Courier, monospace;
+        }
     </style>
-    <script src="pengaturan.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8 flex items-center justify-center">
+<body class="text-slate-800 flex flex-col min-h-screen">
 
-    <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
-        <div class="bg-slate-900 p-6 text-white flex items-center justify-between">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="bg-slate-900 text-white w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-tight">Auto RAW Sorter</h1>
+                    <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Smart File Processor</p>
+                </div>
+            </div>
+            
+            <!-- Tombol Navigasi ke Generator Link (Auto-detect domain pembeli) -->
+            <a href="generatorlink.html" target="_blank" class="px-4 py-2 md:px-5 md:py-2.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-semibold rounded-lg text-xs md:text-sm transition flex items-center gap-2 border border-blue-200 shadow-sm">
+                <i class="fa-solid fa-link"></i> <span class="hidden md:inline">Generate Link Client</span><span class="md:hidden">Generator</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8 flex-grow w-full">
+        
+        <!-- Peringatan Browser -->
+        <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-xl p-4 mb-6 flex gap-3 text-sm">
+            <i class="fa-solid fa-circle-info mt-0.5 text-blue-600"></i>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight flex items-center gap-3">
-                    <i class="fa-solid fa-layer-group text-blue-400"></i> <span id="sorterVendorName">RAW Sorter</span>
-                </h1>
-                <p class="text-slate-400 mt-1 text-sm">Alat otomatis untuk menyortir dan menyalin file foto dari daftar klien.</p>
-            </div>
-            <div class="bg-slate-800 p-3 rounded-lg hidden md:block">
-                <i class="fa-solid fa-laptop-code text-slate-400"></i> <span class="text-xs text-slate-300 ml-2">Local Environment</span>
+                <strong class="font-bold block mb-1">Informasi Penting:</strong>
+                Gunakan browser <b>Google Chrome</b> atau <b>Microsoft Edge</b> versi terbaru. Aplikasi ini mengakses memori lokal komputer Anda, sehingga akan muncul notifikasi "Izinkan akses" (Allow access) dari browser.
             </div>
         </div>
 
-        <div class="p-6 md:p-8 space-y-8">
-            <div id="compatibilityWarning" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
-                <div class="flex">
-                    <i class="fa-solid fa-triangle-exclamation text-red-500 mt-1 mr-3"></i>
-                    <div>
-                        <p class="text-sm text-red-700 font-bold">Browser tidak mendukung fitur Sorter.</p>
-                        <p class="text-xs text-red-600 mt-1">Harap pastikan Anda membuka file ini menggunakan Google Chrome atau Edge di komputer Anda.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h2 class="text-lg font-bold text-slate-700 mb-2 flex items-center">
-                        <span class="bg-slate-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">1</span> Folder Sumber (RAW)
-                    </h2>
-                    <p class="text-xs text-slate-500 mb-4">Pilih folder yang berisi SEMUA foto asli (sebelum diedit).</p>
-                    <button onclick="pickSourceFolder()" class="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-2.5 px-4 rounded-lg transition flex items-center justify-center shadow-sm">
-                        <i class="fa-regular fa-folder-open mr-2"></i> Pilih Folder
-                    </button>
-                    <div id="source-status" class="mt-3 text-sm font-mono text-slate-500 bg-slate-200 p-2 rounded text-center truncate">Belum dipilih</div>
-                </div>
-
-                <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h2 class="text-lg font-bold text-slate-700 mb-2 flex items-center">
-                        <span class="bg-slate-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">2</span> Folder Tujuan
-                    </h2>
-                    <p class="text-xs text-slate-500 mb-4">Pilih folder kosong tempat foto hasil sortir akan disalin.</p>
-                    <button onclick="pickDestFolder()" class="w-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold py-2.5 px-4 rounded-lg transition flex items-center justify-center shadow-sm">
-                        <i class="fa-solid fa-folder-plus mr-2"></i> Pilih Folder
-                    </button>
-                    <div id="dest-status" class="mt-3 text-sm font-mono text-slate-500 bg-slate-200 p-2 rounded text-center truncate">Belum dipilih</div>
-                </div>
-            </div>
-
-            <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h2 class="text-lg font-bold text-slate-700 mb-1 flex items-center">
-                    <span class="bg-slate-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">3</span> Daftar Foto Klien
-                </h2>
-                <p class="text-xs text-slate-500 mb-3 ml-8">Tempel (Paste) daftar nama foto yang dikirim klien via WhatsApp di sini.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Panel Kiri: Pengaturan Folder -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col gap-4">
+                <h2 class="font-bold text-lg text-slate-800 border-b border-slate-100 pb-3"><i class="fa-solid fa-folder-tree mr-2"></i> Pengaturan Folder</h2>
                 
-                <textarea id="fileList" class="w-full h-48 p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none font-mono text-sm shadow-inner" placeholder="Contoh:&#10;IMG_0012&#10;IMG_0015.jpg&#10;DSC04052.CR2"></textarea>
+                <!-- Folder Sumber -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-2">1. Folder Sumber (RAW Asli)</label>
+                    <p class="text-xs text-slate-400 mb-3">Pilih folder induk, sistem akan mencari otomatis ke dalam sub-folder (Cam 1, Cam 2, dll).</p>
+                    <button id="btnSource" onclick="selectSource()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition flex items-center justify-center gap-2 border border-slate-200">
+                        <i class="fa-regular fa-folder-open"></i> Pilih Folder Sumber
+                    </button>
+                    <p id="sourcePath" class="text-xs text-slate-500 mt-2 truncate hidden"><i class="fa-solid fa-check text-green-500 mr-1"></i> Terpilih: <span class="font-mono"></span></p>
+                </div>
+
+                <div class="h-px bg-slate-100 w-full my-2"></div>
+
+                <!-- Folder Tujuan -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-2">2. Folder Tujuan (Hasil Copy)</label>
+                    <button id="btnDest" onclick="selectDest()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition flex items-center justify-center gap-2 border border-slate-200">
+                        <i class="fa-solid fa-folder-plus"></i> Pilih Folder Tujuan
+                    </button>
+                    <p id="destPath" class="text-xs text-slate-500 mt-2 truncate hidden"><i class="fa-solid fa-check text-green-500 mr-1"></i> Terpilih: <span class="font-mono"></span></p>
+                </div>
             </div>
 
-            <button id="processBtn" onclick="processFiles()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-transform transform hover:-translate-y-1 flex items-center justify-center text-lg">
-                <i class="fa-solid fa-bolt mr-2"></i> Mulai Sortir & Copy File
-            </button>
-
-            <div class="bg-slate-900 rounded-xl p-5 shadow-inner">
-                <h3 class="text-slate-300 text-sm font-bold mb-2 flex justify-between">
-                    <span>Terminal Log</span>
-                    <span id="progressText" class="text-green-400"></span>
-                </h3>
-                <div id="log" class="text-green-400 font-mono text-xs h-32 overflow-y-auto whitespace-pre-wrap leading-relaxed">Sistem Siap. Silakan pilih folder dan masukkan list foto.</div>
+            <!-- Panel Kanan: Input List -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col">
+                <h2 class="font-bold text-lg text-slate-800 border-b border-slate-100 pb-3 mb-4"><i class="fa-solid fa-paste mr-2"></i> List Foto dari Klien</h2>
+                <textarea id="fileList" class="w-full flex-grow bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-slate-800 outline-none transition resize-none font-mono" placeholder="Paste daftar nama file dari WhatsApp klien di sini...&#10;&#10;Contoh:&#10;DSC0012.JPG&#10;DSC0055.JPG&#10;DSC0124 (Catatan: Tolong agak terang)"></textarea>
             </div>
         </div>
-    </div>
 
+        <!-- Tombol Proses -->
+        <button id="processBtn" onclick="processFiles()" class="w-full py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg mb-6 text-lg">
+            <i class="fa-solid fa-bolt"></i> Mulai Sortir & Copy File
+        </button>
+
+        <!-- Panel Log / Terminal -->
+        <div class="bg-slate-900 rounded-2xl p-6 shadow-lg overflow-hidden flex flex-col h-64">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                <h3 class="text-white font-bold text-sm"><i class="fa-solid fa-terminal mr-2"></i> Proses Log</h3>
+                <span id="progressText" class="text-green-400 font-bold text-sm bg-slate-800 px-3 py-1 rounded-lg">0 / 0 File Tercopy</span>
+            </div>
+            <div id="logOutput" class="log-container overflow-y-auto flex-grow text-xs leading-relaxed space-y-1">
+                <div class="text-slate-400">Sistem siap. Silakan pilih folder dan masukkan list foto.</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 mt-auto border-t border-slate-200">
+        <p class="text-sm text-slate-400">&copy; <script>document.write(new Date().getFullYear())</script> Auto RAW Sorter - Professional Tool.</p>
+    </footer>
+
+    <!-- LOGIKA JAVASCRIPT -->
     <script>
         let sourceHandle = null;
         let destHandle = null;
 
-        // Branding Setup
-        window.onload = () => {
-            if (typeof CONFIG_APP !== 'undefined') {
-                const vendorName = CONFIG_APP.namaVendor || 'RAW Sorter';
-                document.getElementById('sorterTitle').textContent = `${vendorName} - Sorter`;
-                document.getElementById('sorterVendorName').textContent = `Sorter - ${vendorName}`;
+        async function selectSource() {
+            try {
+                sourceHandle = await window.showDirectoryPicker();
+                const pathEl = document.getElementById('sourcePath');
+                pathEl.classList.remove('hidden');
+                pathEl.querySelector('span').innerText = sourceHandle.name;
+                document.getElementById('btnSource').classList.replace('bg-slate-100', 'bg-green-50');
+                document.getElementById('btnSource').classList.replace('text-slate-700', 'text-green-700');
+            } catch (err) {
+                console.log("Pemilihan folder sumber dibatalkan.", err);
             }
+        }
 
-            if (!window.showDirectoryPicker) {
-                document.getElementById('compatibilityWarning').classList.remove('hidden');
+        async function selectDest() {
+            try {
+                destHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                const pathEl = document.getElementById('destPath');
+                pathEl.classList.remove('hidden');
+                pathEl.querySelector('span').innerText = destHandle.name;
+                document.getElementById('btnDest').classList.replace('bg-slate-100', 'bg-green-50');
+                document.getElementById('btnDest').classList.replace('text-slate-700', 'text-green-700');
+            } catch (err) {
+                console.log("Pemilihan folder tujuan dibatalkan.", err);
             }
-        };
-
-        function addLog(message, type = "info") {
-            const logArea = document.getElementById('log');
-            const color = type === "error" ? "text-red-400" : type === "warning" ? "text-yellow-400" : "text-green-400";
-            const time = new Date().toLocaleTimeString();
-            
-            const logEntry = document.createElement('div');
-            logEntry.className = `${color} mb-1`;
-            logEntry.innerText = `[${time}] ${message}`;
-            
-            logArea.appendChild(logEntry);
-            logArea.scrollTop = logArea.scrollHeight;
         }
 
         function clearLog() {
-            document.getElementById('log').innerHTML = '';
-            document.getElementById('progressText').innerText = '';
+            document.getElementById('logOutput').innerHTML = '';
         }
 
-        async function pickSourceFolder() {
-            try {
-                sourceHandle = await window.showDirectoryPicker({ mode: 'read' });
-                const statusEl = document.getElementById('source-status');
-                statusEl.innerText = sourceHandle.name;
-                statusEl.classList.replace('bg-slate-200', 'bg-slate-900');
-                statusEl.classList.replace('text-slate-500', 'text-white');
-                addLog(`Folder Sumber dipilih: ${sourceHandle.name}`);
-            } catch (error) {
-                if (error.name !== 'AbortError') addLog(`Gagal membuka folder: ${error.message}`, "error");
+        function addLog(message, type = "info") {
+            const logBox = document.getElementById('logOutput');
+            const div = document.createElement('div');
+            
+            if (type === "error") {
+                div.className = "text-red-400 font-bold";
+                div.innerHTML = `<i class="fa-solid fa-xmark mr-1"></i> ${message}`;
+            } else if (type === "success") {
+                div.className = "text-green-400";
+                div.innerHTML = `<i class="fa-solid fa-check mr-1"></i> ${message}`;
+            } else if (type === "warning") {
+                div.className = "text-yellow-400";
+                div.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> ${message}`;
+            } else {
+                div.className = "text-slate-300";
+                div.innerHTML = `<i class="fa-solid fa-angle-right mr-1"></i> ${message}`;
             }
-        }
-
-        async function pickDestFolder() {
-            try {
-                destHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-                const statusEl = document.getElementById('dest-status');
-                statusEl.innerText = destHandle.name;
-                statusEl.classList.replace('bg-slate-200', 'bg-blue-600');
-                statusEl.classList.replace('text-slate-500', 'text-white');
-                addLog(`Folder Tujuan dipilih: ${destHandle.name}`);
-            } catch (error) {
-                if (error.name !== 'AbortError') addLog(`Gagal membuka folder: ${error.message}`, "error");
-            }
+            
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
         }
 
         function getBaseName(filename) {
-            const lastDotIndex = filename.lastIndexOf('.');
-            if (lastDotIndex === -1) return filename.trim().toLowerCase();
-            return filename.substring(0, lastDotIndex).trim().toLowerCase();
+            let name = filename.trim().toUpperCase();
+            name = name.replace(/\s*\(.*\)/g, ''); 
+            const dotIndex = name.lastIndexOf('.');
+            if (dotIndex !== -1) {
+                return name.substring(0, dotIndex).trim();
+            }
+            return name.trim();
+        }
+
+        async function searchFilesInDirectory(dirHandle, notFoundList, copiedCountRef, totalTarget) {
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                    const fileBaseName = getBaseName(entry.name);
+                    const listIndex = notFoundList.findIndex(t => t === fileBaseName);
+                    
+                    if (listIndex !== -1) {
+                        addLog(`Menemukan: ${entry.name} (di folder /${dirHandle.name})`, "success");
+                        const file = await entry.getFile();
+                        const newFileHandle = await destHandle.getFileHandle(entry.name, { create: true });
+                        const writable = await newFileHandle.createWritable();
+                        await writable.write(file);
+                        await writable.close();
+                        
+                        copiedCountRef.count++;
+                        document.getElementById('progressText').innerText = `${copiedCountRef.count} / ${totalTarget} File Tercopy`;
+                        notFoundList.splice(listIndex, 1);
+                    }
+                } else if (entry.kind === 'directory') {
+                    await searchFilesInDirectory(entry, notFoundList, copiedCountRef, totalTarget);
+                }
+                
+                if (notFoundList.length === 0) return;
+            }
         }
 
         async function processFiles() {
@@ -164,55 +212,36 @@
 
             const rawListText = document.getElementById('fileList').value;
             const targetList = rawListText.split('\n')
-                .map(name => getBaseName(name))
-                .filter(name => name !== '');
+                                          .map(name => getBaseName(name))
+                                          .filter(name => name !== '' && !name.includes('LIST FOTO') && !name.includes('TOTAL:'));
 
             if (targetList.length === 0) {
-                alert("Daftar nama file masih kosong!");
+                alert("Daftar nama file masih kosong atau format tidak sesuai!");
                 return;
             }
 
             const btn = document.getElementById('processBtn');
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Sedang Memproses...`;
-            btn.classList.replace('bg-blue-600', 'bg-slate-600');
-            btn.classList.replace('hover:bg-blue-700', 'hover:bg-slate-700');
+            btn.classList.replace('bg-slate-900', 'bg-slate-600');
+            btn.classList.replace('hover:bg-black', 'hover:bg-slate-700');
             
             clearLog();
-            addLog(`Memulai proses sortir untuk ${targetList.length} file...`);
+            addLog(`Memulai proses sortir untuk ${targetList.length} file unik...`);
+            addLog(`Sistem mencari otomatis ke dalam sub-folder (Recursive Mode Aktif).`);
             
-            let copiedCount = 0;
-            let notFoundList = [...targetList];
+            let copiedCountRef = { count: 0 }; 
+            let notFoundList = [...new Set(targetList)]; 
 
             try {
-                for await (const entry of sourceHandle.values()) {
-                    if (entry.kind === 'file') {
-                        const fileBaseName = getBaseName(entry.name);
-                        const listIndex = notFoundList.findIndex(t => t === fileBaseName);
-                        
-                        if (listIndex !== -1) {
-                            addLog(`Menemukan: ${entry.name}. Menyalin...`);
-                            
-                            const file = await entry.getFile();
-                            const newFileHandle = await destHandle.getFileHandle(entry.name, { create: true });
-                            const writable = await newFileHandle.createWritable();
-                            
-                            await writable.write(file);
-                            await writable.close();
-                            
-                            copiedCount++;
-                            document.getElementById('progressText').innerText = `${copiedCount} / ${targetList.length} selesai`;
-                            
-                            notFoundList.splice(listIndex, 1);
-                        }
-                    }
-                }
+                await searchFilesInDirectory(sourceHandle, notFoundList, copiedCountRef, notFoundList.length);
 
-                addLog(`PROSES SELESAI! Berhasil menyalin ${copiedCount} dari ${targetList.length} file.`);
+                addLog(`----------------------------------------`);
+                addLog(`PROSES SELESAI! Berhasil menyalin ${copiedCountRef.count} file.`, "success");
                 
                 if (notFoundList.length > 0) {
-                    addLog(`PERINGATAN: Ada ${notFoundList.length} file yang tidak ditemukan di folder sumber!`, "warning");
-                    addLog(`Daftar file tidak ditemukan: \n${notFoundList.join(', ')}`, "warning");
+                    addLog(`PERINGATAN: Ada ${notFoundList.length} file yang tidak ditemukan di seluruh folder!`, "error");
+                    addLog(`Daftar file tidak ditemukan: ${notFoundList.join(', ')}`, "warning");
                 }
 
             } catch (error) {
@@ -221,8 +250,8 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fa-solid fa-bolt mr-2"></i> Mulai Sortir & Copy File`;
-                btn.classList.replace('bg-slate-600', 'bg-blue-600');
-                btn.classList.replace('hover:bg-slate-700', 'hover:bg-blue-700');
+                btn.classList.replace('bg-slate-600', 'bg-slate-900');
+                btn.classList.replace('hover:bg-slate-700', 'hover:bg-black');
             }
         }
     </script>
