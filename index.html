@@ -237,10 +237,27 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             
-            const autoId = urlParams.get('id');
-            const autoLink = urlParams.get('link');
-            const urlName = urlParams.get('nama');
-            const urlKuota = urlParams.get('kuota');
+            let autoId = urlParams.get('id');
+            let autoLink = urlParams.get('link');
+            let urlName = urlParams.get('nama');
+            let urlKuota = urlParams.get('kuota');
+
+            // --- Logika Decode Hash ---
+            const hashData = urlParams.get('h');
+            if (hashData) {
+                try {
+                    // Menerjemahkan kembali Base64 menjadi objek JSON
+                    const decodedStr = decodeURIComponent(atob(hashData));
+                    const data = JSON.parse(decodedStr);
+                    
+                    if (data.id) autoId = data.id;
+                    if (data.n) urlName = data.n;
+                    if (data.k) urlKuota = data.k;
+                } catch (e) {
+                    console.error("Gagal membaca link terenkripsi", e);
+                    showAlert('Link tidak valid atau rusak.', 'error');
+                }
+            }
 
             // Setel Sapaan Klien di Kartu VIP
             if (urlName) {
