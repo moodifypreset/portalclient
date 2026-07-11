@@ -20,7 +20,7 @@
             </div>
             <div>
                 <h1 class="font-bold text-white text-lg">Auto Link Generator</h1>
-                <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Admin Tool - Smart ID Extractor</p>
+                <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Admin Tool - Smart URL Builder</p>
             </div>
         </div>
 
@@ -40,12 +40,12 @@
 
             <!-- Input 2: Nama Klien -->
             <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">2. Nama Klien / Project</label>
+                <label class="block text-sm font-bold text-slate-700 mb-2">2. Nama Klien / Project (Tanpa Spasi Lebih Baik)</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fa-solid fa-user-tag text-slate-400"></i>
                     </div>
-                    <input type="text" id="clientName" placeholder="Contoh: Raka & Sisil Wedding"
+                    <input type="text" id="clientName" placeholder="Contoh: Jimmy-Josephine"
                         class="w-full pl-10 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:border-blue-600 outline-none transition text-sm">
                 </div>
             </div>
@@ -62,7 +62,7 @@
                 </div>
             </div>
 
-            <!-- Input 4: Fitur Kuota (Baru) -->
+            <!-- Input 4: Fitur Kuota -->
             <div>
                 <label class="block text-sm font-bold text-slate-700 mb-2">4. Batas Maksimal Kuota (Opsional)</label>
                 <div class="relative">
@@ -144,18 +144,24 @@
                 return showAlert('Link Google Drive tidak valid!', true);
             }
 
-            let finalUrl = baseUrl.endsWith('/') ? 
-                           `${baseUrl}?id=${folderId}` : 
-                           `${baseUrl}/?id=${folderId}`;
+            // Trik Estetika: Menyusun parameter agar Nama dan Kuota tampil pertama
+            let finalUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+            let params = [];
             
             if (clientName) {
-                finalUrl += `&nama=${encodeURIComponent(clientName)}`;
+                // Gunakan format nama tanpa spasi %20 jika memungkinkan agar lebih rapi
+                const cleanName = clientName.replace(/\s+/g, '-');
+                params.push(`nama=${encodeURIComponent(cleanName)}`);
             }
             
-            // Logika Penambahan Parameter Kuota
             if (kuota && parseInt(kuota) > 0) {
-                finalUrl += `&kuota=${parseInt(kuota)}`;
+                params.push(`kuota=${parseInt(kuota)}`);
             }
+            
+            // Masukkan ID panjang di posisi paling akhir
+            params.push(`id=${folderId}`);
+            
+            finalUrl += '?' + params.join('&');
 
             document.getElementById('resultBox').classList.remove('hidden');
             document.getElementById('finalUrl').value = finalUrl;
