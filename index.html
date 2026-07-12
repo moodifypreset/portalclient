@@ -31,9 +31,14 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-lg leading-tight tracking-tight" id="headerVendorName">Client Portal</h1>
-                    <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Secure Selection Tool</p>
+                    <p class="text-xs text-slate-500 font-medium uppercase tracking-wider" data-i18n="subtitle">Alat Seleksi Aman</p>
                 </div>
             </div>
+            
+            <!-- Tombol Ganti Bahasa -->
+            <button onclick="toggleLanguage()" class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-1.5 px-3 rounded-lg text-sm transition shadow-sm border border-slate-200">
+                <i class="fa-solid fa-globe text-blue-600"></i> <span id="langDisplay">EN</span>
+            </button>
         </div>
     </header>
 
@@ -46,8 +51,8 @@
                 </div>
                 
                 <div class="relative z-10">
-                    <h2 class="text-2xl md:text-3xl font-bold mb-1">Hallo, <span id="displayClientName" class="text-blue-400 capitalize">Kakak</span> 👋</h2>
-                    <p class="text-slate-400 text-sm md:text-base">Selamat datang di galeri seleksi foto eksklusif Anda.</p>
+                    <h2 class="text-2xl md:text-3xl font-bold mb-1"><span data-i18n="welcomeTitle">Hallo</span>, <span id="displayClientName" class="text-blue-400 capitalize">Kakak</span> 👋</h2>
+                    <p class="text-slate-400 text-sm md:text-base" data-i18n="welcomeDesc">Selamat datang di galeri seleksi foto eksklusif Anda.</p>
                 </div>
                 
                 <div id="greetingQuotaInfo" class="hidden relative z-10 bg-slate-800/80 backdrop-blur-md border border-slate-700 px-5 py-3 rounded-2xl items-center gap-4 shadow-inner">
@@ -55,8 +60,8 @@
                         <i class="fa-solid fa-images"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Kuota Paket</p>
-                        <p class="text-sm font-bold"><span id="greetingQuotaLimit" class="text-xl text-white">0</span> <span class="text-slate-300">Foto Maksimal</span></p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider" data-i18n="quotaTitle">Kuota Paket</p>
+                        <p class="text-sm font-bold"><span id="greetingQuotaLimit" class="text-xl text-white">0</span> <span class="text-slate-300" data-i18n="quotaMax">Foto Maksimal</span></p>
                     </div>
                 </div>
             </div>
@@ -65,33 +70,33 @@
         <div class="max-w-6xl mx-auto px-4 py-8 w-full">
             <div id="inputSection" class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 mb-8 max-w-2xl mx-auto text-center relative overflow-hidden hidden">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-slate-200 via-slate-800 to-slate-200"></div>
-                <h2 class="text-xl font-bold mb-2 text-slate-800">Akses Manual Galeri</h2>
-                <p class="text-slate-500 text-sm mb-8">Silakan tempel (paste) link folder Google Drive Anda di bawah ini.</p>
+                <h2 class="text-xl font-bold mb-2 text-slate-800" data-i18n="manualTitle">Akses Manual Galeri</h2>
+                <p class="text-slate-500 text-sm mb-8" data-i18n="manualDesc">Silakan tempel (paste) link folder Google Drive Anda di bawah ini.</p>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fa-brands fa-google-drive text-slate-400 text-lg"></i>
                     </div>
                     <input type="text" id="driveLink" 
                         class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none transition" 
-                        placeholder="Contoh: https://drive.google.com/drive/folders/xxxxx">
+                        placeholder="Link Google Drive...">
                 </div>
                 <div class="mt-6 flex justify-center">
                     <button onclick="loadFromDrive()" class="px-8 py-3.5 bg-slate-900 hover:bg-black text-white font-medium rounded-xl transition shadow-lg flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-folder-open"></i> Buka Galeri
+                        <i class="fa-solid fa-folder-open"></i> <span data-i18n="btnOpen">Buka Galeri</span>
                     </button>
                 </div>
             </div>
 
             <div id="loadingState" class="hidden flex-col items-center justify-center py-16">
                 <i class="fa-solid fa-circle-notch fa-spin text-4xl text-slate-800 mb-4"></i>
-                <p id="loadingText" class="text-slate-500 font-medium">Menarik foto beresolusi tinggi...</p>
+                <p id="loadingText" class="text-slate-500 font-medium" data-i18n="loading">Menarik foto beresolusi tinggi...</p>
             </div>
 
             <div id="galleryContainer" class="hidden">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4 border-b border-slate-200 pb-4">
                     <div>
-                        <h3 class="font-bold text-xl text-slate-800">Koleksi Foto</h3>
-                        <p class="text-sm text-slate-500">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
+                        <h3 class="font-bold text-xl text-slate-800" data-i18n="galleryTitle">Koleksi Foto</h3>
+                        <p class="text-sm text-slate-500" data-i18n="galleryDesc">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <div class="relative">
@@ -99,10 +104,10 @@
                                 <i class="fa-solid fa-arrow-down-a-z text-slate-400 text-sm"></i>
                             </div>
                             <select id="sortDropdown" onchange="applySort(this.value)" class="text-sm bg-white border border-slate-200 text-slate-700 py-2 pl-9 pr-8 rounded-lg font-medium cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-800 appearance-none transition hover:bg-slate-50">
-                                <option value="default">Urutan Asli</option>
+                                <option value="default" data-i18n="sortDefault">Urutan Asli</option>
                                 <option value="asc">A - Z</option>
                                 <option value="desc">Z - A</option>
-                                <option value="random">Acak (Random)</option>
+                                <option value="random" data-i18n="sortRandom">Acak (Random)</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
                                 <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
@@ -110,9 +115,9 @@
                         </div>
 
                         <button onclick="toggleViewMode()" id="viewModeBtn" class="text-sm bg-slate-800 text-white py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 shadow-sm hover:bg-slate-700">
-                            <i class="fa-solid fa-filter"></i> Lihat Pilihan (0)
+                            <i class="fa-solid fa-filter"></i> <span id="btnViewText">Lihat Pilihan</span> (0)
                         </button>
-                        </div>
+                    </div>
                 </div>
                 <div id="photoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8"></div>
                 <div id="paginationContainer" class="flex justify-center items-center gap-3 mt-10 pb-8 hidden"></div>
@@ -127,7 +132,7 @@
     <div id="actionBar" class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 z-50">
         <div id="quotaContainer" class="hidden w-full px-4 md:px-8 pt-3 pb-1 max-w-6xl mx-auto border-b border-slate-100">
             <div class="flex justify-between items-end mb-1.5">
-                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kuota Paket Anda</span>
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider" data-i18n="quotaFooter">Kuota Paket Anda</span>
                 <span id="quotaText" class="text-sm font-bold text-slate-800">0 / 0</span>
             </div>
             <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden shadow-inner">
@@ -138,16 +143,16 @@
             <div class="flex items-center gap-4">
                 <div class="bg-slate-900 text-white font-bold w-12 h-12 rounded-full flex items-center justify-center text-lg shadow-md shrink-0" id="selectedCount">0</div>
                 <div class="hidden sm:block">
-                    <p class="font-bold text-slate-800">Foto Terpilih</p>
-                    <p class="text-xs text-slate-500">Kirim daftar ini ke tim kami</p>
+                    <p class="font-bold text-slate-800" data-i18n="selFooterTitle">Foto Terpilih</p>
+                    <p class="text-xs text-slate-500" data-i18n="selFooterDesc">Kirim daftar ini ke tim kami</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="downloadList()" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition flex items-center gap-2 border border-slate-300 shadow-sm" title="Download file .txt">
-                    <i class="fa-solid fa-file-arrow-down text-lg"></i> <span class="hidden md:inline">Download List</span>
+                    <i class="fa-solid fa-file-arrow-down text-lg"></i> <span class="hidden md:inline" data-i18n="btnDownload">Download List</span>
                 </button>
                 <button onclick="copyToClipboard()" class="px-5 md:px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center gap-2 shadow-lg">
-                    <i class="fa-brands fa-whatsapp text-xl"></i> <span class="hidden md:inline">Kirim WA</span><span class="md:hidden">Kirim WA</span>
+                    <i class="fa-brands fa-whatsapp text-xl"></i> <span class="hidden md:inline" data-i18n="btnWA">Kirim WA</span><span class="md:hidden" data-i18n="btnWA">Kirim WA</span>
                 </button>
             </div>
         </div>
@@ -164,24 +169,24 @@
                 <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner">
                     <i class="fa-solid fa-lightbulb"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-800">Cara Memilih Foto</h3>
-                <p class="text-slate-500 text-sm mt-2">Ikuti 3 langkah mudah ini untuk memilih foto favorit Anda:</p>
+                <h3 class="text-2xl font-bold text-slate-800" data-i18n="tutTitle">Cara Memilih Foto</h3>
+                <p class="text-slate-500 text-sm mt-2" data-i18n="tutDesc">Ikuti 3 langkah mudah ini untuk memilih foto favorit Anda:</p>
             </div>
             <ul class="space-y-5 mb-8">
                 <li class="flex items-start gap-4">
                     <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">1</div>
-                    <p class="text-sm text-slate-600 pt-1"><strong>Pilih Foto:</strong> Klik (tap) langsung pada gambar foto untuk memilihnya.</p>
+                    <p class="text-sm text-slate-600 pt-1" data-i18n="tut1"><strong>Pilih Foto:</strong> Klik (tap) langsung pada gambar foto untuk memilihnya.</p>
                 </li>
                 <li class="flex items-start gap-4">
                     <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">2</div>
-                    <p class="text-sm text-slate-600 pt-1"><strong>Zoom & Catatan:</strong> Klik ikon <i class="fa-solid fa-magnifying-glass-plus text-slate-800 mx-1"></i> untuk memperbesar gambar & menambahkan instruksi edit (opsional).</p>
+                    <p class="text-sm text-slate-600 pt-1" data-i18n="tut2"><strong>Zoom & Catatan:</strong> Klik ikon <i class="fa-solid fa-magnifying-glass-plus text-slate-800 mx-1"></i> untuk memperbesar gambar & menambahkan instruksi edit (opsional).</p>
                 </li>
                 <li class="flex items-start gap-4">
                     <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">3</div>
-                    <p class="text-sm text-slate-600 pt-1"><strong>Kirim List:</strong> Jika sudah selesai, klik tombol Kirim WA atau Download di bagian bawah layar.</p>
+                    <p class="text-sm text-slate-600 pt-1" data-i18n="tut3"><strong>Kirim List:</strong> Jika sudah selesai, klik tombol Kirim WA atau Download di bagian bawah layar.</p>
                 </li>
             </ul>
-            <button onclick="closeTutorial()" class="w-full py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition shadow-lg text-sm uppercase tracking-wider">
+            <button onclick="closeTutorial()" class="w-full py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition shadow-lg text-sm uppercase tracking-wider" data-i18n="btnTut">
                 Mengerti, Mulai Memilih!
             </button>
         </div>
@@ -198,28 +203,126 @@
             <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-transform duration-300 pointer-events-auto select-none">
         </div>
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
-            <p class="text-white/50 text-xs md:hidden text-center mb-[-5px] animate-pulse"><i class="fa-solid fa-arrows-left-right"></i> Geser kiri/kanan</p>
+            <p class="text-white/50 text-xs md:hidden text-center mb-[-5px] animate-pulse"><i class="fa-solid fa-arrows-left-right"></i> <span data-i18n="swipe">Geser kiri/kanan</span></p>
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
-                <i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini
+                <i class="fa-regular fa-square-check mr-2"></i> <span id="btnSelectText">Pilih Foto Ini</span>
             </button>
-            <textarea id="lightboxNote" oninput="saveNote()" class="w-full bg-slate-800/90 text-white placeholder-slate-400 text-sm rounded-xl p-3 border border-slate-600 focus:outline-none focus:border-slate-400 hidden transition-all shadow-lg backdrop-blur-sm" rows="2" placeholder="Catatan edit (opsional), misal: hapus jerawat..."></textarea>
+            <textarea id="lightboxNote" oninput="saveNote()" data-i18n="notePlaceholder" class="w-full bg-slate-800/90 text-white placeholder-slate-400 text-sm rounded-xl p-3 border border-slate-600 focus:outline-none focus:border-slate-400 hidden transition-all shadow-lg backdrop-blur-sm" rows="2" placeholder="Catatan edit (opsional), misal: hapus jerawat..."></textarea>
         </div>
     </div>
 
+    <!-- LOGIKA JAVASCRIPT -->
     <script>
         const ITEMS_PER_PAGE = 200; 
         
         let appState = { 
             folderId: null, clientName: '', photos: [], originalPhotos: [], 
             selectedIds: new Set(), notes: {}, currentPage: 1, kuota: null, 
-            viewMode: 'all', sortOrder: 'default' 
+            viewMode: 'all', sortOrder: 'default', lang: 'id'
         };
-        
+
+        // KAMUS BAHASA (DICTIONARY)
+        const TRANSLATIONS = {
+            id: {
+                subtitle: "Alat Seleksi Aman",
+                welcomeTitle: "Hallo",
+                welcomeDesc: "Selamat datang di galeri seleksi foto eksklusif Anda.",
+                quotaTitle: "Kuota Paket",
+                quotaMax: "Foto Maksimal",
+                manualTitle: "Akses Manual Galeri",
+                manualDesc: "Silakan tempel (paste) link folder Google Drive Anda di bawah ini.",
+                btnOpen: "Buka Galeri",
+                loading: "Menarik foto beresolusi tinggi...",
+                galleryTitle: "Koleksi Foto",
+                galleryDesc: "Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.",
+                sortDefault: "Urutan Asli",
+                sortRandom: "Acak (Random)",
+                btnViewSel: "Lihat Pilihan",
+                btnViewAll: "Lihat Semua Foto",
+                quotaFooter: "Kuota Paket Anda",
+                selFooterTitle: "Foto Terpilih",
+                selFooterDesc: "Kirim daftar ini ke tim kami",
+                btnDownload: "Download List",
+                btnWA: "Kirim WA",
+                tutTitle: "Cara Memilih Foto",
+                tutDesc: "Ikuti 3 langkah mudah ini untuk memilih foto favorit Anda:",
+                tut1: "<strong>Pilih Foto:</strong> Klik (tap) langsung pada gambar foto untuk memilihnya.",
+                tut2: "<strong>Zoom & Catatan:</strong> Klik ikon <i class='fa-solid fa-magnifying-glass-plus text-slate-800 mx-1'></i> untuk memperbesar gambar & menambahkan instruksi edit.",
+                tut3: "<strong>Kirim List:</strong> Jika sudah selesai, klik tombol Kirim WA atau Download di bagian bawah layar.",
+                btnTut: "Mengerti, Mulai Memilih!",
+                swipe: "Geser kiri/kanan",
+                btnSelect: "Pilih Foto Ini",
+                btnSelected: "Terpilih",
+                notePlaceholder: "Catatan edit (opsional), misal: hapus jerawat...",
+                alertLimit: "Batas maksimal limit foto telah tercapai!",
+                alertEmpty: "Belum ada foto yang dipilih.",
+                alertCopy: "List foto disalin! Silahkan paste di WhatsApp."
+            },
+            en: {
+                subtitle: "Secure Selection Tool",
+                welcomeTitle: "Hello",
+                welcomeDesc: "Welcome to your exclusive photo selection gallery.",
+                quotaTitle: "Package Quota",
+                quotaMax: "Max Photos",
+                manualTitle: "Manual Gallery Access",
+                manualDesc: "Please paste your Google Drive folder link below.",
+                btnOpen: "Open Gallery",
+                loading: "Fetching high-resolution photos...",
+                galleryTitle: "Photo Collection",
+                galleryDesc: "Click an image to select. Click 🔍 to zoom & add notes.",
+                sortDefault: "Original Order",
+                sortRandom: "Randomize",
+                btnViewSel: "View Selection",
+                btnViewAll: "View All Photos",
+                quotaFooter: "Your Package Quota",
+                selFooterTitle: "Selected Photos",
+                selFooterDesc: "Send this list to our team",
+                btnDownload: "Download List",
+                btnWA: "Send via WA",
+                tutTitle: "How to Select Photos",
+                tutDesc: "Follow these 3 simple steps to select your favorite photos:",
+                tut1: "<strong>Select Photo:</strong> Click (tap) directly on the image to select it.",
+                tut2: "<strong>Zoom & Notes:</strong> Click the <i class='fa-solid fa-magnifying-glass-plus text-slate-800 mx-1'></i> icon to enlarge & add editing instructions.",
+                tut3: "<strong>Send List:</strong> When finished, click the Send via WA or Download button at the bottom.",
+                btnTut: "Got it, Start Selecting!",
+                swipe: "Swipe left/right",
+                btnSelect: "Select This Photo",
+                btnSelected: "Selected",
+                notePlaceholder: "Edit notes (optional), e.g., remove blemishes...",
+                alertLimit: "Maximum photo limit has been reached!",
+                alertEmpty: "No photos selected yet.",
+                alertCopy: "List copied! Please paste it in WhatsApp."
+            }
+        };
+
+        // FUNGSI GANTI BAHASA
+        function toggleLanguage() {
+            appState.lang = appState.lang === 'id' ? 'en' : 'id';
+            document.getElementById('langDisplay').textContent = appState.lang === 'id' ? 'EN' : 'ID';
+            applyTranslations();
+        }
+
+        function applyTranslations() {
+            const langData = TRANSLATIONS[appState.lang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (langData[key]) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = langData[key];
+                    } else {
+                        el.innerHTML = langData[key];
+                    }
+                }
+            });
+            updateViewModeText();
+            if (currentZoomPhoto) updateLightboxSelectBtn();
+        }
+
         let currentZoomIndex = 0; 
         let currentZoomPhoto = null;
         let touchstartX = 0;
         let touchendX = 0;
-        let hasSeenTutorial = false; // Flag untuk memastikan tutorial muncul sekali
+        let hasSeenTutorial = false; 
 
         document.addEventListener("DOMContentLoaded", () => {
             if (typeof CONFIG_APP !== 'undefined') {
@@ -280,9 +383,10 @@
                 touchendX = e.changedTouches[0].screenX;
                 handleSwipeGesture();
             }, { passive: true });
+            
+            applyTranslations(); // Set default language texts
         });
 
-        // FUNGSI POP-UP TUTORIAL
         function showTutorial() {
             if (hasSeenTutorial) return;
             const modal = document.getElementById('tutorialModal');
@@ -319,10 +423,7 @@
 
         function saveProgress() {
             if (!appState.folderId) return;
-            const dataToSave = {
-                selected: Array.from(appState.selectedIds),
-                notes: appState.notes
-            };
+            const dataToSave = { selected: Array.from(appState.selectedIds), notes: appState.notes };
             localStorage.setItem(`client_portal_save_${appState.folderId}`, JSON.stringify(dataToSave));
         }
 
@@ -334,14 +435,9 @@
                     appState.selectedIds = new Set(data.selected || []);
                     appState.notes = data.notes || {};
                     if (appState.selectedIds.size > 0) {
-                        setTimeout(() => {
-                            showAlert(`Sesi dipulihkan! ${appState.selectedIds.size} foto sebelumnya berhasil dimuat.`, 'success');
-                            updateActionBar(); 
-                        }, 1000);
+                        setTimeout(() => { updateActionBar(); }, 1000);
                     }
-                } catch (e) {
-                    console.error("Gagal memuat data", e);
-                }
+                } catch (e) { console.error("Gagal memuat data", e); }
             }
         }
 
@@ -362,7 +458,7 @@
         }
 
         async function loadFromDrive() {
-            if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey) return showAlert('Sistem belum dikonfigurasi. Harap isi API Key.', 'error');
+            if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey) return showAlert('Sistem belum dikonfigurasi.', 'error');
             
             const link = document.getElementById('driveLink').value.trim();
             const folderId = extractFolderId(link) || link;
@@ -399,8 +495,6 @@
                     appState.notes = {}; 
                     loadProgress(folderId); 
                     renderGallery();
-                    
-                    // TAMPILKAN TUTORIAL JIKA BERHASIL LOAD PERTAMA KALI
                     setTimeout(() => { showTutorial(); }, 800);
                 } else {
                     showAlert('Folder kosong atau hak akses bukan Publik.', 'error');
@@ -430,23 +524,28 @@
             }
             appState.currentPage = 1;
             renderGallery();
-            const message = order === 'random' ? 'Foto berhasil diacak!' : 'Urutan foto diperbarui!';
-            showAlert(message, 'success');
+        }
+
+        function updateViewModeText() {
+            const btn = document.getElementById('viewModeBtn');
+            const langData = TRANSLATIONS[appState.lang];
+            if (appState.viewMode === 'all') {
+                btn.innerHTML = `<i class="fa-solid fa-filter"></i> <span id="btnViewText">${langData.btnViewSel}</span> (${appState.selectedIds.size})`;
+                btn.classList.replace('bg-blue-600', 'bg-slate-800');
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-border-all"></i> <span id="btnViewText">${langData.btnViewAll}</span>`;
+                btn.classList.replace('bg-slate-800', 'bg-blue-600');
+            }
         }
 
         function toggleViewMode() {
             if (appState.viewMode === 'all') {
-                if (appState.selectedIds.size === 0) return showAlert('Belum ada foto yang dipilih.', 'error');
+                if (appState.selectedIds.size === 0) return showAlert(TRANSLATIONS[appState.lang].alertEmpty, 'error');
                 appState.viewMode = 'selected';
-                document.getElementById('viewModeBtn').innerHTML = '<i class="fa-solid fa-border-all"></i> Lihat Semua Foto';
-                document.getElementById('viewModeBtn').classList.replace('bg-slate-800', 'bg-blue-600');
             } else {
                 appState.viewMode = 'all';
-                document.getElementById('viewModeBtn').classList.replace('bg-blue-600', 'bg-slate-800');
-                if (appState.viewMode === 'all') {
-                    document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
-                }
             }
+            updateViewModeText();
             appState.currentPage = 1;
             renderGallery();
         }
@@ -467,14 +566,11 @@
 
             photosToShow.forEach((photo, index) => {
                 const globalIndex = appState.photos.findIndex(p => p.id === photo.id); 
-
                 const card = document.createElement('div');
                 card.className = `photo-card relative bg-slate-100 rounded-xl overflow-hidden aspect-square border-[3px] border-transparent shadow-sm hover:shadow-md ${appState.selectedIds.has(photo.id) ? 'selected border-slate-900' : ''}`;
                 
                 const img = document.createElement('img');
-                img.src = photo.url; 
-                img.className = "w-full h-full object-cover cursor-pointer transition-transform duration-300"; 
-                img.loading = "lazy";
+                img.src = photo.url; img.className = "w-full h-full object-cover cursor-pointer transition-transform duration-300"; img.loading = "lazy";
                 img.onclick = () => toggleSelect(photo.id, card);
                 
                 const overlay = document.createElement('div');
@@ -510,7 +606,6 @@
         function renderPagination(totalItems) {
             const container = document.getElementById('paginationContainer');
             const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-            
             if (totalPages <= 1) { container.classList.add('hidden'); return; }
             container.classList.remove('hidden'); container.innerHTML = '';
 
@@ -523,7 +618,7 @@
 
             const indicator = document.createElement('span');
             indicator.className = 'px-5 py-2.5 text-sm font-bold text-slate-700 bg-slate-100 rounded-xl';
-            indicator.textContent = `Halaman ${appState.currentPage} dari ${totalPages}`;
+            indicator.textContent = `${appState.currentPage} / ${totalPages}`;
             container.appendChild(indicator);
 
             const nextBtn = document.createElement('button');
@@ -549,15 +644,13 @@
                 cardElement.classList.remove('selected', 'border-slate-900');
             } else {
                 if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
-                    return showAlert(`Batas maksimal ${appState.kuota} foto telah tercapai!`, 'error');
+                    return showAlert(TRANSLATIONS[appState.lang].alertLimit, 'error');
                 }
                 appState.selectedIds.add(id); 
                 cardElement.classList.add('selected', 'border-slate-900');
             }
             updateActionBar(); saveProgress();
-            if (appState.viewMode === 'all') {
-                document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
-            }
+            if (appState.viewMode === 'all') updateViewModeText();
         }
 
         function updateActionBar() {
@@ -573,37 +666,25 @@
                 quotaBar.style.width = `${percentage}%`;
                 
                 if (percentage >= 100) {
-                    quotaBar.classList.replace('bg-blue-600', 'bg-green-500');
-                    quotaBar.classList.replace('bg-yellow-500', 'bg-green-500');
+                    quotaBar.classList.replace('bg-blue-600', 'bg-green-500'); quotaBar.classList.replace('bg-yellow-500', 'bg-green-500');
                     document.getElementById('quotaText').classList.add('text-green-600');
                 } else if (percentage >= 80) {
-                    quotaBar.classList.replace('bg-blue-600', 'bg-yellow-500');
-                    quotaBar.classList.replace('bg-green-500', 'bg-yellow-500');
+                    quotaBar.classList.replace('bg-blue-600', 'bg-yellow-500'); quotaBar.classList.replace('bg-green-500', 'bg-yellow-500');
                     document.getElementById('quotaText').classList.remove('text-green-600');
                 } else {
-                    quotaBar.classList.replace('bg-green-500', 'bg-blue-600');
-                    quotaBar.classList.replace('bg-yellow-500', 'bg-blue-600');
+                    quotaBar.classList.replace('bg-green-500', 'bg-blue-600'); quotaBar.classList.replace('bg-yellow-500', 'bg-blue-600');
                     document.getElementById('quotaText').classList.remove('text-green-600');
                 }
             }
-            
             if (count > 0) { bar.classList.remove('translate-y-full'); } else { bar.classList.add('translate-y-full'); }
         }
 
-        // FUNGSI DOWNLOAD FILE TXT (DAFTAR FOTO TERPILIH)
         function downloadList() {
             if (appState.selectedIds.size === 0) return;
             const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
+            const vendor = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Studio';
             
-            // MENGAMBIL NAMA VENDOR DARI CONFIG_APP ATAU DEFAULT
-            const vendor = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Studio Foto';
-            
-            let textContent = `LIST FOTO PILIHAN KLIEN\n`;
-            textContent += `=======================\n`;
-            textContent += `Layanan : ${vendor}\n`;
-            textContent += `Klien   : ${appState.clientName || 'Klien'}\n`;
-            textContent += `Total   : ${selectedPhotos.length} Foto\n`;
-            textContent += `=======================\n\n`;
+            let textContent = `LIST FOTO PILIHAN KLIEN\n=======================\nLayanan : ${vendor}\nKlien   : ${appState.clientName || 'Klien'}\nTotal   : ${selectedPhotos.length} Foto\n=======================\n\n`;
             
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
@@ -611,61 +692,40 @@
                 if (note) textContent += `   Catatan: ${note}\n`;
             });
             
-            textContent += `\n=======================\n`;
-            textContent += `Dicetak otomatis melalui ${vendor} Portal\n`;
+            textContent += `\n=======================\nDicetak otomatis melalui ${vendor} Portal\n`;
 
             const blob = new Blob([textContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            
+            const a = document.createElement('a'); a.href = url;
             const safeName = appState.clientName ? appState.clientName.replace(/\s+/g, '_') : 'klien';
             a.download = `List_Pilihan_${safeName}.txt`;
-            
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            showAlert('File daftar foto berhasil didownload (.txt)', 'success');
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         }
 
-        // FUNGSI WHATSAPP DIRECT (Kirim Langsung)
         function copyToClipboard() {
             if (appState.selectedIds.size === 0) return;
-            
             const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
-            const vendor = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Studio Foto';
-            
-            // Mengambil nomor WA dari pengaturan.js
+            const vendor = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Studio';
             const waNumber = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.whatsappAdmin) ? CONFIG_APP.whatsappAdmin : '';
             
-            // Menyusun Teks Pesan
             let textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${selectedPhotos.length} Foto\n\n`;
-            
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
                 textToCopy += `${index + 1}. ${p.name}\n`;
                 if (note) textToCopy += `   _Catatan: ${note}_\n`;
             });
-            
             textToCopy += `\n_Dikirim dari ${vendor} Portal_`;
 
-            // Jika nomor WA di-setting, langsung BUKA WHATSAPP
             if (waNumber) {
                 const encodedText = encodeURIComponent(textToCopy);
-                const waUrl = `https://wa.me/${waNumber}?text=${encodedText}`;
-                window.open(waUrl, '_blank');
+                window.open(`https://wa.me/${waNumber}?text=${encodedText}`, '_blank');
             } else {
-                // Jika nomor WA KOSONG, kembali ke mode Salin Manual (Copy)
                 const textArea = document.createElement("textarea");
-                textArea.value = textToCopy; 
-                textArea.style.position = "fixed"; textArea.style.top = "-9999px"; textArea.style.left = "-9999px";
+                textArea.value = textToCopy; textArea.style.position = "fixed"; textArea.style.top = "-9999px"; textArea.style.left = "-9999px";
                 document.body.appendChild(textArea); textArea.focus(); textArea.select();
-                
                 try {
-                    if (document.execCommand('copy')) showAlert('List foto disalin! Silahkan paste di WhatsApp.', 'success');
-                } catch (err) { showAlert('Perangkat Anda tidak mendukung salin otomatis.', 'error'); }
+                    if (document.execCommand('copy')) showAlert(TRANSLATIONS[appState.lang].alertCopy, 'success');
+                } catch (err) { showAlert('Error copying text.', 'error'); }
                 document.body.removeChild(textArea);
             }
         }
@@ -677,9 +737,7 @@
             document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
             
             updateLightboxSelectBtn();
-            
-            lightbox.classList.remove('hidden'); 
-            setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
+            lightbox.classList.remove('hidden'); setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
             document.body.style.overflow = 'hidden';
         }
 
@@ -687,10 +745,7 @@
             const lightbox = document.getElementById('lightbox');
             lightbox.classList.replace('opacity-100', 'opacity-0');
             setTimeout(() => { 
-                lightbox.classList.add('hidden'); 
-                currentZoomPhoto = null;
-                document.body.style.overflow = 'auto';
-                renderGallery(); 
+                lightbox.classList.add('hidden'); currentZoomPhoto = null; document.body.style.overflow = 'auto'; renderGallery(); 
             }, 300);
         }
 
@@ -699,37 +754,30 @@
 
         function toggleLightboxSelect() {
             if (!currentZoomPhoto) return;
-            const globalIndex = appState.photos.findIndex(p => p.id === currentZoomPhoto.id);
-            
             if (appState.selectedIds.has(currentZoomPhoto.id)) {
-                appState.selectedIds.delete(currentZoomPhoto.id);
-                delete appState.notes[currentZoomPhoto.id]; 
+                appState.selectedIds.delete(currentZoomPhoto.id); delete appState.notes[currentZoomPhoto.id]; 
             } else {
                 if (appState.kuota !== null && appState.selectedIds.size >= appState.kuota) {
-                    return showAlert(`Batas maksimal ${appState.kuota} foto telah tercapai!`, 'error');
+                    return showAlert(TRANSLATIONS[appState.lang].alertLimit, 'error');
                 }
                 appState.selectedIds.add(currentZoomPhoto.id);
             }
-            updateLightboxSelectBtn();
-            updateActionBar();
-            saveProgress(); 
-            if (appState.viewMode === 'all') {
-                document.getElementById('viewModeBtn').innerHTML = `<i class="fa-solid fa-filter"></i> Lihat Pilihan (${appState.selectedIds.size})`;
-            }
+            updateLightboxSelectBtn(); updateActionBar(); saveProgress(); 
+            if (appState.viewMode === 'all') updateViewModeText();
         }
 
         function updateLightboxSelectBtn() {
             const btn = document.getElementById('lightboxSelectBtn');
             const noteArea = document.getElementById('lightboxNote');
+            const langData = TRANSLATIONS[appState.lang];
             const isSelected = appState.selectedIds.has(currentZoomPhoto.id);
 
             if (isSelected) {
-                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Terpilih';
+                btn.innerHTML = `<i class="fa-solid fa-check mr-2"></i> <span id="btnSelectText">${langData.btnSelected}</span>`;
                 btn.className = "px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg w-full sm:w-auto";
-                noteArea.classList.remove('hidden');
-                noteArea.value = appState.notes[currentZoomPhoto.id] || '';
+                noteArea.classList.remove('hidden'); noteArea.value = appState.notes[currentZoomPhoto.id] || '';
             } else {
-                btn.innerHTML = '<i class="fa-regular fa-square-check mr-2"></i> Pilih Foto Ini';
+                btn.innerHTML = `<i class="fa-regular fa-square-check mr-2"></i> <span id="btnSelectText">${langData.btnSelect}</span>`;
                 btn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto";
                 noteArea.classList.add('hidden');
             }
@@ -738,11 +786,8 @@
         function saveNote() {
             if (!currentZoomPhoto) return;
             const noteText = document.getElementById('lightboxNote').value.trim();
-            if (noteText) {
-                appState.notes[currentZoomPhoto.id] = noteText;
-            } else {
-                delete appState.notes[currentZoomPhoto.id];
-            }
+            if (noteText) appState.notes[currentZoomPhoto.id] = noteText;
+            else delete appState.notes[currentZoomPhoto.id];
             saveProgress(); 
         }
     </script>
