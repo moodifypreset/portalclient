@@ -630,28 +630,44 @@
             showAlert('File daftar foto berhasil didownload (.txt)', 'success');
         }
 
-        // SALIN WHATSAPP MENGAMBIL CATATAN DAN NAMA VENDOR
+        // FUNGSI WHATSAPP DIRECT (Kirim Langsung)
         function copyToClipboard() {
             if (appState.selectedIds.size === 0) return;
+            
             const selectedPhotos = appState.photos.filter(p => appState.selectedIds.has(p.id));
             const vendor = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Studio Foto';
             
-            const listText = selectedPhotos.map(p => {
+            // Mengambil nomor WA dari pengaturan.js
+            const waNumber = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.whatsappAdmin) ? CONFIG_APP.whatsappAdmin : '';
+            
+            // Menyusun Teks Pesan
+            let textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${selectedPhotos.length} Foto\n\n`;
+            
+            selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
-                return note ? `${p.name} (Catatan: ${note})` : p.name;
-            }).join('\n');
+                textToCopy += `${index + 1}. ${p.name}\n`;
+                if (note) textToCopy += `   _Catatan: ${note}_\n`;
+            });
             
-            let textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${selectedPhotos.length} Foto\n\n${listText}\n\n_Segera diproses, terima kasih!_`;
-            
-            const textArea = document.createElement("textarea");
-            textArea.value = textToCopy; 
-            textArea.style.position = "fixed"; textArea.style.top = "-9999px"; textArea.style.left = "-9999px";
-            document.body.appendChild(textArea); textArea.focus(); textArea.select();
-            
-            try {
-                if (document.execCommand('copy')) showAlert('List foto berhasil disalin! Silahkan tempel di chat WhatsApp.', 'success');
-            } catch (err) { showAlert('Perangkat Anda tidak mendukung salin otomatis.', 'error'); }
-            document.body.removeChild(textArea);
+            textToCopy += `\n_Dikirim dari ${vendor} Portal_`;
+
+            // Jika nomor WA di-setting, langsung BUKA WHATSAPP
+            if (waNumber) {
+                const encodedText = encodeURIComponent(textToCopy);
+                const waUrl = `https://wa.me/${waNumber}?text=${encodedText}`;
+                window.open(waUrl, '_blank');
+            } else {
+                // Jika nomor WA KOSONG, kembali ke mode Salin Manual (Copy)
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy; 
+                textArea.style.position = "fixed"; textArea.style.top = "-9999px"; textArea.style.left = "-9999px";
+                document.body.appendChild(textArea); textArea.focus(); textArea.select();
+                
+                try {
+                    if (document.execCommand('copy')) showAlert('List foto disalin! Silahkan paste di WhatsApp.', 'success');
+                } catch (err) { showAlert('Perangkat Anda tidak mendukung salin otomatis.', 'error'); }
+                document.body.removeChild(textArea);
+            }
         }
 
         function openLightbox(index) {
