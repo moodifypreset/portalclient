@@ -1,18 +1,32 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Client Portal</title>
-    <!-- Konfigurasi Tailwind untuk mengaktifkan Dark Mode via Class -->
+    
+    <!-- KONFIGURASI TAILWIND -->
     <script>
         tailwind = {
             config: {
-                darkMode: 'class',
+                darkMode: 'class', // Wajib diset 'class' agar tidak ikut tema OS
             }
         }
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SCRIPT PEMAKSA TEMA TERANG (LIGHT MODE DEFAULT) -->
+    <!-- Diletakkan di atas agar berjalan SEBELUM halaman di-render -->
+    <script>
+        // Paksa ke Light Mode kecuali klien pernah secara sadar mengklik tombol bulan
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    </script>
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -66,7 +80,7 @@
 
     <main id="clientView" class="flex-grow w-full">
         
-        <!-- KARTU SAPAAN (Eksklusif) -->
+        <!-- KARTU SAPAAN -->
         <div id="greetingSection" class="hidden max-w-6xl w-full mx-auto px-4 pt-8">
             <div class="bg-slate-900 dark:bg-slate-800 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-slate-800 dark:border-slate-700">
                 <div class="absolute -right-10 -top-10 text-slate-800 dark:text-slate-700 opacity-50 transform rotate-12 pointer-events-none">
@@ -261,7 +275,6 @@
             viewMode: 'all', sortOrder: 'default', lang: 'id'
         };
 
-        // KAMUS BAHASA (Diperbarui untuk fitur {vendor})
         const TRANSLATIONS = {
             id: {
                 subtitle: "Alat Seleksi Aman",
@@ -339,7 +352,7 @@
             }
         };
 
-        // --- SISTEM DARK MODE (DIPERBAIKI: Default ke Light Mode) ---
+        // --- SISTEM DARK MODE ---
         function toggleDarkMode() {
             const html = document.documentElement;
             html.classList.toggle('dark');
@@ -350,6 +363,7 @@
 
         function updateDarkModeIcon(isDark) {
             const btn = document.getElementById('darkModeBtn');
+            if (!btn) return;
             if (isDark) {
                 btn.innerHTML = '<i class="fa-solid fa-sun text-yellow-400"></i>';
             } else {
@@ -357,26 +371,12 @@
             }
         }
 
-        // Inisialisasi Tema (Paksa default ke Light kecuali klien sudah pernah pilih Dark)
-        function initTheme() {
-            if (localStorage.theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                updateDarkModeIcon(true);
-            } else {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-                updateDarkModeIcon(false);
-            }
-        }
-        initTheme(); // Jalankan saat file di-load
-
         function toggleLanguage() {
             appState.lang = appState.lang === 'id' ? 'en' : 'id';
             document.getElementById('langDisplay').textContent = appState.lang === 'id' ? 'EN' : 'ID';
             applyTranslations();
         }
 
-        // Fungsi applyTranslations() diperbarui untuk membaca {vendor}
         function applyTranslations() {
             const langData = TRANSLATIONS[appState.lang];
             const vendorName = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Studio Foto';
@@ -384,9 +384,7 @@
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (langData[key]) {
-                    // Inject nama vendor ke dalam teks
                     let textToDisplay = langData[key].replace('{vendor}', vendorName);
-                    
                     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                         el.placeholder = textToDisplay;
                     } else {
@@ -405,6 +403,9 @@
         let hasSeenTutorial = false; 
 
         document.addEventListener("DOMContentLoaded", () => {
+            // Update ikon tema saat halaman selesai dimuat berdasarkan class di HTML
+            updateDarkModeIcon(document.documentElement.classList.contains('dark'));
+
             if (typeof CONFIG_APP !== 'undefined') {
                 document.getElementById('footerVendorName').textContent = CONFIG_APP.namaVendor || 'Studio Foto';
                 document.getElementById('pageTitle').textContent = `Client Portal - ${CONFIG_APP.namaVendor}`;
@@ -467,7 +468,6 @@
             applyTranslations(); 
         });
 
-        // FUNGSI MEMUNCULKAN PANDUAN (Bisa Manual Kapan Saja)
         function showTutorial(forceManual = false) {
             if (hasSeenTutorial && !forceManual) return;
             const modal = document.getElementById('tutorialModal');
