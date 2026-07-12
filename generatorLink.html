@@ -121,17 +121,15 @@
             let finalUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
             let params = [];
             
-            // Parameter 'n' untuk Nama
-            if (clientName) {
+            // JIKA NAMA DIISI: Masukkan ke URL. 
+            // JIKA KOSONG: Abaikan agar URL lebih pendek.
+            if (clientName !== "") {
                 const cleanName = clientName.replace(/\s+/g, '-');
                 params.push(`n=${encodeURIComponent(cleanName)}`);
-            } else {
-                params.push(`n=Klien-X-Studio`);
             }
 
             // Parameter 'k' untuk Kuota (Di-Hash menggunakan Base64)
             if (kuota && parseInt(kuota) > 0) {
-                // Contoh: 100 menjadi "MTAw". Tanda = dihilangkan agar URL lebih bersih
                 const hashedKuota = btoa(kuota.toString()).replace(/=/g, '');
                 params.push(`k=${hashedKuota}`);
             }
