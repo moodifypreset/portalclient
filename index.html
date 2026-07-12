@@ -35,7 +35,6 @@
                 </div>
             </div>
             
-            <!-- Tombol Ganti Bahasa -->
             <button onclick="toggleLanguage()" class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-1.5 px-3 rounded-lg text-sm transition shadow-sm border border-slate-200">
                 <i class="fa-solid fa-globe text-blue-600"></i> <span id="langDisplay">EN</span>
             </button>
@@ -99,6 +98,7 @@
                         <p class="text-sm text-slate-500" data-i18n="galleryDesc">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
+                        <!-- Dropdown Filter -->
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fa-solid fa-arrow-down-a-z text-slate-400 text-sm"></i>
@@ -113,6 +113,11 @@
                                 <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
                             </div>
                         </div>
+
+                        <!-- TOMBOL ACAK LAGI (Disembunyikan secara default) -->
+                        <button id="btnReshuffle" onclick="applySort('random')" class="hidden text-sm bg-indigo-100 text-indigo-700 py-2 px-3 rounded-lg font-bold transition shadow-sm hover:bg-indigo-200 border border-indigo-200">
+                            <i class="fa-solid fa-dice"></i> <span class="hidden sm:inline ml-1" data-i18n="btnReshuffle">Acak Lagi</span>
+                        </button>
 
                         <button onclick="toggleViewMode()" id="viewModeBtn" class="text-sm bg-slate-800 text-white py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 shadow-sm hover:bg-slate-700">
                             <i class="fa-solid fa-filter"></i> <span id="btnViewText">Lihat Pilihan</span> (0)
@@ -179,7 +184,7 @@
                 </li>
                 <li class="flex items-start gap-4">
                     <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">2</div>
-                    <p class="text-sm text-slate-600 pt-1" data-i18n="tut2"><strong>Zoom & Catatan:</strong> Klik ikon <i class="fa-solid fa-magnifying-glass-plus text-slate-800 mx-1"></i> untuk memperbesar gambar & menambahkan instruksi edit (opsional).</p>
+                    <p class="text-sm text-slate-600 pt-1" data-i18n="tut2"><strong>Zoom & Catatan:</strong> Klik ikon <i class="fa-solid fa-magnifying-glass-plus text-slate-800 mx-1"></i> untuk memperbesar gambar & menambahkan instruksi edit.</p>
                 </li>
                 <li class="flex items-start gap-4">
                     <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">3</div>
@@ -237,6 +242,7 @@
                 galleryDesc: "Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.",
                 sortDefault: "Urutan Asli",
                 sortRandom: "Acak (Random)",
+                btnReshuffle: "Acak Lagi",
                 btnViewSel: "Lihat Pilihan",
                 btnViewAll: "Lihat Semua Foto",
                 quotaFooter: "Kuota Paket Anda",
@@ -272,6 +278,7 @@
                 galleryDesc: "Click an image to select. Click 🔍 to zoom & add notes.",
                 sortDefault: "Original Order",
                 sortRandom: "Randomize",
+                btnReshuffle: "Shuffle Again",
                 btnViewSel: "View Selection",
                 btnViewAll: "View All Photos",
                 quotaFooter: "Your Package Quota",
@@ -295,7 +302,6 @@
             }
         };
 
-        // FUNGSI GANTI BAHASA
         function toggleLanguage() {
             appState.lang = appState.lang === 'id' ? 'en' : 'id';
             document.getElementById('langDisplay').textContent = appState.lang === 'id' ? 'EN' : 'ID';
@@ -384,7 +390,7 @@
                 handleSwipeGesture();
             }, { passive: true });
             
-            applyTranslations(); // Set default language texts
+            applyTranslations(); 
         });
 
         function showTutorial() {
@@ -508,6 +514,16 @@
 
         function applySort(order) {
             appState.sortOrder = order;
+            
+            // Logika menampilkan tombol Acak Lagi
+            const btnReshuffle = document.getElementById('btnReshuffle');
+            if (order === 'random') {
+                btnReshuffle.classList.remove('hidden');
+                document.getElementById('sortDropdown').value = 'random'; // Memastikan dropdown tetap di pilihan random
+            } else {
+                btnReshuffle.classList.add('hidden');
+            }
+
             if (order === 'default') {
                 appState.photos = [...appState.originalPhotos];
             } else if (order === 'asc') {
@@ -524,6 +540,13 @@
             }
             appState.currentPage = 1;
             renderGallery();
+            
+            // Memberikan feedback visual jika tombol acak lagi ditekan
+            if(order === 'random') {
+                const icon = btnReshuffle.querySelector('i');
+                icon.classList.add('fa-spin');
+                setTimeout(() => icon.classList.remove('fa-spin'), 500);
+            }
         }
 
         function updateViewModeText() {
