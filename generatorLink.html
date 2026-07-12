@@ -50,7 +50,7 @@
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <i class="fa-brands fa-whatsapp text-slate-400"></i>
                         </div>
-                        <input type="number" id="clientPhone" placeholder="Cth: 62812345..."
+                        <input type="number" id="clientPhone" placeholder="Cth: 08123456..."
                             class="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-600 outline-none transition text-sm">
                     </div>
                 </div>
@@ -191,20 +191,29 @@
             });
         }
 
-        // FUNGSI MEMBUKA WHATSAPP OTOMATIS
+        // FUNGSI MEMBUKA WHATSAPP OTOMATIS (DENGAN AUTO-CONVERT NOMOR)
         function sendToClientWA() {
             const finalUrl = document.getElementById('finalUrl').value;
             const clientName = document.getElementById('clientName').value.trim();
-            const phone = document.getElementById('clientPhone').value.replace(/[^0-9]/g, ''); // Bersihkan jika ada spasi/plus
             
+            // Ambil nomor WA dan bersihkan dari karakter selain angka
+            let rawPhone = document.getElementById('clientPhone').value.replace(/[^0-9]/g, ''); 
+            
+            // LOGIKA AUTO-CONVERT NOMOR INDONESIA
+            let finalPhone = rawPhone;
+            // Jika nomor dimulai dengan angka '0', ubah menjadi '62'
+            if (finalPhone.startsWith('0')) {
+                finalPhone = '62' + finalPhone.substring(1);
+            }
+
             let greeting = clientName ? `Halo Kak ${clientName}, ` : `Halo Kak, `;
             let message = `${greeting}Berikut adalah galeri foto eksklusif untuk diseleksi:\n\n${finalUrl}\n\nSilakan klik link di atas. Terima kasih!`;
             
             let waUrl = '';
             
-            if (phone) {
-                // Jika nomor diisi, kirim langsung ke nomor tersebut
-                waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            if (finalPhone) {
+                // Jika nomor diisi, kirim langsung ke nomor tersebut menggunakan API yang lebih stabil
+                waUrl = `https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`;
             } else {
                 // Jika kosong, buka WhatsApp biasa (minta pilih kontak)
                 waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
