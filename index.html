@@ -446,7 +446,7 @@
                 document.getElementById('headerVendorName').textContent = CONFIG_APP.namaVendor || 'Studio Foto';
             }
 
-            const urlParams = newSearchParams(window.location.search);
+            const urlParams = new URLSearchParams(window.location.search);
             const urlName = urlParams.get('n');
             const urlKuota = urlParams.get('k');
             const autoId = urlParams.get('i');
