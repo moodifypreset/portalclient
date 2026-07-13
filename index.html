@@ -32,18 +32,48 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         .photo-card { transition: all 0.2s ease-in-out; }
         .photo-card:active { transform: scale(0.97); }
         .selected-overlay { opacity: 0; transition: opacity 0.2s ease; }
         .photo-card.selected .selected-overlay { opacity: 1; }
-        .photo-card.selected img { transform: scale(0.95); border-radius: 0.5rem; }
+        
+        @keyframes checkPop {
+            0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+            50% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .photo-card.selected .check-badge {
+            animation: checkPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        @keyframes breathing {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(0.92); }
+            100% { transform: scale(0.95); }
+        }
+        .photo-card.selected img {
+            border-radius: 0.5rem;
+            animation: breathing 3s infinite ease-in-out; 
+            box-shadow: 0 0 0 3px #3b82f6; 
+        }
+
+        /* Triangle untuk tooltip */
+        .tooltip-triangle {
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            width: 10px;
+            height: 10px;
+            background-color: #2563eb; /* blue-600 */
+        }
     </style>
     
     <script src="pengaturan.js"></script>
 </head>
 <body class="text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 pb-32 flex flex-col min-h-screen">
 
-    <!-- HEADER -->
     <header class="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40 transition-colors duration-300">
         <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -142,6 +172,19 @@
                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="galleryDesc">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
+                        
+                        <!-- TOMBOL GRID DENGAN ANIMASI BALON TOOLTIP -->
+                        <div class="relative">
+                            <button onclick="hideTooltip('gridTooltip'); toggleGridSize()" class="text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 py-2 px-3 rounded-lg font-medium cursor-pointer shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition" title="Ubah Ukuran Grid">
+                                <i class="fa-solid fa-table-cells-large"></i>
+                            </button>
+                            <div id="gridTooltip" class="hidden opacity-0 absolute -top-12 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg animate-bounce shadow-lg pointer-events-none whitespace-nowrap z-50 transition-all duration-300">
+                                <span data-i18n="gridTip">Ubah Baris Foto</span>
+                                <div class="tooltip-triangle"></div>
+                            </div>
+                        </div>
+
+                        <!-- DROPDOWN URUTAN -->
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fa-solid fa-arrow-down-a-z text-slate-400 text-sm"></i>
@@ -157,9 +200,16 @@
                             </div>
                         </div>
 
-                        <button id="btnReshuffle" onclick="applySort('random')" class="hidden text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 px-3 rounded-lg font-bold transition shadow-sm hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
-                            <i class="fa-solid fa-dice"></i> <span class="hidden sm:inline ml-1" data-i18n="btnReshuffle">Acak Lagi</span>
-                        </button>
+                        <!-- TOMBOL ACAK LAGI DENGAN ANIMASI BALON TOOLTIP -->
+                        <div class="relative">
+                            <button id="btnReshuffle" onclick="hideTooltip('reshuffleTooltip'); applySort('random')" class="hidden text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 px-3 rounded-lg font-bold transition shadow-sm hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
+                                <i class="fa-solid fa-dice"></i> <span class="hidden sm:inline ml-1" data-i18n="btnReshuffle">Acak Lagi</span>
+                            </button>
+                            <div id="reshuffleTooltip" class="hidden opacity-0 absolute -top-12 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg animate-bounce shadow-lg pointer-events-none whitespace-nowrap z-50 transition-all duration-300">
+                                <span data-i18n="reshuffleTip">Tekan ini untuk acak foto</span>
+                                <div class="tooltip-triangle"></div>
+                            </div>
+                        </div>
 
                         <button onclick="toggleViewMode()" id="viewModeBtn" class="text-sm bg-slate-800 dark:bg-slate-700 text-white py-2 px-4 rounded-lg font-medium transition flex items-center gap-2 shadow-sm hover:bg-slate-700 dark:hover:bg-slate-600 border border-transparent dark:border-slate-600">
                             <i class="fa-solid fa-filter"></i> <span id="btnViewText">Lihat Pilihan</span> (0)
@@ -167,7 +217,7 @@
                     </div>
                 </div>
                 
-                <div id="photoGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8"></div>
+                <div id="photoGrid" class="mb-8 transition-all duration-300"></div>
                 <div id="paginationContainer" class="flex justify-center items-center gap-3 mt-10 pb-8 hidden"></div>
             </div>
         </div>
@@ -177,7 +227,6 @@
         <p class="text-sm text-slate-400">&copy; <script>document.write(new Date().getFullYear())</script> Layanan eksklusif oleh <span id="footerVendorName" class="font-medium text-slate-500 dark:text-slate-300">Portal</span>.</p>
     </footer>
 
-    <!-- ACTION BAR -->
     <div id="actionBar" class="fixed bottom-0 left-0 w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.5)] transform translate-y-full transition-transform duration-300 z-50">
         <div id="quotaContainer" class="hidden w-full px-4 md:px-8 pt-3 pb-1 max-w-6xl mx-auto border-b border-slate-100 dark:border-slate-700">
             <div class="flex justify-between items-end mb-1.5">
@@ -212,7 +261,6 @@
         <span id="alertText" class="text-sm font-bold tracking-wide">Notifikasi</span>
     </div>
 
-    <!-- TUTORIAL MODAL (DIPERBARUI DENGAN INFO FILTER) -->
     <div id="tutorialModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-3xl max-w-md w-full p-8 shadow-2xl transform scale-95 transition-transform duration-300" id="tutorialContent">
             <div class="absolute top-4 right-4">
@@ -236,7 +284,7 @@
                 </li>
                 <li class="flex items-start gap-4">
                     <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">3</div>
-                    <p class="text-sm text-slate-600 dark:text-slate-300 pt-1" data-i18n="tut4"><strong>Cek & Urutan:</strong> Gunakan menu drop-down untuk mengacak foto, dan klik tombol <em>'Lihat Pilihan'</em> untuk meninjau ulang foto yang sudah dipilih.</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 pt-1" data-i18n="tut4"><strong>Tampilan & Urutan:</strong> Klik ikon <i class="fa-solid fa-table-cells-large text-slate-800 dark:text-white mx-1"></i> untuk mengubah jumlah baris grid foto. Gunakan dropdown untuk melihat foto dalam <em>'Urutan Asli'</em> (berdasarkan jam foto) atau <em>'Acak'</em>. Klik tombol <em>'Lihat Pilihan'</em> untuk meninjau foto yang sudah dipilih.</p>
                 </li>
                 <li class="flex items-start gap-4">
                     <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">4</div>
@@ -278,7 +326,8 @@
             photos: [], originalPhotos: [], folders: [], folderHistory: [],
             selectedMap: new Map(), 
             notes: {}, currentPage: 1, kuota: null, 
-            viewMode: 'all', sortOrder: 'default', lang: 'id'
+            viewMode: 'all', sortOrder: 'default', lang: 'id',
+            gridMode: 2 
         };
 
         const TRANSLATIONS = {
@@ -310,7 +359,7 @@
                 tutDesc: "Ikuti panduan mudah ini untuk menyeleksi foto favorit Anda:",
                 tut1: "<strong>Pilih Foto:</strong> Klik (tap) langsung pada gambar foto untuk memilihnya.",
                 tut2: "<strong>Zoom & Catatan:</strong> Klik ikon <i class='fa-solid fa-magnifying-glass-plus text-slate-800 dark:text-white mx-1'></i> untuk memperbesar gambar & tambah instruksi edit.",
-                tut4: "<strong>Cek & Urutan:</strong> Gunakan menu drop-down untuk mengacak foto, dan klik tombol <em>'Lihat Pilihan'</em> untuk meninjau ulang foto yang sudah dipilih.",
+                tut4: "<strong>Tampilan & Urutan:</strong> Klik ikon <i class='fa-solid fa-table-cells-large text-slate-800 dark:text-white mx-1'></i> untuk mengubah jumlah baris grid foto. Gunakan dropdown untuk melihat foto dalam <em>'Urutan Asli'</em> (berdasarkan jam foto) atau <em>'Acak'</em>. Klik tombol <em>'Lihat Pilihan'</em> untuk meninjau foto yang sudah dipilih.",
                 tut3: "<strong>Kirim List:</strong> Jika sudah selesai, klik tombol Kirim WA atau Download di bagian bawah layar.",
                 btnTut: "Mengerti, Mulai Memilih!",
                 btnGuide: "Panduan",
@@ -320,7 +369,9 @@
                 notePlaceholder: "Catatan edit (opsional), misal: hapus jerawat...",
                 alertLimit: "Batas maksimal limit foto telah tercapai!",
                 alertEmpty: "Belum ada foto yang dipilih.",
-                alertCopy: "List foto disalin! Silahkan paste di WhatsApp."
+                alertCopy: "List foto disalin! Silahkan paste di WhatsApp.",
+                gridTip: "Ubah Baris Foto",
+                reshuffleTip: "Tekan ini untuk acak foto"
             },
             en: {
                 subtitle: "Secure Selection Tool",
@@ -350,7 +401,7 @@
                 tutDesc: "Follow these simple steps to select your favorite photos:",
                 tut1: "<strong>Select Photo:</strong> Click (tap) directly on the image to select it.",
                 tut2: "<strong>Zoom & Notes:</strong> Click the <i class='fa-solid fa-magnifying-glass-plus text-slate-800 dark:text-white mx-1'></i> icon to enlarge & add editing instructions.",
-                tut4: "<strong>Sort & Review:</strong> Use the dropdown to randomize photos, and click the <em>'View Selection'</em> button to review your chosen photos.",
+                tut4: "<strong>View & Sort:</strong> Click the <i class='fa-solid fa-table-cells-large text-slate-800 dark:text-white mx-1'></i> icon to change grid layout. Use the dropdown to view photos in <em>'Original Order'</em> or <em>'Random'</em>. Click <em>'View Selection'</em> to review your chosen photos.",
                 tut3: "<strong>Send List:</strong> When finished, click the Send via WA or Download button at the bottom.",
                 btnTut: "Got it, Start Selecting!",
                 btnGuide: "Guide",
@@ -360,7 +411,9 @@
                 notePlaceholder: "Edit notes (optional), e.g., remove blemishes...",
                 alertLimit: "Maximum photo limit has been reached!",
                 alertEmpty: "No photos selected yet.",
-                alertCopy: "List copied! Please paste it in WhatsApp."
+                alertCopy: "List copied! Please paste it in WhatsApp.",
+                gridTip: "Change Grid Rows",
+                reshuffleTip: "Click to reshuffle"
             }
         };
 
@@ -412,6 +465,7 @@
         let touchstartX = 0;
         let touchendX = 0;
         let hasSeenTutorial = false; 
+        let tooltipTimeout;
 
         document.addEventListener("DOMContentLoaded", () => {
             updateDarkModeIcon(document.documentElement.classList.contains('dark'));
@@ -475,6 +529,44 @@
             applyTranslations(); 
         });
 
+        // FUNGSI ANIMASI BALON TOOLTIP
+        function hideTooltip(id) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.replace('opacity-100', 'opacity-0');
+                setTimeout(() => el.classList.add('hidden'), 300);
+            }
+        }
+
+        function triggerTooltipsAnimation() {
+            clearTimeout(tooltipTimeout);
+            const gt = document.getElementById('gridTooltip');
+            const rt = document.getElementById('reshuffleTooltip');
+            
+            if(gt) { gt.classList.remove('hidden'); setTimeout(()=> gt.classList.replace('opacity-0', 'opacity-100'), 50); }
+            if(rt && document.getElementById('sortDropdown').value === 'random') { rt.classList.remove('hidden'); setTimeout(()=> rt.classList.replace('opacity-0', 'opacity-100'), 50); }
+            
+            // Auto hide tooltip dalam 8 detik agar tidak mengganggu
+            tooltipTimeout = setTimeout(() => {
+                hideTooltip('gridTooltip');
+                hideTooltip('reshuffleTooltip');
+            }, 8000);
+        }
+
+        function toggleGridSize() {
+            if (appState.gridMode === 2) {
+                appState.gridMode = 4;
+            } else if (appState.gridMode === 4) {
+                appState.gridMode = 6;
+            } else {
+                appState.gridMode = 2;
+            }
+            renderGallery();
+            
+            const lang = appState.lang === 'id' ? 'Tampilan: ' + appState.gridMode + ' Foto per baris' : 'View: ' + appState.gridMode + ' Photos per row';
+            showAlert(lang, 'success');
+        }
+
         function showTutorial(forceManual = false) {
             if (hasSeenTutorial && !forceManual) return;
             const modal = document.getElementById('tutorialModal');
@@ -496,6 +588,9 @@
             setTimeout(() => {
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
+                
+                // Panggil Animasi Balon setelah Panduan ditutup
+                triggerTooltipsAnimation();
             }, 300);
         }
 
@@ -575,7 +670,6 @@
             appState.folderId = targetFolderId;
             appState.currentPage = 1; 
             appState.viewMode = 'all';
-            document.getElementById('sortDropdown').value = 'default';
             
             const displayTitle = (targetFolderId === appState.rootFolderId) ? TRANSLATIONS[appState.lang].galleryTitle : folderName;
             document.getElementById('currentFolderDisplay').innerHTML = (targetFolderId === appState.rootFolderId) 
@@ -604,16 +698,23 @@
                     
                     appState.photos = photoFiles.map(f => ({ 
                         id: f.id, name: f.name, folderName: displayTitle,
-                        // OPTIMASI LOAD: Thumbnail diperkecil ke 500px agar load ratusan foto grid sangat cepat
                         url: f.thumbnailLink?.replace('=s220', '=s500'), 
                         fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') 
                     }));
                     appState.originalPhotos = [...appState.photos];
                     
                     renderFolders(); 
-                    renderGallery();
                     
-                    if (!overrideFolderId) { setTimeout(() => { showTutorial(false); }, 800); }
+                    // DEFAULT ACAK SAAT LOADING
+                    document.getElementById('sortDropdown').value = 'random';
+                    applySort('random');
+                    
+                    if (!overrideFolderId) { 
+                        setTimeout(() => { showTutorial(false); }, 800); 
+                    } else {
+                        // Jika pindah folder dan sudah pernah lihat tutorial, langsung trigger balon
+                        if(hasSeenTutorial) setTimeout(triggerTooltipsAnimation, 500);
+                    }
                 } else {
                     showAlert('Folder kosong atau hak akses bukan Publik.', 'error');
                     document.getElementById('loadingState').classList.add('hidden');
@@ -664,11 +765,14 @@
         function applySort(order) {
             appState.sortOrder = order;
             const btnReshuffle = document.getElementById('btnReshuffle');
+            const rtTooltip = document.getElementById('reshuffleTooltip');
+            
             if (order === 'random') {
                 btnReshuffle.classList.remove('hidden');
                 document.getElementById('sortDropdown').value = 'random'; 
             } else {
                 btnReshuffle.classList.add('hidden');
+                if(rtTooltip) hideTooltip('reshuffleTooltip'); // Sembunyikan balon jika bukan acak
             }
 
             if (order === 'default') {
@@ -727,8 +831,27 @@
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('loadingState').classList.remove('flex');
             document.getElementById('galleryContainer').classList.remove('hidden');
-            const grid = document.getElementById('photoGrid'); grid.innerHTML = '';
             
+            const grid = document.getElementById('photoGrid'); 
+            grid.innerHTML = '';
+            
+            let gridClasses = '';
+            let gapClass = '';
+            let isSmallGrid = appState.gridMode > 2;
+
+            if (appState.gridMode === 2) {
+                gridClasses = 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+                gapClass = 'gap-4 md:gap-6';
+            } else if (appState.gridMode === 4) {
+                gridClasses = 'grid-cols-4 md:grid-cols-5 lg:grid-cols-6';
+                gapClass = 'gap-2 md:gap-4';
+            } else if (appState.gridMode === 6) {
+                gridClasses = 'grid-cols-6 md:grid-cols-8 lg:grid-cols-10';
+                gapClass = 'gap-1.5 md:gap-3';
+            }
+            
+            grid.className = `grid ${gridClasses} ${gapClass} mb-8 transition-all duration-300`;
+
             const photosToProcess = appState.viewMode === 'selected' 
                 ? Array.from(appState.selectedMap.values()) 
                 : appState.photos;
@@ -740,32 +863,41 @@
             photosToShow.forEach((photo, index) => {
                 const globalIndex = appState.photos.findIndex(p => p.id === photo.id); 
                 const card = document.createElement('div');
-                card.className = `photo-card relative bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden aspect-square border-[3px] border-transparent shadow-sm hover:shadow-md ${appState.selectedMap.has(photo.id) ? 'selected border-slate-900 dark:border-blue-400' : ''}`;
+                card.className = `photo-card relative bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden aspect-square shadow-sm hover:shadow-md ${appState.selectedMap.has(photo.id) ? 'selected' : ''}`;
                 
                 const img = document.createElement('img');
-                img.src = photo.url; img.className = "w-full h-full object-cover cursor-pointer transition-transform duration-300"; img.loading = "lazy";
+                img.src = photo.url; 
+                img.className = "w-full h-full object-cover cursor-pointer transition-transform duration-300"; 
+                img.loading = "lazy";
                 img.onclick = () => toggleSelect(photo, card);
                 
                 const overlay = document.createElement('div');
-                overlay.className = "selected-overlay absolute inset-0 bg-slate-900/10 dark:bg-black/20 z-10 flex items-start justify-end p-3 pointer-events-none";
-                overlay.innerHTML = '<div class="bg-slate-900 dark:bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg"><i class="fa-solid fa-check"></i></div>';
+                overlay.className = "selected-overlay absolute inset-0 bg-slate-900/10 dark:bg-black/20 z-10 flex items-start justify-end p-2 pointer-events-none";
+                
+                const badgeSize = isSmallGrid ? 'w-5 h-5 text-[10px]' : 'w-8 h-8 text-sm';
+                overlay.innerHTML = `<div class="check-badge bg-blue-600 text-white ${badgeSize} rounded-full flex items-center justify-center shadow-lg"><i class="fa-solid fa-check"></i></div>`;
                 
                 if (appState.notes[photo.id]) {
                     const noteBadge = document.createElement('div');
-                    noteBadge.className = "note-badge absolute top-3 right-14 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs shadow-md z-20 pointer-events-none";
+                    const rightPos = isSmallGrid ? 'right-8' : 'right-12';
+                    noteBadge.className = `note-badge absolute top-2 ${rightPos} bg-yellow-500 text-white ${badgeSize} rounded-full flex items-center justify-center shadow-md z-20 pointer-events-none`;
                     noteBadge.innerHTML = '<i class="fa-solid fa-comment-dots"></i>';
                     overlay.appendChild(noteBadge);
                 }
 
                 const bottomArea = document.createElement('div');
-                bottomArea.className = "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 flex justify-between items-end z-20";
+                const bottomPad = isSmallGrid ? 'p-1.5 pt-4' : 'p-3 pt-8';
+                const textSize = isSmallGrid ? 'text-[9px]' : 'text-xs';
+                const btnSize = isSmallGrid ? 'w-5 h-5 text-[10px] rounded' : 'w-8 h-8 rounded-lg';
+
+                bottomArea.className = `absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent ${bottomPad} flex justify-between items-end z-20`;
                 
                 const nameText = document.createElement('p');
-                nameText.className = "text-white text-xs font-medium truncate drop-shadow-md w-3/4";
+                nameText.className = `text-white ${textSize} font-medium truncate drop-shadow-md w-3/4`;
                 nameText.textContent = photo.name;
 
                 const zoomBtn = document.createElement('button');
-                zoomBtn.className = "text-white bg-black/40 hover:bg-blue-600 rounded-lg w-8 h-8 flex items-center justify-center shadow-lg transition-colors";
+                zoomBtn.className = `text-white bg-black/40 hover:bg-blue-600 ${btnSize} flex items-center justify-center shadow-lg transition-colors`;
                 zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
                 
                 const targetIndex = appState.viewMode === 'selected' ? index : globalIndex;
@@ -816,13 +948,13 @@
             if (appState.selectedMap.has(photoObj.id)) {
                 appState.selectedMap.delete(photoObj.id); 
                 delete appState.notes[photoObj.id]; 
-                cardElement.classList.remove('selected', 'border-slate-900', 'dark:border-blue-400');
+                cardElement.classList.remove('selected');
             } else {
                 if (appState.kuota !== null && appState.selectedMap.size >= appState.kuota) {
                     return showAlert(TRANSLATIONS[appState.lang].alertLimit, 'error');
                 }
                 appState.selectedMap.set(photoObj.id, photoObj); 
-                cardElement.classList.add('selected', 'border-slate-900', 'dark:border-blue-400');
+                cardElement.classList.add('selected');
             }
             updateActionBar(); saveProgress();
             if (appState.viewMode === 'all') updateViewModeText();
@@ -905,7 +1037,6 @@
             }
         }
 
-        // OPTIMASI: FUNGSI PRE-LOADING GAMBAR MASA DEPAN
         function preloadNeighbors(currentIndex, photosArray) {
             if (currentIndex < photosArray.length - 1) {
                 const imgNext = new Image();
@@ -939,7 +1070,6 @@
                     imgEl.classList.remove('opacity-0', 'scale-95'); 
                     imgEl.classList.add('opacity-100', 'scale-100');
 
-                    // Panggil pre-loading foto selanjutnya agar tidak lag saat di-swipe
                     preloadNeighbors(currentZoomIndex, photosToProcess);
                 }, 200); 
 
@@ -957,7 +1087,6 @@
                 setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
                 document.body.style.overflow = 'hidden';
 
-                // Pre-loading untuk pertama kali dibuka
                 preloadNeighbors(currentZoomIndex, photosToProcess);
             }
         }
