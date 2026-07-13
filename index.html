@@ -121,7 +121,6 @@
             </div>
 
             <div id="galleryContainer" class="hidden">
-                <!-- FITUR BARU: NAVIGASI SUB-FOLDER -->
                 <div id="folderNavContainer" class="hidden mb-6 bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div class="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-700 pb-3">
                         <h4 class="font-bold text-slate-700 dark:text-slate-200 text-sm flex items-center">
@@ -208,12 +207,12 @@
         </div>
     </div>
 
-    <!-- ALERTS & MODALS -->
     <div id="customAlert" class="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-800 border border-transparent dark:border-slate-600 text-white px-6 py-4 rounded-xl shadow-2xl z-[99] flex items-center gap-3 transition-all duration-300 transform -translate-y-32 opacity-0 min-w-[300px] justify-center">
         <i id="alertIcon" class="fa-solid fa-circle-check text-green-400 text-lg"></i>
         <span id="alertText" class="text-sm font-bold tracking-wide">Notifikasi</span>
     </div>
 
+    <!-- TUTORIAL MODAL (DIPERBARUI DENGAN INFO FILTER) -->
     <div id="tutorialModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 px-4">
         <div class="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-3xl max-w-md w-full p-8 shadow-2xl transform scale-95 transition-transform duration-300" id="tutorialContent">
             <div class="absolute top-4 right-4">
@@ -224,9 +223,9 @@
                     <i class="fa-solid fa-lightbulb"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-slate-800 dark:text-white" data-i18n="tutTitle">Cara Memilih Foto</h3>
-                <p class="text-slate-500 dark:text-slate-400 text-sm mt-2" data-i18n="tutDesc">Ikuti 3 langkah mudah ini untuk memilih foto favorit Anda:</p>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-2" data-i18n="tutDesc">Ikuti panduan mudah ini untuk menyeleksi foto favorit Anda:</p>
             </div>
-            <ul class="space-y-5 mb-8">
+            <ul class="space-y-4 mb-8">
                 <li class="flex items-start gap-4">
                     <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">1</div>
                     <p class="text-sm text-slate-600 dark:text-slate-300 pt-1" data-i18n="tut1"><strong>Pilih Foto:</strong> Klik (tap) langsung pada gambar foto untuk memilihnya.</p>
@@ -237,6 +236,10 @@
                 </li>
                 <li class="flex items-start gap-4">
                     <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">3</div>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 pt-1" data-i18n="tut4"><strong>Cek & Urutan:</strong> Gunakan menu drop-down untuk mengacak foto, dan klik tombol <em>'Lihat Pilihan'</em> untuk meninjau ulang foto yang sudah dipilih.</p>
+                </li>
+                <li class="flex items-start gap-4">
+                    <div class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">4</div>
                     <p class="text-sm text-slate-600 dark:text-slate-300 pt-1" data-i18n="tut3"><strong>Kirim List:</strong> Jika sudah selesai, klik tombol Kirim WA atau Download di bagian bawah layar.</p>
                 </li>
             </ul>
@@ -246,6 +249,7 @@
         </div>
     </div>
 
+    <!-- LIGHTBOX ZOOM -->
     <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm touch-pan-y">
         <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
             <p id="lightboxTitle" class="text-white font-medium drop-shadow-md text-sm md:text-base ml-2">Photo Name</p>
@@ -269,11 +273,10 @@
     <script>
         const ITEMS_PER_PAGE = 200; 
         
-        // UPDATE ARSITEKTUR MEMORI (Mendukung Map untuk multi-folder)
         let appState = { 
             rootFolderId: null, folderId: null, clientName: '', 
             photos: [], originalPhotos: [], folders: [], folderHistory: [],
-            selectedMap: new Map(), // Menyimpan Full Object Foto
+            selectedMap: new Map(), 
             notes: {}, currentPage: 1, kuota: null, 
             viewMode: 'all', sortOrder: 'default', lang: 'id'
         };
@@ -304,9 +307,10 @@
                 btnDownload: "Download List",
                 btnWA: "Kirim WA",
                 tutTitle: "Cara Memilih Foto",
-                tutDesc: "Ikuti 3 langkah mudah ini untuk memilih foto favorit Anda:",
+                tutDesc: "Ikuti panduan mudah ini untuk menyeleksi foto favorit Anda:",
                 tut1: "<strong>Pilih Foto:</strong> Klik (tap) langsung pada gambar foto untuk memilihnya.",
                 tut2: "<strong>Zoom & Catatan:</strong> Klik ikon <i class='fa-solid fa-magnifying-glass-plus text-slate-800 dark:text-white mx-1'></i> untuk memperbesar gambar & tambah instruksi edit.",
+                tut4: "<strong>Cek & Urutan:</strong> Gunakan menu drop-down untuk mengacak foto, dan klik tombol <em>'Lihat Pilihan'</em> untuk meninjau ulang foto yang sudah dipilih.",
                 tut3: "<strong>Kirim List:</strong> Jika sudah selesai, klik tombol Kirim WA atau Download di bagian bawah layar.",
                 btnTut: "Mengerti, Mulai Memilih!",
                 btnGuide: "Panduan",
@@ -343,9 +347,10 @@
                 btnDownload: "Download List",
                 btnWA: "Send via WA",
                 tutTitle: "How to Select Photos",
-                tutDesc: "Follow these 3 simple steps to select your favorite photos:",
+                tutDesc: "Follow these simple steps to select your favorite photos:",
                 tut1: "<strong>Select Photo:</strong> Click (tap) directly on the image to select it.",
                 tut2: "<strong>Zoom & Notes:</strong> Click the <i class='fa-solid fa-magnifying-glass-plus text-slate-800 dark:text-white mx-1'></i> icon to enlarge & add editing instructions.",
+                tut4: "<strong>Sort & Review:</strong> Use the dropdown to randomize photos, and click the <em>'View Selection'</em> button to review your chosen photos.",
                 tut3: "<strong>Send List:</strong> When finished, click the Send via WA or Download button at the bottom.",
                 btnTut: "Got it, Start Selecting!",
                 btnGuide: "Guide",
@@ -497,14 +502,13 @@
         function handleSwipeGesture() {
             const minSwipeDistance = 50; 
             if (touchendX < touchstartX - minSwipeDistance) {
-                if (currentZoomIndex < appState.photos.length - 1) nextPhoto();
+                if (currentZoomIndex < (appState.viewMode === 'selected' ? appState.selectedMap.size : appState.photos.length) - 1) nextPhoto();
             }
             if (touchendX > touchstartX + minSwipeDistance) {
                 if (currentZoomIndex > 0) prevPhoto();
             }
         }
 
-        // SISTEM PENYIMPANAN BARU (Berdasarkan Root Folder)
         function saveProgress() {
             if (!appState.rootFolderId) return;
             const dataToSave = { 
@@ -547,7 +551,6 @@
             return url.match(/id=([a-zA-Z0-9-_]+)/)?.[1] || null;
         }
 
-        // FUNGSI LOAD API YANG DIPERBARUI (Mendukung Sub-Folder)
         async function loadFromDrive(overrideFolderId = null, folderName = null, isNavigatingBack = false) {
             if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey) return showAlert('Sistem belum dikonfigurasi.', 'error');
             
@@ -560,7 +563,7 @@
                 
                 appState.rootFolderId = targetFolderId;
                 appState.folderHistory = [];
-                loadProgress(appState.rootFolderId); // Load memori yang pernah disimpan
+                loadProgress(appState.rootFolderId); 
                 document.getElementById('inputSection').classList.add('hidden');
             } else {
                 if (!isNavigatingBack) {
@@ -574,7 +577,6 @@
             appState.viewMode = 'all';
             document.getElementById('sortDropdown').value = 'default';
             
-            // Set Judul Folder Saat Ini
             const displayTitle = (targetFolderId === appState.rootFolderId) ? TRANSLATIONS[appState.lang].galleryTitle : folderName;
             document.getElementById('currentFolderDisplay').innerHTML = (targetFolderId === appState.rootFolderId) 
                 ? displayTitle 
@@ -586,7 +588,6 @@
             
             try {
                 let fetchedFiles = []; let nextPageToken = "";
-                // Mengambil File & Folder dari API
                 const query = encodeURIComponent(`'${targetFolderId}' in parents and trashed=false`);
                 do {
                     let apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=nextPageToken,files(id,name,mimeType,thumbnailLink)&key=${CONFIG_APP.googleApiKey}&pageSize=1000`;
@@ -598,13 +599,13 @@
                 } while (nextPageToken);
 
                 if (fetchedFiles.length > 0 || appState.folderHistory.length > 0) {
-                    // Memisahkan Folder dan Foto
                     appState.folders = fetchedFiles.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
                     let photoFiles = fetchedFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && f.thumbnailLink);
                     
                     appState.photos = photoFiles.map(f => ({ 
                         id: f.id, name: f.name, folderName: displayTitle,
-                        url: f.thumbnailLink?.replace('=s220', '=s800'), 
+                        // OPTIMASI LOAD: Thumbnail diperkecil ke 500px agar load ratusan foto grid sangat cepat
+                        url: f.thumbnailLink?.replace('=s220', '=s500'), 
                         fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') 
                     }));
                     appState.originalPhotos = [...appState.photos];
@@ -623,7 +624,6 @@
             }
         }
 
-        // RENDER UI SUB-FOLDER
         function renderFolders() {
             const container = document.getElementById('folderNavContainer');
             const grid = document.getElementById('folderGrid');
@@ -711,7 +711,7 @@
             if (appState.viewMode === 'all') {
                 if (appState.selectedMap.size === 0) return showAlert(TRANSLATIONS[appState.lang].alertEmpty, 'error');
                 appState.viewMode = 'selected';
-                document.getElementById('folderNavContainer').classList.add('hidden'); // Sembunyikan folder saat mode terpilih
+                document.getElementById('folderNavContainer').classList.add('hidden'); 
             } else {
                 appState.viewMode = 'all';
                 if (appState.folders.length > 0 || appState.folderHistory.length > 0) {
@@ -729,7 +729,6 @@
             document.getElementById('galleryContainer').classList.remove('hidden');
             const grid = document.getElementById('photoGrid'); grid.innerHTML = '';
             
-            // JIKA VIEW SELECTED: Tampilkan seluruh foto terpilih dari SEMUA folder
             const photosToProcess = appState.viewMode === 'selected' 
                 ? Array.from(appState.selectedMap.values()) 
                 : appState.photos;
@@ -745,7 +744,6 @@
                 
                 const img = document.createElement('img');
                 img.src = photo.url; img.className = "w-full h-full object-cover cursor-pointer transition-transform duration-300"; img.loading = "lazy";
-                // Kirim object photo utuh
                 img.onclick = () => toggleSelect(photo, card);
                 
                 const overlay = document.createElement('div');
@@ -770,7 +768,6 @@
                 zoomBtn.className = "text-white bg-black/40 hover:bg-blue-600 rounded-lg w-8 h-8 flex items-center justify-center shadow-lg transition-colors";
                 zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
                 
-                // Jika viewMode = selected, index mengacu pada grid terpilih (bukan global folder asli)
                 const targetIndex = appState.viewMode === 'selected' ? index : globalIndex;
                 zoomBtn.onclick = (e) => { e.stopPropagation(); openLightbox(targetIndex); };
 
@@ -908,7 +905,18 @@
             }
         }
 
-        // FUNGSI LIGHTBOX DENGAN ANIMASI FADE & SCALE
+        // OPTIMASI: FUNGSI PRE-LOADING GAMBAR MASA DEPAN
+        function preloadNeighbors(currentIndex, photosArray) {
+            if (currentIndex < photosArray.length - 1) {
+                const imgNext = new Image();
+                imgNext.src = photosArray[currentIndex + 1].fullUrl || photosArray[currentIndex + 1].url;
+            }
+            if (currentIndex > 0) {
+                const imgPrev = new Image();
+                imgPrev.src = photosArray[currentIndex - 1].fullUrl || photosArray[currentIndex - 1].url;
+            }
+        }
+
         function openLightbox(index) {
             const lightbox = document.getElementById('lightbox');
             const imgEl = document.getElementById('lightboxImg');
@@ -917,6 +925,7 @@
             const photosToProcess = appState.viewMode === 'selected' ? Array.from(appState.selectedMap.values()) : appState.photos;
 
             if (isCurrentlyOpen) {
+                imgEl.classList.remove('opacity-100', 'scale-100');
                 imgEl.classList.add('opacity-0', 'scale-95');
                 
                 setTimeout(() => {
@@ -926,7 +935,12 @@
                     document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                     updateLightboxSelectBtn();
                     
+                    void imgEl.offsetWidth;
                     imgEl.classList.remove('opacity-0', 'scale-95'); 
+                    imgEl.classList.add('opacity-100', 'scale-100');
+
+                    // Panggil pre-loading foto selanjutnya agar tidak lag saat di-swipe
+                    preloadNeighbors(currentZoomIndex, photosToProcess);
                 }, 200); 
 
             } else {
@@ -936,9 +950,15 @@
                 document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                 updateLightboxSelectBtn();
                 
+                imgEl.classList.remove('opacity-0', 'scale-95');
+                imgEl.classList.add('opacity-100', 'scale-100');
+                
                 lightbox.classList.remove('hidden'); 
                 setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
                 document.body.style.overflow = 'hidden';
+
+                // Pre-loading untuk pertama kali dibuka
+                preloadNeighbors(currentZoomIndex, photosToProcess);
             }
         }
 
