@@ -908,7 +908,7 @@
             }
         }
 
-        // FUNGSI LIGHTBOX DENGAN ANIMASI FADE & SCALE
+        // FUNGSI LIGHTBOX DENGAN ANIMASI FADE & SCALE (DIPERBAIKI)
         function openLightbox(index) {
             const lightbox = document.getElementById('lightbox');
             const imgEl = document.getElementById('lightboxImg');
@@ -917,24 +917,38 @@
             const photosToProcess = appState.viewMode === 'selected' ? Array.from(appState.selectedMap.values()) : appState.photos;
 
             if (isCurrentlyOpen) {
+                // JIKA LIGHTBOX SEDANG DIBUKA (PINDAH FOTO)
+                // 1. Cabut penampil, masukkan class penyembunyi
+                imgEl.classList.remove('opacity-100', 'scale-100');
                 imgEl.classList.add('opacity-0', 'scale-95');
                 
                 setTimeout(() => {
+                    // 2. Ganti foto saat gambar sedang transparan
                     currentZoomIndex = index; 
                     currentZoomPhoto = photosToProcess[index];
                     document.getElementById('lightboxTitle').textContent = `${currentZoomPhoto.name} (${index + 1} of ${photosToProcess.length})`;
                     document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                     updateLightboxSelectBtn();
                     
+                    // 3. Trik memancing DOM Reflow agar animasi Fade-In jalan di HP
+                    void imgEl.offsetWidth;
+                    
+                    // 4. Munculkan kembali foto yang baru
                     imgEl.classList.remove('opacity-0', 'scale-95'); 
+                    imgEl.classList.add('opacity-100', 'scale-100');
                 }, 200); 
 
             } else {
+                // JIKA PERTAMA KALI DIBUKA DARI GRID -> BUKA NORMAL
                 currentZoomIndex = index; 
                 currentZoomPhoto = photosToProcess[index];
                 document.getElementById('lightboxTitle').textContent = `${currentZoomPhoto.name} (${index + 1} of ${photosToProcess.length})`;
                 document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                 updateLightboxSelectBtn();
+                
+                // Pastikan class penampil terpasang
+                imgEl.classList.remove('opacity-0', 'scale-95');
+                imgEl.classList.add('opacity-100', 'scale-100');
                 
                 lightbox.classList.remove('hidden'); 
                 setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
