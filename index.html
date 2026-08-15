@@ -1281,8 +1281,10 @@
             const blob = new Blob([textContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url;
-            const safeName = appState.clientName ? appState.clientName.replace(/\s+/g, '_') : 'klien';
-            a.download = `List_Pilihan_${safeName}.txt`;
+            
+            const safeName = appState.clientName ? appState.clientName : 'Klien';
+            a.download = `List Data Foto Edit - ${safeName}.txt`;
+            
             document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         }
 
@@ -1480,3 +1482,6 @@
     </script>
 </body>
 </html>
+```
+
+Adakah yang ingin disesuaikan dari jarak antar teks (*tile spacing*) atau ketebalan warnanya, Kak?
