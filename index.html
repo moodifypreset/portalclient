@@ -369,9 +369,6 @@
                 <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
                     <i class="fa-regular fa-square-check mr-2"></i> <span id="btnSelectText">Pilih Foto Ini</span>
                 </button>
-                <button id="lightboxPriorityBtn" onclick="togglePriority()" class="hidden px-4 py-3 bg-slate-800 hover:bg-slate-700 text-yellow-500 font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-auto shrink-0" title="Tandai Prioritas Cetak">
-                    <i id="priorityIcon" class="fa-regular fa-star text-lg"></i> <span id="btnPriorityText" class="hidden sm:inline ml-2">Prioritas</span>
-                </button>
             </div>
             
             <textarea id="lightboxNote" oninput="saveNote()" data-i18n="notePlaceholder" class="w-full bg-slate-800/90 text-white placeholder-slate-400 text-sm rounded-xl p-3 border border-slate-600 focus:outline-none focus:border-slate-400 hidden transition-all shadow-lg backdrop-blur-sm" rows="2" placeholder="Catatan edit (opsional), misal: hapus jerawat..."></textarea>
@@ -391,7 +388,6 @@
             gridMode: 2, 
             isProtected: false, 
             isWatermarked: false,
-            prioritySet: new Set(),
             watermarkDataUrl_Small: null,
             watermarkDataUrl_Large: null
         };
@@ -438,9 +434,7 @@
                 alertCopy: "List foto disalin! Silahkan paste di WhatsApp.",
                 gridTip: "Ubah Baris Foto",
                 reshuffleTip: "Tekan ini untuk acak foto",
-                zoomTip: "Ketuk 2x atau gunakan ini untuk Zoom",
-                btnPriority: "Prioritas",
-                btnPrioritized: "Prioritas Cetak!"
+                zoomTip: "Ketuk 2x atau gunakan ini untuk Zoom"
             },
             en: {
                 subtitle: "Secure Selection Tool",
@@ -483,9 +477,7 @@
                 alertCopy: "List copied! Please paste it in WhatsApp.",
                 gridTip: "Change Grid Rows",
                 reshuffleTip: "Click to reshuffle",
-                zoomTip: "Double tap or use this to Zoom",
-                btnPriority: "Priority",
-                btnPrioritized: "Print Priority!"
+                zoomTip: "Double tap or use this to Zoom"
             }
         };
 
@@ -838,8 +830,7 @@
             if (!appState.rootFolderId) return;
             const dataToSave = { 
                 selected: Array.from(appState.selectedMap.entries()), 
-                notes: appState.notes,
-                priority: Array.from(appState.prioritySet) 
+                notes: appState.notes
             };
             localStorage.setItem(`client_portal_save_${appState.rootFolderId}`, JSON.stringify(dataToSave));
         }
@@ -851,7 +842,6 @@
                     const data = JSON.parse(savedData);
                     appState.selectedMap = new Map(data.selected || []);
                     appState.notes = data.notes || {};
-                    appState.prioritySet = new Set(data.priority || []); 
                     
                     if (appState.selectedMap.size > 0) {
                         setTimeout(() => { updateActionBar(); }, 1000);
@@ -861,7 +851,6 @@
             } else {
                 appState.selectedMap = new Map();
                 appState.notes = {};
-                appState.prioritySet = new Set();
             }
         }
 
@@ -1154,14 +1143,6 @@
                 const badgeSize = isSmallGrid ? 'w-5 h-5 text-[10px]' : 'w-8 h-8 text-sm';
                 overlay.innerHTML = `<div class="check-badge bg-blue-600 text-white ${badgeSize} rounded-full flex items-center justify-center shadow-lg"><i class="fa-solid fa-check"></i></div>`;
                 
-                if (appState.prioritySet.has(photo.id)) {
-                    const prioBadge = document.createElement('div');
-                    const leftPos = isSmallGrid ? 'left-1.5' : 'left-2';
-                    prioBadge.className = `star-badge absolute top-2 ${leftPos} bg-yellow-500 text-white ${badgeSize} rounded-full flex items-center justify-center shadow-md z-20 pointer-events-none`;
-                    prioBadge.innerHTML = '<i class="fa-solid fa-star"></i>';
-                    overlay.appendChild(prioBadge);
-                }
-
                 if (appState.notes[photo.id]) {
                     const noteBadge = document.createElement('div');
                     const rightPos = isSmallGrid ? 'right-8' : 'right-12';
@@ -1241,10 +1222,7 @@
             if (appState.selectedMap.has(photoObj.id)) {
                 appState.selectedMap.delete(photoObj.id); 
                 delete appState.notes[photoObj.id]; 
-                appState.prioritySet.delete(photoObj.id); 
                 cardElement.classList.remove('selected');
-                const prioBadge = cardElement.querySelector('.star-badge');
-                if (prioBadge) prioBadge.remove(); 
             } else {
                 if (appState.kuota !== null && appState.selectedMap.size >= appState.kuota) {
                     return showAlert(TRANSLATIONS[appState.lang].alertLimit, 'error');
@@ -1254,19 +1232,6 @@
             }
             updateActionBar(); saveProgress();
             if (appState.viewMode === 'all') updateViewModeText();
-        }
-
-        function togglePriority() {
-            if (!currentZoomPhoto || !appState.selectedMap.has(currentZoomPhoto.id)) return;
-            
-            if (appState.prioritySet.has(currentZoomPhoto.id)) {
-                appState.prioritySet.delete(currentZoomPhoto.id);
-            } else {
-                appState.prioritySet.add(currentZoomPhoto.id);
-            }
-            
-            updateLightboxSelectBtn();
-            saveProgress();
         }
 
         function updateActionBar() {
@@ -1305,9 +1270,8 @@
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama'; 
-                const priorityMark = appState.prioritySet.has(p.id) ? ' ⭐ [PRIORITAS CETAK]' : '';
                 
-                textContent += `${index + 1}. ${p.name} [folder : ${folderInfo}]${priorityMark}\n`;
+                textContent += `${index + 1}. ${p.name} [folder : ${folderInfo}]\n`;
                 
                 if (note) textContent += `   Catatan: ${note}\n`;
             });
@@ -1333,9 +1297,8 @@
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama';
-                const priorityMark = appState.prioritySet.has(p.id) ? ' ⭐ *[PRIORITAS CETAK]*' : '';
                 
-                textToCopy += `${index + 1}. ${p.name} [folder : ${folderInfo}]${priorityMark}\n`;
+                textToCopy += `${index + 1}. ${p.name} [folder : ${folderInfo}]\n`;
                 
                 if (note) textToCopy += `   _Catatan: ${note}_\n`;
             });
@@ -1480,7 +1443,6 @@
             if (appState.selectedMap.has(currentZoomPhoto.id)) {
                 appState.selectedMap.delete(currentZoomPhoto.id); 
                 delete appState.notes[currentZoomPhoto.id]; 
-                appState.prioritySet.delete(currentZoomPhoto.id); 
             } else {
                 if (appState.kuota !== null && appState.selectedMap.size >= appState.kuota) {
                     return showAlert(TRANSLATIONS[appState.lang].alertLimit, 'error');
@@ -1493,35 +1455,18 @@
 
         function updateLightboxSelectBtn() {
             const btn = document.getElementById('lightboxSelectBtn');
-            const prioBtn = document.getElementById('lightboxPriorityBtn');
-            const prioIcon = document.getElementById('priorityIcon');
-            const prioText = document.getElementById('btnPriorityText');
-            
             const noteArea = document.getElementById('lightboxNote');
             const langData = TRANSLATIONS[appState.lang];
             const isSelected = appState.selectedMap.has(currentZoomPhoto.id);
-            const isPriority = appState.prioritySet.has(currentZoomPhoto.id);
 
             if (isSelected) {
                 btn.innerHTML = `<i class="fa-solid fa-check mr-2"></i> <span id="btnSelectText">${langData.btnSelected}</span>`;
                 btn.className = "px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg w-full sm:w-auto";
                 noteArea.classList.remove('hidden'); noteArea.value = appState.notes[currentZoomPhoto.id] || '';
-                
-                prioBtn.classList.remove('hidden');
-                if (isPriority) {
-                    prioBtn.className = "px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold rounded-xl transition flex items-center justify-center shadow-lg w-auto shrink-0";
-                    prioIcon.className = "fa-solid fa-star text-lg";
-                    prioText.textContent = langData.btnPrioritized || "Prioritas";
-                } else {
-                    prioBtn.className = "px-4 py-3 bg-slate-800 hover:bg-slate-700 text-yellow-500 font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-auto shrink-0";
-                    prioIcon.className = "fa-regular fa-star text-lg";
-                    prioText.textContent = langData.btnPriority || "Prioritas";
-                }
             } else {
                 btn.innerHTML = `<i class="fa-regular fa-square-check mr-2"></i> <span id="btnSelectText">${langData.btnSelect}</span>`;
                 btn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto";
                 noteArea.classList.add('hidden');
-                prioBtn.classList.add('hidden');
             }
         }
 
