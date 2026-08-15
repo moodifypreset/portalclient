@@ -58,7 +58,6 @@
             box-shadow: 0 0 0 3px #3b82f6; 
         }
 
-        /* Triangle untuk tooltip */
         .tooltip-triangle {
             position: absolute;
             bottom: -4px;
@@ -66,7 +65,34 @@
             transform: translateX(-50%) rotate(45deg);
             width: 10px;
             height: 10px;
-            background-color: #2563eb; /* blue-600 */
+            background-color: #2563eb; 
+        }
+
+        /* WATERMARK & PROTEKSI CSS */
+        .watermark-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 15;
+            overflow: hidden;
+        }
+        .watermark-text {
+            color: rgba(255, 255, 255, 0.55);
+            font-weight: 800;
+            text-transform: uppercase;
+            transform: rotate(-30deg);
+            user-select: none;
+            text-shadow: 0px 2px 5px rgba(0,0,0,0.6);
+            white-space: nowrap;
+        }
+        .anti-copy-img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
         }
     </style>
     
@@ -173,7 +199,6 @@
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         
-                        <!-- TOMBOL GRID DENGAN ANIMASI BALON TOOLTIP -->
                         <div class="relative">
                             <button onclick="hideTooltip('gridTooltip'); toggleGridSize()" class="text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 py-2 px-3 rounded-lg font-medium cursor-pointer shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition" title="Ubah Ukuran Grid">
                                 <i class="fa-solid fa-table-cells-large"></i>
@@ -184,7 +209,6 @@
                             </div>
                         </div>
 
-                        <!-- DROPDOWN URUTAN -->
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fa-solid fa-arrow-down-a-z text-slate-400 text-sm"></i>
@@ -200,7 +224,6 @@
                             </div>
                         </div>
 
-                        <!-- TOMBOL ACAK LAGI DENGAN ANIMASI BALON TOOLTIP -->
                         <div class="relative">
                             <button id="btnReshuffle" onclick="hideTooltip('reshuffleTooltip'); applySort('random')" class="hidden text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 px-3 rounded-lg font-bold transition shadow-sm hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600">
                                 <i class="fa-solid fa-dice"></i> <span class="hidden sm:inline ml-1" data-i18n="btnReshuffle">Acak Lagi</span>
@@ -297,7 +320,7 @@
         </div>
     </div>
 
-    <!-- LIGHTBOX ZOOM -->
+    <!-- LIGHTBOX ZOOM (DENGAN ELEMEN WATERMARK) -->
     <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm touch-pan-y">
         <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
             <p id="lightboxTitle" class="text-white font-medium drop-shadow-md text-sm md:text-base ml-2">Photo Name</p>
@@ -305,9 +328,16 @@
         </div>
         <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-left"></i></button>
         <button onclick="nextPhoto(event)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-right"></i></button>
-        <div class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24 pointer-events-none">
+        
+        <div class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24 pointer-events-none relative">
             <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-all duration-200 ease-in-out pointer-events-auto select-none opacity-100 transform scale-100">
+            
+            <!-- Elemen Watermark Lighbox -->
+            <div id="lightboxWatermark" class="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden hidden z-[55]">
+                <span id="lbWmText" class="watermark-text text-4xl md:text-6xl text-center leading-none"></span>
+            </div>
         </div>
+
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
             <p class="text-white/50 text-xs md:hidden text-center mb-[-5px] animate-pulse"><i class="fa-solid fa-arrows-left-right"></i> <span data-i18n="swipe">Geser kiri/kanan</span></p>
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
@@ -327,7 +357,9 @@
             selectedMap: new Map(), 
             notes: {}, currentPage: 1, kuota: null, 
             viewMode: 'all', sortOrder: 'default', lang: 'id',
-            gridMode: 2 
+            gridMode: 2, 
+            isProtected: false, // Inisialisasi Keamanan
+            isWatermarked: false
         };
 
         const TRANSLATIONS = {
@@ -480,6 +512,24 @@
             const urlName = urlParams.get('n');
             const urlKuota = urlParams.get('k');
             const autoId = urlParams.get('i');
+            
+            // DETEKSI PROTEKSI URL
+            appState.isProtected = urlParams.get('prot') === '1';
+            appState.isWatermarked = urlParams.get('wm') === '1';
+
+            if (appState.isProtected) {
+                document.addEventListener('contextmenu', event => {
+                    if(event.target.tagName === 'IMG') event.preventDefault();
+                });
+                document.addEventListener('dragstart', event => {
+                    if(event.target.tagName === 'IMG') event.preventDefault();
+                });
+                document.addEventListener('keydown', event => {
+                    if (event.ctrlKey && (event.key === 's' || event.key === 'S')) event.preventDefault();
+                });
+                document.documentElement.style.WebkitTouchCallout = 'none';
+                document.documentElement.style.userSelect = 'none';
+            }
 
             if (urlName) {
                 appState.clientName = decodeURIComponent(urlName).replace(/-/g, ' ');
@@ -529,7 +579,6 @@
             applyTranslations(); 
         });
 
-        // FUNGSI ANIMASI BALON TOOLTIP
         function hideTooltip(id) {
             const el = document.getElementById(id);
             if(el) {
@@ -546,7 +595,6 @@
             if(gt) { gt.classList.remove('hidden'); setTimeout(()=> gt.classList.replace('opacity-0', 'opacity-100'), 50); }
             if(rt && document.getElementById('sortDropdown').value === 'random') { rt.classList.remove('hidden'); setTimeout(()=> rt.classList.replace('opacity-0', 'opacity-100'), 50); }
             
-            // Auto hide tooltip dalam 8 detik agar tidak mengganggu
             tooltipTimeout = setTimeout(() => {
                 hideTooltip('gridTooltip');
                 hideTooltip('reshuffleTooltip');
@@ -589,7 +637,6 @@
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
                 
-                // Panggil Animasi Balon setelah Panduan ditutup
                 triggerTooltipsAnimation();
             }, 300);
         }
@@ -622,11 +669,50 @@
                     appState.notes = data.notes || {};
                     if (appState.selectedMap.size > 0) {
                         setTimeout(() => { updateActionBar(); }, 1000);
+                        refreshExpiredUrls();
                     }
                 } catch (e) { console.error("Gagal memuat data", e); }
             } else {
                 appState.selectedMap = new Map();
                 appState.notes = {};
+            }
+        }
+
+        async function refreshExpiredUrls() {
+            if (appState.selectedMap.size === 0) return;
+            if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey) return;
+            
+            const ids = Array.from(appState.selectedMap.keys());
+            
+            for (let i = 0; i < ids.length; i += 30) {
+                const chunk = ids.slice(i, i + 30);
+                const query = chunk.map(id => `id='${id}'`).join(' or ');
+                const apiUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,thumbnailLink)&key=${CONFIG_APP.googleApiKey}`;
+                
+                try {
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    
+                    if (data.files) {
+                        let isUpdated = false;
+                        data.files.forEach(f => {
+                            if (appState.selectedMap.has(f.id)) {
+                                const p = appState.selectedMap.get(f.id);
+                                p.url = f.thumbnailLink?.replace('=s220', '=s500');
+                                p.fullUrl = f.thumbnailLink?.replace('=s220', '=s1600');
+                                appState.selectedMap.set(f.id, p);
+                                isUpdated = true;
+                            }
+                        });
+                        
+                        if (isUpdated) {
+                            saveProgress();
+                            if (appState.viewMode === 'selected') renderGallery();
+                        }
+                    }
+                } catch (e) { 
+                    console.error("Gagal refresh URL foto lama:", e); 
+                }
             }
         }
 
@@ -705,14 +791,12 @@
                     
                     renderFolders(); 
                     
-                    // DEFAULT ACAK SAAT LOADING
                     document.getElementById('sortDropdown').value = 'random';
                     applySort('random');
                     
                     if (!overrideFolderId) { 
                         setTimeout(() => { showTutorial(false); }, 800); 
                     } else {
-                        // Jika pindah folder dan sudah pernah lihat tutorial, langsung trigger balon
                         if(hasSeenTutorial) setTimeout(triggerTooltipsAnimation, 500);
                     }
                 } else {
@@ -772,7 +856,7 @@
                 document.getElementById('sortDropdown').value = 'random'; 
             } else {
                 btnReshuffle.classList.add('hidden');
-                if(rtTooltip) hideTooltip('reshuffleTooltip'); // Sembunyikan balon jika bukan acak
+                if(rtTooltip) hideTooltip('reshuffleTooltip'); 
             }
 
             if (order === 'default') {
@@ -859,6 +943,8 @@
             const startIndex = (appState.currentPage - 1) * ITEMS_PER_PAGE;
             const endIndex = startIndex + ITEMS_PER_PAGE;
             const photosToShow = photosToProcess.slice(startIndex, endIndex);
+            
+            const vendorNameStr = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Watermark';
 
             photosToShow.forEach((photo, index) => {
                 const globalIndex = appState.photos.findIndex(p => p.id === photo.id); 
@@ -867,7 +953,7 @@
                 
                 const img = document.createElement('img');
                 img.src = photo.url; 
-                img.className = "w-full h-full object-cover cursor-pointer transition-transform duration-300"; 
+                img.className = `w-full h-full object-cover cursor-pointer transition-transform duration-300 ${appState.isProtected ? 'anti-copy-img' : ''}`; 
                 img.loading = "lazy";
                 img.onclick = () => toggleSelect(photo, card);
                 
@@ -885,19 +971,28 @@
                     overlay.appendChild(noteBadge);
                 }
 
+                // RENDER WATERMARK JIKA AKTIF
+                if (appState.isWatermarked) {
+                    const wmOverlay = document.createElement('div');
+                    wmOverlay.className = "watermark-overlay";
+                    const wmTextSize = isSmallGrid ? 'text-[8px] md:text-xs' : 'text-lg md:text-2xl';
+                    wmOverlay.innerHTML = `<span class="watermark-text ${wmTextSize} w-full text-center px-2 truncate">${vendorNameStr}</span>`;
+                    card.appendChild(wmOverlay);
+                }
+
                 const bottomArea = document.createElement('div');
                 const bottomPad = isSmallGrid ? 'p-1.5 pt-4' : 'p-3 pt-8';
                 const textSize = isSmallGrid ? 'text-[9px]' : 'text-xs';
                 const btnSize = isSmallGrid ? 'w-5 h-5 text-[10px] rounded' : 'w-8 h-8 rounded-lg';
 
-                bottomArea.className = `absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent ${bottomPad} flex justify-between items-end z-20`;
+                bottomArea.className = `absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent ${bottomPad} flex justify-between items-end z-20 pointer-events-none`;
                 
                 const nameText = document.createElement('p');
                 nameText.className = `text-white ${textSize} font-medium truncate drop-shadow-md w-3/4`;
                 nameText.textContent = photo.name;
 
                 const zoomBtn = document.createElement('button');
-                zoomBtn.className = `text-white bg-black/40 hover:bg-blue-600 ${btnSize} flex items-center justify-center shadow-lg transition-colors`;
+                zoomBtn.className = `text-white bg-black/40 hover:bg-blue-600 ${btnSize} flex items-center justify-center shadow-lg transition-colors pointer-events-auto`;
                 zoomBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
                 
                 const targetIndex = appState.viewMode === 'selected' ? index : globalIndex;
@@ -995,7 +1090,10 @@
             
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
-                textContent += `${index + 1}. ${p.name}\n`;
+                const folderInfo = p.folderName || 'Galeri Utama'; 
+                
+                textContent += `${index + 1}. [${folderInfo}] ${p.name}\n`;
+                
                 if (note) textContent += `   Catatan: ${note}\n`;
             });
             
@@ -1016,9 +1114,13 @@
             const waNumber = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.whatsappAdmin) ? CONFIG_APP.whatsappAdmin : '';
             
             let textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${selectedPhotos.length} Foto\n\n`;
+            
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
-                textToCopy += `${index + 1}. ${p.name}\n`;
+                const folderInfo = p.folderName || 'Galeri Utama';
+                
+                textToCopy += `${index + 1}. [${folderInfo}] ${p.name}\n`;
+                
                 if (note) textToCopy += `   _Catatan: ${note}_\n`;
             });
             textToCopy += `\n_Dikirim dari ${vendor} Portal_`;
@@ -1070,6 +1172,12 @@
                     imgEl.classList.remove('opacity-0', 'scale-95'); 
                     imgEl.classList.add('opacity-100', 'scale-100');
 
+                    // Set Teks Watermark Lightbox
+                    if (appState.isWatermarked) {
+                        const vendorNameStr = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Watermark';
+                        document.getElementById('lbWmText').textContent = vendorNameStr;
+                    }
+
                     preloadNeighbors(currentZoomIndex, photosToProcess);
                 }, 200); 
 
@@ -1082,6 +1190,13 @@
                 
                 imgEl.classList.remove('opacity-0', 'scale-95');
                 imgEl.classList.add('opacity-100', 'scale-100');
+
+                // Munculkan Watermark jika aktif
+                if (appState.isWatermarked) {
+                    const vendorNameStr = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Watermark';
+                    document.getElementById('lbWmText').textContent = vendorNameStr;
+                    document.getElementById('lightboxWatermark').classList.remove('hidden');
+                }
                 
                 lightbox.classList.remove('hidden'); 
                 setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
@@ -1096,6 +1211,7 @@
             lightbox.classList.replace('opacity-100', 'opacity-0');
             setTimeout(() => { 
                 lightbox.classList.add('hidden'); currentZoomPhoto = null; document.body.style.overflow = 'auto'; renderGallery(); 
+                document.getElementById('lightboxWatermark').classList.add('hidden');
             }, 300);
         }
 
