@@ -494,21 +494,21 @@
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Ukuran Canvas (Kotak pola berulang)
-            const boxSize = isLarge ? 300 : 150;
+            // Ukuran Canvas diperkecil agar pola watermark LEBIH PADAT (rapat)
+            const boxSize = isLarge ? 140 : 70;
             canvas.width = boxSize;
             canvas.height = boxSize;
 
             ctx.translate(boxSize / 2, boxSize / 2);
-            ctx.rotate(-30 * Math.PI / 180); // Sudut kemiringan
+            ctx.rotate(-35 * Math.PI / 180); // Dimiringkan sedikit lebih tajam (-35 derajat)
 
-            ctx.font = `800 ${isLarge ? '28px' : '14px'} Inter, sans-serif`;
-            ctx.fillStyle = isLarge ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.3)';
+            ctx.font = `800 ${isLarge ? '16px' : '9px'} Inter, sans-serif`;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; // Konsisten di Opacity 30%
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
-            // Efek bayangan agar terbaca di area putih
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            // Efek bayangan tipis agar terbaca di area foto yang putih/terang
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
             ctx.shadowBlur = 3;
             ctx.shadowOffsetX = 1;
             ctx.shadowOffsetY = 1;
