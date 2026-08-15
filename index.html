@@ -334,13 +334,11 @@
     <!-- LIGHTBOX ZOOM -->
     <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm touch-pan-y">
         
-        <!-- HEADER LIGHTBOX -->
         <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
             <p id="lightboxTitle" class="text-white font-medium drop-shadow-md text-sm md:text-base ml-2">Photo Name</p>
             <button onclick="closeLightbox()" class="text-white hover:text-red-400 w-10 h-10 flex items-center justify-center text-2xl bg-black/50 hover:bg-white/20 rounded-full transition"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <!-- FITUR BARU: TOMBOL ZOOM IN & ZOOM OUT -->
         <div class="absolute right-4 top-20 flex flex-col gap-3 z-50">
             <div class="relative">
                 <button onclick="changeZoom(0.5, event)" class="w-10 h-10 bg-black/60 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-lg transition shadow-lg border border-slate-600"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
@@ -352,11 +350,9 @@
             <button onclick="changeZoom(-0.5, event)" class="w-10 h-10 bg-black/60 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-lg transition shadow-lg border border-slate-600"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
         </div>
 
-        <!-- TOMBOL PREV / NEXT -->
         <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-left"></i></button>
         <button onclick="nextPhoto(event)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-right"></i></button>
         
-        <!-- AREA GAMBAR (DIPERBARUI UNTUK MENDUKUNG DRAG/PAN) -->
         <div id="lightboxScrollArea" class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24 relative overflow-hidden">
             <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-all duration-200 ease-in-out select-none transform origin-center">
             
@@ -365,7 +361,6 @@
             </div>
         </div>
 
-        <!-- AREA BAWAH -->
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
             <p class="text-white/50 text-xs md:hidden text-center mb-[-5px] animate-pulse"><i class="fa-solid fa-arrows-left-right"></i> <span data-i18n="swipe">Geser kiri/kanan</span></p>
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
@@ -380,7 +375,7 @@
         const ITEMS_PER_PAGE = 200; 
         
         let appState = { 
-            rootFolderId: null, folderId: null, clientName: '', 
+            rootFolderId: null, folderId: null, currentFolderName: '', clientName: '', 
             photos: [], originalPhotos: [], folders: [], folderHistory: [],
             selectedMap: new Map(), 
             notes: {}, currentPage: 1, kuota: null, 
@@ -529,7 +524,6 @@
         let hasSeenTutorial = false; 
         let tooltipTimeout;
 
-        // --- VARIABEL LOGIKA ZOOM & DRAG ---
         let zoomScale = 1;
         let isDragging = false;
         let startX, startY, translateX = 0, translateY = 0;
@@ -623,7 +617,7 @@
 
             const lightboxEl = document.getElementById('lightbox');
             lightboxEl.addEventListener('touchstart', e => {
-                if (zoomScale > 1) return; // Mencegah swipe ganti foto saat sedang diperbesar
+                if (zoomScale > 1) return; 
                 if (e.target.tagName.toLowerCase() === 'textarea') return;
                 touchstartX = e.changedTouches[0].screenX;
             }, { passive: true });
@@ -638,7 +632,6 @@
             setupZoomDragEvents();
         });
 
-        // --- FUNGSI ZOOM & DRAG ---
         function applyZoomPan() {
             const img = document.getElementById('lightboxImg');
             img.style.setProperty('--tw-scale-x', zoomScale);
@@ -666,7 +659,7 @@
                 translateX = 0;
                 translateY = 0;
             }
-            if(zoomScale > 4) zoomScale = 4; // Maksimal zoom 4x
+            if(zoomScale > 4) zoomScale = 4; 
             
             applyZoomPan();
             
@@ -689,7 +682,7 @@
 
         function dragStart(e) {
             if (zoomScale <= 1) return;
-            if(e.type === 'touchstart') e.preventDefault(); // Hentikan scroll bawaan HP
+            if(e.type === 'touchstart') e.preventDefault(); 
             
             isDragging = true;
             const imgEl = document.getElementById('lightboxImg');
@@ -716,7 +709,6 @@
             const imgEl = document.getElementById('lightboxImg');
             if(zoomScale > 1) imgEl.style.cursor = 'grab';
             
-            // Logika Double Tap HP untuk Zoom
             if(e && (e.type === 'touchend' || e.type === 'mouseup') && e.target === imgEl) {
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTap;
@@ -732,7 +724,6 @@
                 lastTap = currentTime;
             }
         }
-        // --------------------------
 
         function hideTooltip(id) {
             const el = document.getElementById(id);
@@ -903,23 +894,42 @@
                 document.getElementById('inputSection').classList.add('hidden');
             } else {
                 if (!isNavigatingBack) {
-                    const currentName = appState.folderHistory.length === 0 ? "Galeri Utama" : document.getElementById('currentFolderDisplay').innerText;
-                    appState.folderHistory.push({ id: appState.folderId, name: currentName });
+                    appState.folderHistory.push({ id: appState.folderId, name: appState.currentFolderName });
                 }
             }
-
-            appState.folderId = targetFolderId;
-            appState.currentPage = 1; 
-            appState.viewMode = 'all';
-            
-            const displayTitle = (targetFolderId === appState.rootFolderId) ? TRANSLATIONS[appState.lang].galleryTitle : folderName;
-            document.getElementById('currentFolderDisplay').innerHTML = (targetFolderId === appState.rootFolderId) 
-                ? displayTitle 
-                : `<i class="fa-solid fa-folder-open text-blue-500 mr-2"></i> ${displayTitle}`;
 
             document.getElementById('loadingState').classList.remove('hidden');
             document.getElementById('loadingState').classList.add('flex');
             document.getElementById('galleryContainer').classList.add('hidden');
+
+            appState.folderId = targetFolderId;
+            appState.currentPage = 1; 
+            appState.viewMode = 'all';
+
+            // MENGAMBIL NAMA FOLDER UTAMA DARI GOOGLE DRIVE API JIKA BELUM ADA
+            let fetchedFolderName = folderName;
+            if (!fetchedFolderName) {
+                try {
+                    const fRes = await fetch(`https://www.googleapis.com/drive/v3/files/${targetFolderId}?fields=name&key=${CONFIG_APP.googleApiKey}`);
+                    const fData = await fRes.json();
+                    if (fData.name) fetchedFolderName = fData.name;
+                    else fetchedFolderName = "Galeri Utama";
+                } catch(e) {
+                    fetchedFolderName = "Galeri Utama";
+                }
+            }
+
+            appState.currentFolderName = fetchedFolderName;
+
+            let fullFolderPath = fetchedFolderName;
+            if (appState.folderHistory.length > 0) {
+                const historyNames = appState.folderHistory.map(h => h.name);
+                fullFolderPath = [...historyNames, fetchedFolderName].join(' - ');
+            }
+
+            document.getElementById('currentFolderDisplay').innerHTML = (targetFolderId === appState.rootFolderId) 
+                ? fetchedFolderName 
+                : `<i class="fa-solid fa-folder-open text-blue-500 mr-2"></i> ${fetchedFolderName}`;
             
             try {
                 let fetchedFiles = []; let nextPageToken = "";
@@ -938,7 +948,7 @@
                     let photoFiles = fetchedFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && f.thumbnailLink);
                     
                     appState.photos = photoFiles.map(f => ({ 
-                        id: f.id, name: f.name, folderName: displayTitle,
+                        id: f.id, name: f.name, folderName: fullFolderPath,
                         url: f.thumbnailLink?.replace('=s220', '=s500'), 
                         fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') 
                     }));
@@ -1246,13 +1256,13 @@
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama'; 
                 
-                textContent += `${index + 1}. [${folderInfo}] ${p.name}\n`;
+                // FORMAT BARU SESUAI PERMINTAAN KAKAK
+                textContent += `${index + 1}. ${p.name} [folder : ${folderInfo}]\n`;
                 
                 if (note) textContent += `   Catatan: ${note}\n`;
             });
             
-            const editorFormat = selectedPhotos.map(p => p.name).join(', ');
-            textContent += `\n=======================\nFormat Khusus Editor (Lightroom):\n${editorFormat}\n=======================\nDicetak otomatis melalui ${vendor} Portal\n`;
+            textContent += `\n=======================\nDicetak otomatis melalui ${vendor} Portal\n`;
 
             const blob = new Blob([textContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -1274,13 +1284,13 @@
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama';
                 
-                textToCopy += `${index + 1}. [${folderInfo}] ${p.name}\n`;
+                // FORMAT BARU SESUAI PERMINTAAN KAKAK
+                textToCopy += `${index + 1}. ${p.name} [folder : ${folderInfo}]\n`;
                 
                 if (note) textToCopy += `   _Catatan: ${note}_\n`;
             });
             
-            const editorFormat = selectedPhotos.map(p => p.name).join(', ');
-            textToCopy += `\n*Format Khusus Editor (Lightroom):*\n${editorFormat}\n\n_Dikirim dari ${vendor} Portal_`;
+            textToCopy += `\n_Dikirim dari ${vendor} Portal_`;
 
             if (waNumber) {
                 const encodedText = encodeURIComponent(textToCopy);
