@@ -548,6 +548,7 @@
             appState.isWatermarked = urlParams.get('wm') === '1';
 
             if (appState.isProtected) {
+                // Mencegah Klik Kanan, Dragging, dan Keyboard Save
                 document.addEventListener('contextmenu', event => {
                     if(event.target.tagName === 'IMG') event.preventDefault();
                 });
@@ -562,23 +563,6 @@
                 document.documentElement.style.userSelect = 'none';
                 document.body.style.WebkitTouchCallout = 'none';
                 document.body.style.userSelect = 'none';
-
-                const blackoutOverlay = document.createElement('div');
-                blackoutOverlay.id = 'blackout-overlay';
-                blackoutOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:999999;display:none;color:#ef4444;justify-content:center;align-items:center;font-weight:bold;font-size:1.5rem;text-align:center;flex-direction:column;gap:10px;';
-                blackoutOverlay.innerHTML = '<i class="fa-solid fa-shield-halved text-4xl"></i><p>Tangkapan Layar & Perekaman Dilarang</p>';
-                document.body.appendChild(blackoutOverlay);
-
-                window.addEventListener('blur', () => {
-                    blackoutOverlay.style.display = 'flex';
-                });
-                window.addEventListener('focus', () => {
-                    blackoutOverlay.style.display = 'none';
-                });
-                document.addEventListener('visibilitychange', () => {
-                    if (document.hidden) blackoutOverlay.style.display = 'flex';
-                    else blackoutOverlay.style.display = 'none';
-                });
             }
 
             if (urlName) {
@@ -894,42 +878,29 @@
                 document.getElementById('inputSection').classList.add('hidden');
             } else {
                 if (!isNavigatingBack) {
-                    appState.folderHistory.push({ id: appState.folderId, name: appState.currentFolderName });
+                    const currentName = appState.folderHistory.length === 0 ? "Galeri Utama" : document.getElementById('currentFolderDisplay').innerText;
+                    appState.folderHistory.push({ id: appState.folderId, name: currentName });
                 }
             }
-
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('loadingState').classList.add('flex');
-            document.getElementById('galleryContainer').classList.add('hidden');
 
             appState.folderId = targetFolderId;
             appState.currentPage = 1; 
             appState.viewMode = 'all';
-
-            // MENGAMBIL NAMA FOLDER UTAMA DARI GOOGLE DRIVE API JIKA BELUM ADA
-            let fetchedFolderName = folderName;
-            if (!fetchedFolderName) {
-                try {
-                    const fRes = await fetch(`https://www.googleapis.com/drive/v3/files/${targetFolderId}?fields=name&key=${CONFIG_APP.googleApiKey}`);
-                    const fData = await fRes.json();
-                    if (fData.name) fetchedFolderName = fData.name;
-                    else fetchedFolderName = "Galeri Utama";
-                } catch(e) {
-                    fetchedFolderName = "Galeri Utama";
-                }
-            }
-
-            appState.currentFolderName = fetchedFolderName;
-
-            let fullFolderPath = fetchedFolderName;
+            
+            let fullFolderPath = displayTitle = (targetFolderId === appState.rootFolderId) ? TRANSLATIONS[appState.lang].galleryTitle : folderName;
+            
             if (appState.folderHistory.length > 0) {
                 const historyNames = appState.folderHistory.map(h => h.name);
-                fullFolderPath = [...historyNames, fetchedFolderName].join(' - ');
+                fullFolderPath = [...historyNames, displayTitle].join(' - ');
             }
-
+            
             document.getElementById('currentFolderDisplay').innerHTML = (targetFolderId === appState.rootFolderId) 
-                ? fetchedFolderName 
-                : `<i class="fa-solid fa-folder-open text-blue-500 mr-2"></i> ${fetchedFolderName}`;
+                ? displayTitle 
+                : `<i class="fa-solid fa-folder-open text-blue-500 mr-2"></i> ${displayTitle}`;
+
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('loadingState').classList.add('flex');
+            document.getElementById('galleryContainer').classList.add('hidden');
             
             try {
                 let fetchedFiles = []; let nextPageToken = "";
@@ -1256,13 +1227,13 @@
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama'; 
                 
-                // FORMAT BARU SESUAI PERMINTAAN KAKAK
                 textContent += `${index + 1}. ${p.name} [folder : ${folderInfo}]\n`;
                 
                 if (note) textContent += `   Catatan: ${note}\n`;
             });
             
-            textContent += `\n=======================\nDicetak otomatis melalui ${vendor} Portal\n`;
+            const editorFormat = selectedPhotos.map(p => p.name).join(', ');
+            textContent += `\n=======================\nFormat Khusus Editor (Lightroom):\n${editorFormat}\n=======================\nDicetak otomatis melalui ${vendor} Portal\n`;
 
             const blob = new Blob([textContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -1284,13 +1255,13 @@
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama';
                 
-                // FORMAT BARU SESUAI PERMINTAAN KAKAK
                 textToCopy += `${index + 1}. ${p.name} [folder : ${folderInfo}]\n`;
                 
                 if (note) textToCopy += `   _Catatan: ${note}_\n`;
             });
             
-            textToCopy += `\n_Dikirim dari ${vendor} Portal_`;
+            const editorFormat = selectedPhotos.map(p => p.name).join(', ');
+            textToCopy += `\n*Format Khusus Editor (Lightroom):*\n${editorFormat}\n\n_Dikirim dari ${vendor} Portal_`;
 
             if (waNumber) {
                 const encodedText = encodeURIComponent(textToCopy);
@@ -1335,7 +1306,6 @@
                     document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                     updateLightboxSelectBtn();
                     
-                    // Reset Zoom 
                     zoomScale = 1; translateX = 0; translateY = 0;
                     imgEl.style.removeProperty('--tw-scale-x');
                     imgEl.style.removeProperty('--tw-scale-y');
@@ -1363,7 +1333,6 @@
                 document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                 updateLightboxSelectBtn();
                 
-                // Reset Zoom
                 zoomScale = 1; translateX = 0; translateY = 0;
                 imgEl.style.removeProperty('--tw-scale-x');
                 imgEl.style.removeProperty('--tw-scale-y');
@@ -1387,7 +1356,6 @@
 
                 preloadNeighbors(currentZoomIndex, photosToProcess);
                 
-                // Trigger Balon Zoom Pertama Kali
                 if (!hasSeenZoomTooltip) {
                     hasSeenZoomTooltip = true;
                     setTimeout(() => {
