@@ -22,7 +22,7 @@
             </div>
             <div>
                 <h1 class="font-bold text-white text-lg">Secure Link Generator</h1>
-                <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">With Quota Hashing & WA Direct</p>
+                <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">With Quota Hashing & Protection</p>
             </div>
         </div>
 
@@ -80,6 +80,21 @@
                         <input type="number" id="kuota" placeholder="Contoh: 100 (Kosongkan jika bebas)"
                             class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg focus:border-blue-600 outline-none transition text-sm">
                     </div>
+                </div>
+            </div>
+
+            <!-- FITUR BARU: PROTEKSI HAK CIPTA -->
+            <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 space-y-3">
+                <label class="block text-xs font-bold text-blue-800 border-b border-blue-200 pb-2 mb-2"><i class="fa-solid fa-lock mr-1"></i> Proteksi Hak Cipta</label>
+                <div class="flex flex-col gap-3">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="protCheck" checked class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500">
+                        <span class="text-sm font-medium text-slate-700">Aktifkan Anti-Copy (Blokir Klik Kanan, Drag & Save)</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="wmCheck" checked class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500">
+                        <span class="text-sm font-medium text-slate-700">Tampilkan Watermark (Nama Vendor)</span>
+                    </label>
                 </div>
             </div>
 
@@ -143,13 +158,11 @@
             }
         });
 
-        // FUNGSI AUTO-SAVE TEMPLATE
         function saveTemplate() {
             const currentText = document.getElementById('waTemplate').value;
             localStorage.setItem('customWaTemplate', currentText);
         }
 
-        // FUNGSI RESET TEMPLATE KE BAWAAN
         function resetTemplate() {
             document.getElementById('waTemplate').value = DEFAULT_TEMPLATE;
             localStorage.removeItem('customWaTemplate');
@@ -197,6 +210,10 @@
                 params.push(`k=${hashedKuota}`);
             }
             
+            // INJEKSI PARAMETER KEAMANAN JIKA DICENTANG
+            if (document.getElementById('protCheck').checked) params.push('prot=1');
+            if (document.getElementById('wmCheck').checked) params.push('wm=1');
+
             params.push(`i=${folderId}`);
             finalUrl += '?' + params.join('&');
 
@@ -211,12 +228,9 @@
             }
         }
 
-        // HELPER: MENGUBAH TEMPLATE DARI KOLOM INPUT MENJADI PESAN ASLI
         function getMessageTemplate(name, link) {
             let template = document.getElementById('waTemplate').value;
             let displayName = name ? `Kak ${name}` : "Kakak";
-            
-            // Replace tags
             return template.replace(/\[NAMA\]/g, displayName).replace(/\[LINK\]/g, link);
         }
 
@@ -224,7 +238,6 @@
             const finalUrl = document.getElementById('finalUrl').value;
             const clientName = document.getElementById('clientName').value.trim();
             
-            // Mengambil pesan yang sudah diolah dari UI
             let messageToCopy = getMessageTemplate(clientName, finalUrl);
             
             navigator.clipboard.writeText(messageToCopy).then(() => {
@@ -251,7 +264,6 @@
                 finalPhone = '62' + finalPhone.substring(1);
             }
 
-            // Mengambil pesan yang sudah diolah dari UI
             let message = getMessageTemplate(clientName, finalUrl);
             let waUrl = '';
             
