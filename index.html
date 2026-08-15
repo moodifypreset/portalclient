@@ -67,6 +67,15 @@
             height: 10px;
             background-color: #2563eb; 
         }
+        .tooltip-triangle-right {
+            position: absolute;
+            top: 50%;
+            right: -4px;
+            transform: translateY(-50%) rotate(45deg);
+            width: 10px;
+            height: 10px;
+            background-color: #2563eb; 
+        }
 
         .watermark-overlay {
             position: absolute;
@@ -322,22 +331,41 @@
         </div>
     </div>
 
+    <!-- LIGHTBOX ZOOM -->
     <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm touch-pan-y">
+        
+        <!-- HEADER LIGHTBOX -->
         <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
             <p id="lightboxTitle" class="text-white font-medium drop-shadow-md text-sm md:text-base ml-2">Photo Name</p>
             <button onclick="closeLightbox()" class="text-white hover:text-red-400 w-10 h-10 flex items-center justify-center text-2xl bg-black/50 hover:bg-white/20 rounded-full transition"><i class="fa-solid fa-xmark"></i></button>
         </div>
+
+        <!-- FITUR BARU: TOMBOL ZOOM IN & ZOOM OUT -->
+        <div class="absolute right-4 top-20 flex flex-col gap-3 z-50">
+            <div class="relative">
+                <button onclick="changeZoom(0.5, event)" class="w-10 h-10 bg-black/60 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-lg transition shadow-lg border border-slate-600"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                <div id="zoomTooltip" class="hidden opacity-0 absolute right-14 top-1/2 -translate-y-1/2 bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-xl pointer-events-none whitespace-nowrap transition-all duration-300">
+                    <span data-i18n="zoomTip">Ketuk 2x atau gunakan ini untuk Zoom</span>
+                    <div class="tooltip-triangle-right"></div>
+                </div>
+            </div>
+            <button onclick="changeZoom(-0.5, event)" class="w-10 h-10 bg-black/60 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-lg transition shadow-lg border border-slate-600"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+        </div>
+
+        <!-- TOMBOL PREV / NEXT -->
         <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-left"></i></button>
         <button onclick="nextPhoto(event)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-right"></i></button>
         
-        <div class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24 pointer-events-none relative">
-            <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-all duration-200 ease-in-out pointer-events-auto select-none opacity-100 transform scale-100">
+        <!-- AREA GAMBAR (DIPERBARUI UNTUK MENDUKUNG DRAG/PAN) -->
+        <div id="lightboxScrollArea" class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24 relative overflow-hidden">
+            <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-all duration-200 ease-in-out select-none transform origin-center">
             
             <div id="lightboxWatermark" class="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden hidden z-[55]">
                 <span id="lbWmText" class="watermark-text text-4xl md:text-6xl text-center leading-none"></span>
             </div>
         </div>
 
+        <!-- AREA BAWAH -->
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
             <p class="text-white/50 text-xs md:hidden text-center mb-[-5px] animate-pulse"><i class="fa-solid fa-arrows-left-right"></i> <span data-i18n="swipe">Geser kiri/kanan</span></p>
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
@@ -403,7 +431,8 @@
                 alertEmpty: "Belum ada foto yang dipilih.",
                 alertCopy: "List foto disalin! Silahkan paste di WhatsApp.",
                 gridTip: "Ubah Baris Foto",
-                reshuffleTip: "Tekan ini untuk acak foto"
+                reshuffleTip: "Tekan ini untuk acak foto",
+                zoomTip: "Ketuk 2x atau gunakan ini untuk Zoom"
             },
             en: {
                 subtitle: "Secure Selection Tool",
@@ -445,7 +474,8 @@
                 alertEmpty: "No photos selected yet.",
                 alertCopy: "List copied! Please paste it in WhatsApp.",
                 gridTip: "Change Grid Rows",
-                reshuffleTip: "Click to reshuffle"
+                reshuffleTip: "Click to reshuffle",
+                zoomTip: "Double tap or use this to Zoom"
             }
         };
 
@@ -499,6 +529,13 @@
         let hasSeenTutorial = false; 
         let tooltipTimeout;
 
+        // --- VARIABEL LOGIKA ZOOM & DRAG ---
+        let zoomScale = 1;
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+        let hasSeenZoomTooltip = false;
+        let lastTap = 0;
+
         document.addEventListener("DOMContentLoaded", () => {
             updateDarkModeIcon(document.documentElement.classList.contains('dark'));
 
@@ -517,7 +554,6 @@
             appState.isWatermarked = urlParams.get('wm') === '1';
 
             if (appState.isProtected) {
-                // Mencegah Klik Kanan, Dragging, dan Keyboard Save
                 document.addEventListener('contextmenu', event => {
                     if(event.target.tagName === 'IMG') event.preventDefault();
                 });
@@ -533,7 +569,6 @@
                 document.body.style.WebkitTouchCallout = 'none';
                 document.body.style.userSelect = 'none';
 
-                // SISTEM LAYAR HITAM SAAT BROWSER KEHILANGAN FOKUS (ANTI SNIPPING TOOL/SCREEN RECORD)
                 const blackoutOverlay = document.createElement('div');
                 blackoutOverlay.id = 'blackout-overlay';
                 blackoutOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:999999;display:none;color:#ef4444;justify-content:center;align-items:center;font-weight:bold;font-size:1.5rem;text-align:center;flex-direction:column;gap:10px;';
@@ -588,17 +623,116 @@
 
             const lightboxEl = document.getElementById('lightbox');
             lightboxEl.addEventListener('touchstart', e => {
+                if (zoomScale > 1) return; // Mencegah swipe ganti foto saat sedang diperbesar
                 if (e.target.tagName.toLowerCase() === 'textarea') return;
                 touchstartX = e.changedTouches[0].screenX;
             }, { passive: true });
             lightboxEl.addEventListener('touchend', e => {
+                if (zoomScale > 1) return; 
                 if (e.target.tagName.toLowerCase() === 'textarea') return;
                 touchendX = e.changedTouches[0].screenX;
                 handleSwipeGesture();
             }, { passive: true });
             
             applyTranslations(); 
+            setupZoomDragEvents();
         });
+
+        // --- FUNGSI ZOOM & DRAG ---
+        function applyZoomPan() {
+            const img = document.getElementById('lightboxImg');
+            img.style.setProperty('--tw-scale-x', zoomScale);
+            img.style.setProperty('--tw-scale-y', zoomScale);
+            img.style.setProperty('--tw-translate-x', `${translateX}px`);
+            img.style.setProperty('--tw-translate-y', `${translateY}px`);
+            
+            if(zoomScale > 1) {
+                img.style.cursor = 'grab';
+                img.classList.replace('object-contain', 'object-cover');
+            } else {
+                img.style.cursor = 'default';
+                img.classList.replace('object-cover', 'object-contain');
+            }
+        }
+
+        function changeZoom(step, e) {
+            if(e) e.stopPropagation();
+            const imgEl = document.getElementById('lightboxImg');
+            imgEl.style.transition = 'transform 0.3s ease-in-out'; 
+            
+            zoomScale += step;
+            if(zoomScale <= 1) {
+                zoomScale = 1;
+                translateX = 0;
+                translateY = 0;
+            }
+            if(zoomScale > 4) zoomScale = 4; // Maksimal zoom 4x
+            
+            applyZoomPan();
+            
+            setTimeout(() => { imgEl.style.transition = ''; }, 300);
+            
+            hideTooltip('zoomTooltip');
+        }
+
+        function setupZoomDragEvents() {
+            const imgEl = document.getElementById('lightboxImg');
+
+            imgEl.addEventListener('mousedown', dragStart);
+            window.addEventListener('mousemove', dragMove);
+            window.addEventListener('mouseup', dragEnd);
+
+            imgEl.addEventListener('touchstart', dragStart, {passive: false});
+            window.addEventListener('touchmove', dragMove, {passive: false});
+            window.addEventListener('touchend', dragEnd);
+        }
+
+        function dragStart(e) {
+            if (zoomScale <= 1) return;
+            if(e.type === 'touchstart') e.preventDefault(); // Hentikan scroll bawaan HP
+            
+            isDragging = true;
+            const imgEl = document.getElementById('lightboxImg');
+            imgEl.style.cursor = 'grabbing';
+            imgEl.style.transition = 'none'; 
+            
+            const touch = e.touches ? e.touches[0] : e;
+            startX = touch.clientX - translateX;
+            startY = touch.clientY - translateY;
+        }
+
+        function dragMove(e) {
+            if (!isDragging || zoomScale <= 1) return;
+            if(e.type === 'touchmove') e.preventDefault(); 
+            
+            const touch = e.touches ? e.touches[0] : e;
+            translateX = touch.clientX - startX;
+            translateY = touch.clientY - startY;
+            applyZoomPan();
+        }
+
+        function dragEnd(e) {
+            isDragging = false;
+            const imgEl = document.getElementById('lightboxImg');
+            if(zoomScale > 1) imgEl.style.cursor = 'grab';
+            
+            // Logika Double Tap HP untuk Zoom
+            if(e && (e.type === 'touchend' || e.type === 'mouseup') && e.target === imgEl) {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 300 && tapLength > 0) {
+                    if (zoomScale === 1) changeZoom(1.5, null);
+                    else {
+                        zoomScale = 1; translateX = 0; translateY = 0; 
+                        imgEl.style.transition = 'transform 0.3s ease-in-out';
+                        applyZoomPan();
+                    }
+                    if(e.cancelable) e.preventDefault();
+                }
+                lastTap = currentTime;
+            }
+        }
+        // --------------------------
 
         function hideTooltip(id) {
             const el = document.getElementById(id);
@@ -778,13 +912,7 @@
             appState.currentPage = 1; 
             appState.viewMode = 'all';
             
-            let fullFolderPath = displayTitle = (targetFolderId === appState.rootFolderId) ? TRANSLATIONS[appState.lang].galleryTitle : folderName;
-            
-            if (appState.folderHistory.length > 0) {
-                const historyNames = appState.folderHistory.map(h => h.name);
-                fullFolderPath = [...historyNames, displayTitle].join(' - ');
-            }
-            
+            const displayTitle = (targetFolderId === appState.rootFolderId) ? TRANSLATIONS[appState.lang].galleryTitle : folderName;
             document.getElementById('currentFolderDisplay').innerHTML = (targetFolderId === appState.rootFolderId) 
                 ? displayTitle 
                 : `<i class="fa-solid fa-folder-open text-blue-500 mr-2"></i> ${displayTitle}`;
@@ -810,7 +938,7 @@
                     let photoFiles = fetchedFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && f.thumbnailLink);
                     
                     appState.photos = photoFiles.map(f => ({ 
-                        id: f.id, name: f.name, folderName: fullFolderPath,
+                        id: f.id, name: f.name, folderName: displayTitle,
                         url: f.thumbnailLink?.replace('=s220', '=s500'), 
                         fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') 
                     }));
@@ -1197,6 +1325,15 @@
                     document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                     updateLightboxSelectBtn();
                     
+                    // Reset Zoom 
+                    zoomScale = 1; translateX = 0; translateY = 0;
+                    imgEl.style.removeProperty('--tw-scale-x');
+                    imgEl.style.removeProperty('--tw-scale-y');
+                    imgEl.style.removeProperty('--tw-translate-x');
+                    imgEl.style.removeProperty('--tw-translate-y');
+                    imgEl.style.cursor = 'default';
+                    imgEl.classList.replace('object-cover', 'object-contain');
+                    
                     void imgEl.offsetWidth;
                     imgEl.classList.remove('opacity-0', 'scale-95'); 
                     imgEl.classList.add('opacity-100', 'scale-100');
@@ -1216,6 +1353,15 @@
                 document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                 updateLightboxSelectBtn();
                 
+                // Reset Zoom
+                zoomScale = 1; translateX = 0; translateY = 0;
+                imgEl.style.removeProperty('--tw-scale-x');
+                imgEl.style.removeProperty('--tw-scale-y');
+                imgEl.style.removeProperty('--tw-translate-x');
+                imgEl.style.removeProperty('--tw-translate-y');
+                imgEl.style.cursor = 'default';
+                imgEl.classList.replace('object-cover', 'object-contain');
+                
                 imgEl.classList.remove('opacity-0', 'scale-95');
                 imgEl.classList.add('opacity-100', 'scale-100');
 
@@ -1230,6 +1376,20 @@
                 document.body.style.overflow = 'hidden';
 
                 preloadNeighbors(currentZoomIndex, photosToProcess);
+                
+                // Trigger Balon Zoom Pertama Kali
+                if (!hasSeenZoomTooltip) {
+                    hasSeenZoomTooltip = true;
+                    setTimeout(() => {
+                        const zt = document.getElementById('zoomTooltip');
+                        zt.classList.remove('hidden');
+                        setTimeout(() => zt.classList.replace('opacity-0', 'opacity-100'), 100);
+                        setTimeout(() => {
+                            zt.classList.replace('opacity-100', 'opacity-0');
+                            setTimeout(() => zt.classList.add('hidden'), 300);
+                        }, 5000);
+                    }, 1000);
+                }
             }
         }
 
