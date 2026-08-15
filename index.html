@@ -517,6 +517,7 @@
             appState.isWatermarked = urlParams.get('wm') === '1';
 
             if (appState.isProtected) {
+                // Mencegah Klik Kanan, Dragging, dan Keyboard Save
                 document.addEventListener('contextmenu', event => {
                     if(event.target.tagName === 'IMG') event.preventDefault();
                 });
@@ -524,12 +525,31 @@
                     if(event.target.tagName === 'IMG') event.preventDefault();
                 });
                 document.addEventListener('keydown', event => {
-                    if (event.ctrlKey && (event.key === 's' || event.key === 'S')) event.preventDefault();
+                    if (event.ctrlKey && (event.key === 's' || event.key === 'S' || event.key === 'p' || event.key === 'P')) event.preventDefault();
                 });
+                
                 document.documentElement.style.WebkitTouchCallout = 'none';
                 document.documentElement.style.userSelect = 'none';
                 document.body.style.WebkitTouchCallout = 'none';
                 document.body.style.userSelect = 'none';
+
+                // SISTEM LAYAR HITAM SAAT BROWSER KEHILANGAN FOKUS (ANTI SNIPPING TOOL/SCREEN RECORD)
+                const blackoutOverlay = document.createElement('div');
+                blackoutOverlay.id = 'blackout-overlay';
+                blackoutOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:999999;display:none;color:#ef4444;justify-content:center;align-items:center;font-weight:bold;font-size:1.5rem;text-align:center;flex-direction:column;gap:10px;';
+                blackoutOverlay.innerHTML = '<i class="fa-solid fa-shield-halved text-4xl"></i><p>Tangkapan Layar & Perekaman Dilarang</p>';
+                document.body.appendChild(blackoutOverlay);
+
+                window.addEventListener('blur', () => {
+                    blackoutOverlay.style.display = 'flex';
+                });
+                window.addEventListener('focus', () => {
+                    blackoutOverlay.style.display = 'none';
+                });
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) blackoutOverlay.style.display = 'flex';
+                    else blackoutOverlay.style.display = 'none';
+                });
             }
 
             if (urlName) {
@@ -1098,7 +1118,7 @@
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama'; 
                 
-                textContent += `${index + 1}. ${p.name} [Folder : ${folderInfo}]\n`;
+                textContent += `${index + 1}. [${folderInfo}] ${p.name}\n`;
                 
                 if (note) textContent += `   Catatan: ${note}\n`;
             });
@@ -1126,7 +1146,7 @@
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama';
                 
-                textToCopy += `${index + 1}. ${p.name} [Folder : ${folderInfo}]\n`;
+                textToCopy += `${index + 1}. [${folderInfo}] ${p.name}\n`;
                 
                 if (note) textToCopy += `   _Catatan: ${note}_\n`;
             });
