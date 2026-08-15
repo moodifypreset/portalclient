@@ -363,17 +363,9 @@
 
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
             <p class="text-white/50 text-xs md:hidden text-center mb-[-5px] animate-pulse"><i class="fa-solid fa-arrows-left-right"></i> <span data-i18n="swipe">Geser kiri/kanan</span></p>
-            
-            <!-- PANEL TOMBOL: PILIH & PRIORITAS CETAK -->
-            <div class="flex flex-row gap-2 w-full justify-center">
-                <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
-                    <i class="fa-regular fa-square-check mr-2"></i> <span id="btnSelectText">Pilih Foto Ini</span>
-                </button>
-                <button id="lightboxPriorityBtn" onclick="togglePriority()" class="hidden px-4 py-3 bg-slate-800 hover:bg-slate-700 text-yellow-500 font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-auto shrink-0" title="Tandai Prioritas Cetak">
-                    <i id="priorityIcon" class="fa-regular fa-star text-lg"></i> <span id="btnPriorityText" class="hidden sm:inline ml-2">Prioritas</span>
-                </button>
-            </div>
-            
+            <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
+                <i class="fa-regular fa-square-check mr-2"></i> <span id="btnSelectText">Pilih Foto Ini</span>
+            </button>
             <textarea id="lightboxNote" oninput="saveNote()" data-i18n="notePlaceholder" class="w-full bg-slate-800/90 text-white placeholder-slate-400 text-sm rounded-xl p-3 border border-slate-600 focus:outline-none focus:border-slate-400 hidden transition-all shadow-lg backdrop-blur-sm" rows="2" placeholder="Catatan edit (opsional), misal: hapus jerawat..."></textarea>
         </div>
     </div>
@@ -390,8 +382,7 @@
             viewMode: 'all', sortOrder: 'default', lang: 'id',
             gridMode: 2, 
             isProtected: false, 
-            isWatermarked: false,
-            prioritySet: new Set() // <-- Variabel baru untuk sistem tagging
+            isWatermarked: false
         };
 
         const TRANSLATIONS = {
@@ -436,9 +427,7 @@
                 alertCopy: "List foto disalin! Silahkan paste di WhatsApp.",
                 gridTip: "Ubah Baris Foto",
                 reshuffleTip: "Tekan ini untuk acak foto",
-                zoomTip: "Ketuk 2x atau gunakan ini untuk Zoom",
-                btnPriority: "Prioritas",
-                btnPrioritized: "Prioritas Cetak!"
+                zoomTip: "Ketuk 2x atau gunakan ini untuk Zoom"
             },
             en: {
                 subtitle: "Secure Selection Tool",
@@ -481,9 +470,7 @@
                 alertCopy: "List copied! Please paste it in WhatsApp.",
                 gridTip: "Change Grid Rows",
                 reshuffleTip: "Click to reshuffle",
-                zoomTip: "Double tap or use this to Zoom",
-                btnPriority: "Priority",
-                btnPrioritized: "Print Priority!"
+                zoomTip: "Double tap or use this to Zoom"
             }
         };
 
@@ -561,6 +548,7 @@
             appState.isWatermarked = urlParams.get('wm') === '1';
 
             if (appState.isProtected) {
+                // Mencegah Klik Kanan, Dragging, dan Keyboard Save
                 document.addEventListener('contextmenu', event => {
                     if(event.target.tagName === 'IMG') event.preventDefault();
                 });
@@ -797,8 +785,7 @@
             if (!appState.rootFolderId) return;
             const dataToSave = { 
                 selected: Array.from(appState.selectedMap.entries()), 
-                notes: appState.notes,
-                priority: Array.from(appState.prioritySet) // <-- SIMPAN DATA PRIORITAS
+                notes: appState.notes 
             };
             localStorage.setItem(`client_portal_save_${appState.rootFolderId}`, JSON.stringify(dataToSave));
         }
@@ -810,8 +797,6 @@
                     const data = JSON.parse(savedData);
                     appState.selectedMap = new Map(data.selected || []);
                     appState.notes = data.notes || {};
-                    appState.prioritySet = new Set(data.priority || []); // <-- MUAT DATA PRIORITAS
-                    
                     if (appState.selectedMap.size > 0) {
                         setTimeout(() => { updateActionBar(); }, 1000);
                         refreshExpiredUrls();
@@ -820,7 +805,6 @@
             } else {
                 appState.selectedMap = new Map();
                 appState.notes = {};
-                appState.prioritySet = new Set();
             }
         }
 
@@ -1115,15 +1099,6 @@
                 const badgeSize = isSmallGrid ? 'w-5 h-5 text-[10px]' : 'w-8 h-8 text-sm';
                 overlay.innerHTML = `<div class="check-badge bg-blue-600 text-white ${badgeSize} rounded-full flex items-center justify-center shadow-lg"><i class="fa-solid fa-check"></i></div>`;
                 
-                // RENDER LENCANA PRIORITAS CETAK (BINTANG EMAS)
-                if (appState.prioritySet.has(photo.id)) {
-                    const prioBadge = document.createElement('div');
-                    const leftPos = isSmallGrid ? 'left-1.5' : 'left-2';
-                    prioBadge.className = `star-badge absolute top-2 ${leftPos} bg-yellow-500 text-white ${badgeSize} rounded-full flex items-center justify-center shadow-md z-20 pointer-events-none`;
-                    prioBadge.innerHTML = '<i class="fa-solid fa-star"></i>';
-                    overlay.appendChild(prioBadge);
-                }
-
                 if (appState.notes[photo.id]) {
                     const noteBadge = document.createElement('div');
                     const rightPos = isSmallGrid ? 'right-8' : 'right-12';
@@ -1203,10 +1178,7 @@
             if (appState.selectedMap.has(photoObj.id)) {
                 appState.selectedMap.delete(photoObj.id); 
                 delete appState.notes[photoObj.id]; 
-                appState.prioritySet.delete(photoObj.id); // Hapus prioritas jika foto di-unselect
                 cardElement.classList.remove('selected');
-                const prioBadge = cardElement.querySelector('.star-badge');
-                if (prioBadge) prioBadge.remove(); // Hapus badge bintang dari UI
             } else {
                 if (appState.kuota !== null && appState.selectedMap.size >= appState.kuota) {
                     return showAlert(TRANSLATIONS[appState.lang].alertLimit, 'error');
@@ -1216,19 +1188,6 @@
             }
             updateActionBar(); saveProgress();
             if (appState.viewMode === 'all') updateViewModeText();
-        }
-
-        function togglePriority() {
-            if (!currentZoomPhoto || !appState.selectedMap.has(currentZoomPhoto.id)) return;
-            
-            if (appState.prioritySet.has(currentZoomPhoto.id)) {
-                appState.prioritySet.delete(currentZoomPhoto.id);
-            } else {
-                appState.prioritySet.add(currentZoomPhoto.id);
-            }
-            
-            updateLightboxSelectBtn();
-            saveProgress();
         }
 
         function updateActionBar() {
@@ -1267,9 +1226,8 @@
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama'; 
-                const priorityMark = appState.prioritySet.has(p.id) ? ' ⭐ [PRIORITAS CETAK]' : '';
                 
-                textContent += `${index + 1}. ${p.name} [folder : ${folderInfo}]${priorityMark}\n`;
+                textContent += `${index + 1}. ${p.name} [folder : ${folderInfo}]\n`;
                 
                 if (note) textContent += `   Catatan: ${note}\n`;
             });
@@ -1296,9 +1254,8 @@
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama';
-                const priorityMark = appState.prioritySet.has(p.id) ? ' ⭐ *[PRIORITAS CETAK]*' : '';
                 
-                textToCopy += `${index + 1}. ${p.name} [folder : ${folderInfo}]${priorityMark}\n`;
+                textToCopy += `${index + 1}. ${p.name} [folder : ${folderInfo}]\n`;
                 
                 if (note) textToCopy += `   _Catatan: ${note}_\n`;
             });
@@ -1436,9 +1393,7 @@
         function toggleLightboxSelect() {
             if (!currentZoomPhoto) return;
             if (appState.selectedMap.has(currentZoomPhoto.id)) {
-                appState.selectedMap.delete(currentZoomPhoto.id); 
-                delete appState.notes[currentZoomPhoto.id]; 
-                appState.prioritySet.delete(currentZoomPhoto.id); // Hapus prioritas jika di-unselect dari lightbox
+                appState.selectedMap.delete(currentZoomPhoto.id); delete appState.notes[currentZoomPhoto.id]; 
             } else {
                 if (appState.kuota !== null && appState.selectedMap.size >= appState.kuota) {
                     return showAlert(TRANSLATIONS[appState.lang].alertLimit, 'error');
@@ -1451,37 +1406,18 @@
 
         function updateLightboxSelectBtn() {
             const btn = document.getElementById('lightboxSelectBtn');
-            const prioBtn = document.getElementById('lightboxPriorityBtn');
-            const prioIcon = document.getElementById('priorityIcon');
-            const prioText = document.getElementById('btnPriorityText');
-            
             const noteArea = document.getElementById('lightboxNote');
             const langData = TRANSLATIONS[appState.lang];
             const isSelected = appState.selectedMap.has(currentZoomPhoto.id);
-            const isPriority = appState.prioritySet.has(currentZoomPhoto.id);
 
             if (isSelected) {
-                // Konfigurasi Tombol Pilih
                 btn.innerHTML = `<i class="fa-solid fa-check mr-2"></i> <span id="btnSelectText">${langData.btnSelected}</span>`;
                 btn.className = "px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg w-full sm:w-auto";
                 noteArea.classList.remove('hidden'); noteArea.value = appState.notes[currentZoomPhoto.id] || '';
-                
-                // Konfigurasi Tombol Prioritas
-                prioBtn.classList.remove('hidden');
-                if (isPriority) {
-                    prioBtn.className = "px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold rounded-xl transition flex items-center justify-center shadow-lg w-auto shrink-0";
-                    prioIcon.className = "fa-solid fa-star text-lg";
-                    prioText.textContent = langData.btnPrioritized || "Prioritas";
-                } else {
-                    prioBtn.className = "px-4 py-3 bg-slate-800 hover:bg-slate-700 text-yellow-500 font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-auto shrink-0";
-                    prioIcon.className = "fa-regular fa-star text-lg";
-                    prioText.textContent = langData.btnPriority || "Prioritas";
-                }
             } else {
                 btn.innerHTML = `<i class="fa-regular fa-square-check mr-2"></i> <span id="btnSelectText">${langData.btnSelect}</span>`;
                 btn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto";
                 noteArea.classList.add('hidden');
-                prioBtn.classList.add('hidden');
             }
         }
 
