@@ -77,47 +77,16 @@
             background-color: #2563eb; 
         }
 
-        /* WATERMARK TILED (ANTI-AI) CSS */
+        /* WATERMARK DYNAMIC (CANVAS BACKGROUND) CSS */
         .watermark-overlay {
             position: absolute;
             inset: 0;
             pointer-events: none;
             z-index: 15;
-            overflow: hidden;
-            display: flex;
-            flex-wrap: wrap;
-            align-content: stretch;
-            justify-content: center;
             border-radius: inherit; /* Menyatu dengan lengkungan foto */
-        }
-        .watermark-pattern {
-            width: 200%; 
-            height: 200%;
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-content: center;
-            transform: rotate(-30deg);
-        }
-        .watermark-item {
-            color: rgba(255, 255, 255, 0.30); /* Opacity 30% */
-            font-weight: 800;
-            text-transform: uppercase;
-            user-select: none;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5); 
-            white-space: nowrap;
-            margin: 15px 30px; 
-            font-size: 14px; 
-        }
-
-        /* Ukuran font watermark lebih besar khusus di mode Lightbox Zoom */
-        #lightboxWatermark .watermark-item {
-            font-size: 24px;
-            margin: 30px 50px;
-            color: rgba(255, 255, 255, 0.35);
+            /* Background image akan di-inject via JS dari canvas */
+            background-repeat: repeat;
+            background-position: center;
         }
 
         .anti-copy-img {
@@ -385,10 +354,8 @@
                 <img id="lightboxImg" src="" class="max-w-full max-h-full rounded-md select-none block pointer-events-none">
                 
                 <!-- WATERMARK CONTAINER DI LIGHTBOX TERIKAT KE GAMBAR -->
-                <div id="lightboxWatermark" class="watermark-overlay hidden rounded-md overflow-hidden">
-                    <div class="watermark-pattern" id="lbWmPattern">
-                        <!-- Teks akan di-generate oleh JavaScript agar bisa banyak -->
-                    </div>
+                <div id="lightboxWatermark" class="watermark-overlay hidden">
+                    <!-- Background Canvas akan di-inject via JS -->
                 </div>
 
             </div>
@@ -424,7 +391,9 @@
             gridMode: 2, 
             isProtected: false, 
             isWatermarked: false,
-            prioritySet: new Set() 
+            prioritySet: new Set(),
+            watermarkDataUrl_Small: null,
+            watermarkDataUrl_Large: null
         };
 
         const TRANSLATIONS = {
@@ -520,13 +489,40 @@
             }
         };
 
-        // --- FUNGSI GENERATE WATERMARK TILED (ANTI-AI) ---
-        function generateWatermarkPattern(vendorName, isLightbox = false) {
-            let html = '';
-            for (let i = 0; i < 50; i++) {
-                html += `<span class="watermark-item">${vendorName}</span>`;
-            }
-            return html;
+        // --- FUNGSI CANVAS GENERATE WATERMARK ---
+        function createWatermarkImage(text, isLarge) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Ukuran Canvas (Kotak pola berulang)
+            const boxSize = isLarge ? 300 : 150;
+            canvas.width = boxSize;
+            canvas.height = boxSize;
+
+            ctx.translate(boxSize / 2, boxSize / 2);
+            ctx.rotate(-30 * Math.PI / 180); // Sudut kemiringan
+
+            ctx.font = `800 ${isLarge ? '28px' : '14px'} Inter, sans-serif`;
+            ctx.fillStyle = isLarge ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.3)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Efek bayangan agar terbaca di area putih
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+
+            ctx.fillText(text.toUpperCase(), 0, 0);
+
+            return canvas.toDataURL('image/png');
+        }
+
+        function initWatermarks() {
+            if (!appState.isWatermarked) return;
+            const vendorNameStr = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'WATERMARK';
+            appState.watermarkDataUrl_Small = createWatermarkImage(vendorNameStr, false);
+            appState.watermarkDataUrl_Large = createWatermarkImage(vendorNameStr, true);
         }
 
         function toggleDarkMode() {
@@ -619,6 +615,8 @@
                 document.body.style.userSelect = 'none';
             }
 
+            initWatermarks(); // Jalankan inisialisasi pembuat gambar watermark
+
             if (urlName) {
                 appState.clientName = decodeURIComponent(urlName).replace(/-/g, ' ');
                 document.getElementById('displayClientName').textContent = appState.clientName;
@@ -670,12 +668,11 @@
             setupZoomDragEvents();
         });
 
-        // --- FUNGSI ZOOM & PAN (DIPERBARUI) ---
+        // --- FUNGSI ZOOM & PAN ---
         function applyZoomPan() {
             const wrapper = document.getElementById('lightboxImageWrapper');
             
             // Transformasi dilakukan pada wrapper, bukan pada IMG. 
-            // Sehingga Watermark ikut membesar!
             wrapper.style.setProperty('--tw-scale-x', zoomScale);
             wrapper.style.setProperty('--tw-scale-y', zoomScale);
             wrapper.style.setProperty('--tw-translate-x', `${translateX}px`);
@@ -1139,8 +1136,6 @@
             const startIndex = (appState.currentPage - 1) * ITEMS_PER_PAGE;
             const endIndex = startIndex + ITEMS_PER_PAGE;
             const photosToShow = photosToProcess.slice(startIndex, endIndex);
-            
-            const vendorNameStr = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Watermark';
 
             photosToShow.forEach((photo, index) => {
                 const globalIndex = appState.photos.findIndex(p => p.id === photo.id); 
@@ -1175,10 +1170,11 @@
                     overlay.appendChild(noteBadge);
                 }
 
-                if (appState.isWatermarked) {
+                // PENERAPAN CANVAS WATERMARK DI GRID
+                if (appState.isWatermarked && appState.watermarkDataUrl_Small) {
                     const wmOverlay = document.createElement('div');
                     wmOverlay.className = "watermark-overlay";
-                    wmOverlay.innerHTML = `<div class="watermark-pattern">${generateWatermarkPattern(vendorNameStr, false)}</div>`;
+                    wmOverlay.style.backgroundImage = `url(${appState.watermarkDataUrl_Small})`;
                     card.appendChild(wmOverlay);
                 }
 
@@ -1401,9 +1397,10 @@
                     wrapper.classList.remove('opacity-0', 'scale-95'); 
                     wrapper.classList.add('opacity-100', 'scale-100');
 
-                    if (appState.isWatermarked) {
-                        const vendorNameStr = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Watermark';
-                        document.getElementById('lbWmPattern').innerHTML = generateWatermarkPattern(vendorNameStr, true);
+                    // PENERAPAN CANVAS WATERMARK DI LIGHTBOX
+                    if (appState.isWatermarked && appState.watermarkDataUrl_Large) {
+                        const lbWm = document.getElementById('lightboxWatermark');
+                        lbWm.style.backgroundImage = `url(${appState.watermarkDataUrl_Large})`;
                     }
 
                     preloadNeighbors(currentZoomIndex, photosToProcess);
@@ -1426,10 +1423,11 @@
                 wrapper.classList.remove('opacity-0', 'scale-95');
                 wrapper.classList.add('opacity-100', 'scale-100');
 
-                if (appState.isWatermarked) {
-                    const vendorNameStr = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Watermark';
-                    document.getElementById('lbWmPattern').innerHTML = generateWatermarkPattern(vendorNameStr, true);
-                    document.getElementById('lightboxWatermark').classList.remove('hidden');
+                // PENERAPAN CANVAS WATERMARK DI LIGHTBOX
+                if (appState.isWatermarked && appState.watermarkDataUrl_Large) {
+                    const lbWm = document.getElementById('lightboxWatermark');
+                    lbWm.style.backgroundImage = `url(${appState.watermarkDataUrl_Large})`;
+                    lbWm.classList.remove('hidden');
                 }
                 
                 lightbox.classList.remove('hidden'); 
