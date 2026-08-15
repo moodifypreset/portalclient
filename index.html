@@ -58,7 +58,6 @@
             box-shadow: 0 0 0 3px #3b82f6; 
         }
 
-        /* Triangle untuk tooltip */
         .tooltip-triangle {
             position: absolute;
             bottom: -4px;
@@ -69,7 +68,6 @@
             background-color: #2563eb; 
         }
 
-        /* WATERMARK & PROTEKSI CSS AGRESIF */
         .watermark-overlay {
             position: absolute;
             inset: 0;
@@ -89,9 +87,8 @@
             text-shadow: 0px 2px 5px rgba(0,0,0,0.6);
             white-space: nowrap;
         }
-        /* CSS Agresif untuk memblokir aksi sentuhan (Save Image) di HP */
         .anti-copy-img {
-            -webkit-touch-callout: none !important; /* Blokir Long-press popup di iOS */
+            -webkit-touch-callout: none !important; 
             -webkit-user-select: none !important;
             -khtml-user-select: none !important;
             -moz-user-select: none !important;
@@ -325,7 +322,6 @@
         </div>
     </div>
 
-    <!-- LIGHTBOX ZOOM (DENGAN ELEMEN WATERMARK) -->
     <div id="lightbox" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300 backdrop-blur-sm touch-pan-y">
         <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
             <p id="lightboxTitle" class="text-white font-medium drop-shadow-md text-sm md:text-base ml-2">Photo Name</p>
@@ -530,7 +526,6 @@
                 document.addEventListener('keydown', event => {
                     if (event.ctrlKey && (event.key === 's' || event.key === 'S')) event.preventDefault();
                 });
-                // Disable callout & select globally if protected
                 document.documentElement.style.WebkitTouchCallout = 'none';
                 document.documentElement.style.userSelect = 'none';
                 document.body.style.WebkitTouchCallout = 'none';
@@ -763,7 +758,13 @@
             appState.currentPage = 1; 
             appState.viewMode = 'all';
             
-            const displayTitle = (targetFolderId === appState.rootFolderId) ? TRANSLATIONS[appState.lang].galleryTitle : folderName;
+            let fullFolderPath = displayTitle = (targetFolderId === appState.rootFolderId) ? TRANSLATIONS[appState.lang].galleryTitle : folderName;
+            
+            if (appState.folderHistory.length > 0) {
+                const historyNames = appState.folderHistory.map(h => h.name);
+                fullFolderPath = [...historyNames, displayTitle].join(' - ');
+            }
+            
             document.getElementById('currentFolderDisplay').innerHTML = (targetFolderId === appState.rootFolderId) 
                 ? displayTitle 
                 : `<i class="fa-solid fa-folder-open text-blue-500 mr-2"></i> ${displayTitle}`;
@@ -789,7 +790,7 @@
                     let photoFiles = fetchedFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && f.thumbnailLink);
                     
                     appState.photos = photoFiles.map(f => ({ 
-                        id: f.id, name: f.name, folderName: displayTitle,
+                        id: f.id, name: f.name, folderName: fullFolderPath,
                         url: f.thumbnailLink?.replace('=s220', '=s500'), 
                         fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') 
                     }));
@@ -1097,12 +1098,13 @@
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama'; 
                 
-                textContent += `${index + 1}. [${folderInfo}] ${p.name}\n`;
+                textContent += `${index + 1}. ${p.name} [Folder : ${folderInfo}]\n`;
                 
                 if (note) textContent += `   Catatan: ${note}\n`;
             });
             
-            textContent += `\n=======================\nDicetak otomatis melalui ${vendor} Portal\n`;
+            const editorFormat = selectedPhotos.map(p => p.name).join(', ');
+            textContent += `\n=======================\nFormat Khusus Editor (Lightroom):\n${editorFormat}\n=======================\nDicetak otomatis melalui ${vendor} Portal\n`;
 
             const blob = new Blob([textContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -1124,11 +1126,13 @@
                 const note = appState.notes[p.id];
                 const folderInfo = p.folderName || 'Galeri Utama';
                 
-                textToCopy += `${index + 1}. [${folderInfo}] ${p.name}\n`;
+                textToCopy += `${index + 1}. ${p.name} [Folder : ${folderInfo}]\n`;
                 
                 if (note) textToCopy += `   _Catatan: ${note}_\n`;
             });
-            textToCopy += `\n_Dikirim dari ${vendor} Portal_`;
+            
+            const editorFormat = selectedPhotos.map(p => p.name).join(', ');
+            textToCopy += `\n*Format Khusus Editor (Lightroom):*\n${editorFormat}\n\n_Dikirim dari ${vendor} Portal_`;
 
             if (waNumber) {
                 const encodedText = encodeURIComponent(textToCopy);
