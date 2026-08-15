@@ -10,7 +10,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
     </style>
-    <!-- Memanggil file pengaturan untuk fallback nama vendor jika diperlukan -->
     <script src="pengaturan.js"></script>
 </head>
 <body class="text-slate-800 flex items-center justify-center min-h-screen p-4 py-10">
@@ -35,7 +34,6 @@
             <!-- Bagian Data Klien -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Kolom Nama -->
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Klien (Opsional)</label>
                         <div class="relative">
@@ -47,7 +45,6 @@
                         </div>
                     </div>
 
-                    <!-- Kolom WA Klien -->
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">No. WA Klien (Opsional)</label>
                         <div class="relative">
@@ -83,22 +80,22 @@
                 </div>
             </div>
 
-            <!-- FITUR BARU: PROTEKSI HAK CIPTA -->
+            <!-- FITUR PROTEKSI HAK CIPTA -->
             <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 space-y-3">
                 <label class="block text-xs font-bold text-blue-800 border-b border-blue-200 pb-2 mb-2"><i class="fa-solid fa-lock mr-1"></i> Proteksi Hak Cipta</label>
                 <div class="flex flex-col gap-3">
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" id="protCheck" checked class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500">
-                        <span class="text-sm font-medium text-slate-700">Aktifkan Anti-Copy (Blokir Klik Kanan, Drag & Save)</span>
+                        <span class="text-sm font-medium text-slate-700">Anti-Save (Blokir Tahan Layar HP, Klik Kanan & Drag)</span>
                     </label>
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="checkbox" id="wmCheck" checked class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500">
-                        <span class="text-sm font-medium text-slate-700">Tampilkan Watermark (Nama Vendor)</span>
+                        <span class="text-sm font-medium text-slate-700">Tampilkan Watermark (Nama Vendor) di atas foto</span>
                     </label>
                 </div>
             </div>
 
-            <!-- BAGIAN KUSTOMISASI PESAN WHATSAPP (NO-CODE) -->
+            <!-- BAGIAN KUSTOMISASI PESAN WHATSAPP -->
             <div>
                 <label class="block text-sm font-bold text-slate-700 mb-1">Format Pesan WhatsApp (Auto-Save)</label>
                 <p class="text-[11px] text-slate-500 mb-2 leading-relaxed">
@@ -120,7 +117,6 @@
                 <span class="text-xs font-bold text-green-700 uppercase tracking-wider mb-2 block">Link Siap Dikirim!</span>
                 <textarea id="finalUrl" readonly class="w-full bg-white border border-green-200 rounded-lg p-3 text-sm text-slate-700 outline-none resize-none h-24 font-mono font-medium shadow-inner"></textarea>
                 
-                <!-- Dua Tombol Aksi -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                     <button onclick="copyToClipboard()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl transition flex justify-center items-center gap-2 shadow-md">
                         <i class="fa-solid fa-copy"></i> Salin Teks
@@ -134,7 +130,6 @@
         </div>
     </div>
 
-    <!-- Alert Notifikasi -->
     <div id="customAlert" class="fixed top-4 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 transition-all duration-300 transform -translate-y-32 opacity-0">
         <i id="alertIcon" class="fa-solid fa-circle-check text-green-400"></i>
         <span id="alertText" class="text-sm font-bold">Teks tersalin!</span>
@@ -144,12 +139,10 @@
         const DEFAULT_TEMPLATE = "Halo [NAMA],\n\nBerikut adalah link galeri foto eksklusif Anda untuk proses seleksi:\n[LINK]\n\nSilakan klik link di atas. Jika ada pertanyaan, balas pesan ini ya. Terima kasih!";
 
         document.addEventListener("DOMContentLoaded", () => {
-            // Setup Base URL
             let currentUrl = window.location.href.split('?')[0].split('#')[0];
             let portalUrl = currentUrl.includes("generatorLink.html") ? currentUrl.replace("generatorLink.html", "") : currentUrl.substring(0, currentUrl.lastIndexOf("/") + 1);
             document.getElementById('baseUrl').value = portalUrl;
 
-            // Load Template Pesan dari Local Storage (Auto-Save fitur)
             const savedTemplate = localStorage.getItem('customWaTemplate');
             if (savedTemplate) {
                 document.getElementById('waTemplate').value = savedTemplate;
@@ -210,7 +203,6 @@
                 params.push(`k=${hashedKuota}`);
             }
             
-            // INJEKSI PARAMETER KEAMANAN JIKA DICENTANG
             if (document.getElementById('protCheck').checked) params.push('prot=1');
             if (document.getElementById('wmCheck').checked) params.push('wm=1');
 
