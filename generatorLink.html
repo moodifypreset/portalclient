@@ -12,8 +12,9 @@
     </style>
     <script src="pengaturan.js"></script>
 </head>
-<body class="text-slate-800 flex items-center justify-center min-h-screen p-4 py-10">
+<body class="text-slate-800 flex flex-col items-center justify-center min-h-screen p-4 py-10 gap-6">
 
+    <!-- BOX UTAMA: GENERATOR LINK -->
     <div class="bg-white max-w-xl w-full rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
         <div class="bg-slate-900 px-6 py-5 flex items-center gap-4">
             <div class="bg-white/20 text-white w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-inner">
@@ -26,10 +27,7 @@
         </div>
 
         <div class="p-6 md:p-8 space-y-5">
-            
-            <div class="hidden">
-                <input type="text" id="baseUrl">
-            </div>
+            <div class="hidden"><input type="text" id="baseUrl"></div>
 
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -39,42 +37,35 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fa-solid fa-user-tag text-slate-400"></i>
                             </div>
-                            <input type="text" id="clientName" placeholder="Cth: Stefany and Jansen"
-                                class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg focus:border-blue-600 outline-none transition text-sm">
+                            <input type="text" id="clientName" placeholder="Cth: Stefany and Jansen" class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg focus:border-blue-600 outline-none transition text-sm">
                         </div>
                     </div>
-
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">No. WA Klien (Opsional)</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fa-brands fa-whatsapp text-slate-400"></i>
                             </div>
-                            <input type="number" id="clientPhone" placeholder="Cth: 08123456..."
-                                class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg focus:border-blue-600 outline-none transition text-sm">
+                            <input type="number" id="clientPhone" placeholder="Cth: 08123456..." class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg focus:border-blue-600 outline-none transition text-sm">
                         </div>
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Link Google Drive Asli <span class="text-red-500">*</span></label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-brands fa-google-drive text-slate-400"></i>
                         </div>
-                        <input type="text" id="driveLink" placeholder="Paste link folder di sini..."
-                            class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg focus:border-blue-600 outline-none transition text-sm">
+                        <input type="text" id="driveLink" placeholder="Paste link folder di sini..." class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg focus:border-blue-600 outline-none transition text-sm">
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Batas Kuota Foto (Opsional)</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-shield-halved text-slate-400"></i>
                         </div>
-                        <input type="number" id="kuota" placeholder="Contoh: 100 (Kosongkan jika bebas)"
-                            class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg focus:border-blue-600 outline-none transition text-sm">
+                        <input type="number" id="kuota" placeholder="Contoh: 100 (Kosongkan jika bebas)" class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg focus:border-blue-600 outline-none transition text-sm">
                     </div>
                 </div>
             </div>
@@ -98,8 +89,7 @@
                 <p class="text-[11px] text-slate-500 mb-2 leading-relaxed">
                     Gunakan kode <span class="font-mono bg-blue-100 text-blue-700 px-1 rounded">[NAMA]</span> untuk menyisipkan nama, dan <span class="font-mono bg-blue-100 text-blue-700 px-1 rounded">[LINK]</span> untuk tautan galeri. Bebas diedit!
                 </p>
-                <textarea id="waTemplate" oninput="saveTemplate()" rows="4" 
-                    class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 text-sm text-slate-700 focus:border-blue-600 outline-none transition resize-none shadow-inner"></textarea>
+                <textarea id="waTemplate" oninput="saveTemplate()" rows="4" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 text-sm text-slate-700 focus:border-blue-600 outline-none transition resize-none shadow-inner"></textarea>
                 <div class="flex justify-end mt-1">
                     <button onclick="resetTemplate()" class="text-[10px] font-bold text-slate-400 hover:text-blue-600 transition uppercase tracking-wider"><i class="fa-solid fa-rotate-left"></i> Reset ke Standar</button>
                 </div>
@@ -112,7 +102,6 @@
             <div id="resultBox" class="hidden mt-2 bg-green-50 border border-green-200 rounded-xl p-4 transition-all">
                 <span class="text-xs font-bold text-green-700 uppercase tracking-wider mb-2 block">Link Siap Dikirim!</span>
                 <textarea id="finalUrl" readonly class="w-full bg-white border border-green-200 rounded-lg p-3 text-sm text-slate-700 outline-none resize-none h-24 font-mono font-medium shadow-inner"></textarea>
-                
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                     <button onclick="copyToClipboard()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl transition flex justify-center items-center gap-2 shadow-md">
                         <i class="fa-solid fa-copy"></i> Salin Teks
@@ -122,10 +111,35 @@
                     </button>
                 </div>
             </div>
-
         </div>
     </div>
 
+    <!-- BOX KEDUA: ALAT EKSTRAK NAMA FOTO (KHUSUS EDITOR LIGHTROOM) -->
+    <div class="bg-white max-w-xl w-full rounded-2xl shadow-xl border border-slate-200 overflow-hidden mt-2">
+        <div class="bg-slate-800 px-6 py-4 flex items-center gap-3">
+            <i class="fa-solid fa-bolt text-yellow-400"></i>
+            <h2 class="font-bold text-white text-md">Alat Ekstrak Nama Foto (Lightroom)</h2>
+        </div>
+        <div class="p-6 md:p-8 space-y-4">
+            <p class="text-xs text-slate-500 mb-2">Tempel list WA dari klien di bawah ini, dan sistem akan mengambil nama file fotonya saja untuk dicari di Lightroom.</p>
+            
+            <textarea id="rawClientText" rows="4" placeholder="Cth: 1. IMG_001.jpg [folder : Akad Nikah]..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm text-slate-700 focus:border-blue-600 outline-none transition resize-none"></textarea>
+            
+            <button onclick="extractFilenames()" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md">
+                <i class="fa-solid fa-filter"></i> Ekstrak Nama Foto
+            </button>
+
+            <div id="extractResultBox" class="hidden mt-4">
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Hasil (Pisahkan dengan koma):</label>
+                <textarea id="extractedResult" readonly rows="3" class="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm font-mono text-blue-700 outline-none resize-none shadow-inner"></textarea>
+                <button onclick="copyExtractedText()" class="mt-2 w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold rounded-lg transition flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-copy"></i> Salin Hasil
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Notifikasi -->
     <div id="customAlert" class="fixed top-4 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 transition-all duration-300 transform -translate-y-32 opacity-0">
         <i id="alertIcon" class="fa-solid fa-circle-check text-green-400"></i>
         <span id="alertText" class="text-sm font-bold">Teks tersalin!</span>
@@ -171,7 +185,7 @@
             const match = url.match(/folders\/([a-zA-Z0-9-_]+)/);
             if (match && match[1]) return match[1];
             const matchId = url.match(/id=([a-zA-Z0-9-_]+)/);
-            return matchId && matchId[1] ? matchId[1] : null;
+            return matchId && matchId[1] ? matchId[1] : url; 
         }
 
         function generateLink() {
@@ -262,6 +276,50 @@
             }
             
             window.open(waUrl, '_blank');
+        }
+
+        // FUNGSI EKSTRAK NAMA FOTO (DIPERBARUI)
+        function extractFilenames() {
+            const text = document.getElementById('rawClientText').value;
+            if (!text.trim()) return showAlert('Paste dulu list dari klien!', true);
+            
+            const lines = text.split('\n');
+            const filenames = [];
+            
+            lines.forEach(line => {
+                // Regex disesuaikan agar mengambil nama file di antara nomor list dan tulisan [folder : ...]
+                const match = line.match(/^\d+\.\s+(.+?)(?:\s+\[folder\s*:|$)/i);
+                if (match && match[1]) {
+                    filenames.push(match[1].trim());
+                }
+            });
+            
+            if (filenames.length === 0) {
+                return showAlert('Tidak ada nama foto yang ditemukan.', true);
+            }
+
+            const resultBox = document.getElementById('extractResultBox');
+            const resultText = document.getElementById('extractedResult');
+            
+            resultBox.classList.remove('hidden');
+            resultText.value = filenames.join(', ');
+            
+            showAlert(`Berhasil mengekstrak ${filenames.length} foto!`);
+        }
+
+        function copyExtractedText() {
+            const text = document.getElementById('extractedResult').value;
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Hasil ekstraksi disalin!');
+            }).catch(() => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showAlert('Hasil ekstraksi disalin!');
+            });
         }
     </script>
 </body>
