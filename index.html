@@ -84,14 +84,14 @@
             pointer-events: none;
             z-index: 15;
             overflow: hidden;
-            /* Container akan menjadi wadah pola berulang */
             display: flex;
             flex-wrap: wrap;
             align-content: stretch;
             justify-content: center;
+            border-radius: inherit; /* Menyatu dengan lengkungan foto */
         }
         .watermark-pattern {
-            width: 200%; /* Dibuat lebar agar saat di-rotate tidak ada sudut kosong */
+            width: 200%; 
             height: 200%;
             position: absolute;
             top: -50%;
@@ -107,18 +107,17 @@
             font-weight: 800;
             text-transform: uppercase;
             user-select: none;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Shadow tipis agar terbaca di foto terang */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5); 
             white-space: nowrap;
-            /* Margin untuk memberi jarak antar teks (Kerapatan Looping) */
             margin: 15px 30px; 
-            font-size: 14px; /* Ukuran default untuk grid */
+            font-size: 14px; 
         }
 
         /* Ukuran font watermark lebih besar khusus di mode Lightbox Zoom */
         #lightboxWatermark .watermark-item {
             font-size: 24px;
             margin: 30px 50px;
-            color: rgba(255, 255, 255, 0.35); /* Sedikit lebih terang di lightbox */
+            color: rgba(255, 255, 255, 0.35);
         }
 
         .anti-copy-img {
@@ -378,16 +377,22 @@
         <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-left"></i></button>
         <button onclick="nextPhoto(event)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-right"></i></button>
         
-        <!-- AREA GAMBAR (DIPERBARUI) -->
+        <!-- AREA GAMBAR DENGAN WRAPPER KHUSUS WATERMARK -->
         <div id="lightboxScrollArea" class="w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24 relative overflow-hidden">
-            <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-all duration-200 ease-in-out select-none transform origin-center">
             
-            <!-- WATERMARK CONTAINER DI LIGHTBOX -->
-            <div id="lightboxWatermark" class="watermark-overlay hidden">
-                <div class="watermark-pattern" id="lbWmPattern">
-                    <!-- Teks akan di-generate oleh JavaScript agar bisa banyak -->
+            <div id="lightboxImageWrapper" class="relative inline-flex justify-center items-center max-w-full max-h-full transform origin-center transition-all duration-200 ease-in-out shadow-2xl rounded-md opacity-0 scale-95">
+                
+                <img id="lightboxImg" src="" class="max-w-full max-h-full rounded-md select-none block pointer-events-none">
+                
+                <!-- WATERMARK CONTAINER DI LIGHTBOX TERIKAT KE GAMBAR -->
+                <div id="lightboxWatermark" class="watermark-overlay hidden rounded-md overflow-hidden">
+                    <div class="watermark-pattern" id="lbWmPattern">
+                        <!-- Teks akan di-generate oleh JavaScript agar bisa banyak -->
+                    </div>
                 </div>
+
             </div>
+
         </div>
 
         <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-11/12 max-w-md z-50">
@@ -517,7 +522,6 @@
 
         // --- FUNGSI GENERATE WATERMARK TILED (ANTI-AI) ---
         function generateWatermarkPattern(vendorName, isLightbox = false) {
-            // Kita render sekitar 50 elemen teks agar bisa memenuhi layar secara menyilang
             let html = '';
             for (let i = 0; i < 50; i++) {
                 html += `<span class="watermark-item">${vendorName}</span>`;
@@ -666,26 +670,28 @@
             setupZoomDragEvents();
         });
 
+        // --- FUNGSI ZOOM & PAN (DIPERBARUI) ---
         function applyZoomPan() {
-            const img = document.getElementById('lightboxImg');
-            img.style.setProperty('--tw-scale-x', zoomScale);
-            img.style.setProperty('--tw-scale-y', zoomScale);
-            img.style.setProperty('--tw-translate-x', `${translateX}px`);
-            img.style.setProperty('--tw-translate-y', `${translateY}px`);
+            const wrapper = document.getElementById('lightboxImageWrapper');
+            
+            // Transformasi dilakukan pada wrapper, bukan pada IMG. 
+            // Sehingga Watermark ikut membesar!
+            wrapper.style.setProperty('--tw-scale-x', zoomScale);
+            wrapper.style.setProperty('--tw-scale-y', zoomScale);
+            wrapper.style.setProperty('--tw-translate-x', `${translateX}px`);
+            wrapper.style.setProperty('--tw-translate-y', `${translateY}px`);
             
             if(zoomScale > 1) {
-                img.style.cursor = 'grab';
-                img.classList.replace('object-contain', 'object-cover');
+                wrapper.style.cursor = 'grab';
             } else {
-                img.style.cursor = 'default';
-                img.classList.replace('object-cover', 'object-contain');
+                wrapper.style.cursor = 'default';
             }
         }
 
         function changeZoom(step, e) {
             if(e) e.stopPropagation();
-            const imgEl = document.getElementById('lightboxImg');
-            imgEl.style.transition = 'transform 0.3s ease-in-out'; 
+            const wrapper = document.getElementById('lightboxImageWrapper');
+            wrapper.style.transition = 'transform 0.3s ease-in-out'; 
             
             zoomScale += step;
             if(zoomScale <= 1) {
@@ -697,19 +703,19 @@
             
             applyZoomPan();
             
-            setTimeout(() => { imgEl.style.transition = ''; }, 300);
+            setTimeout(() => { wrapper.style.transition = ''; }, 300);
             
             hideTooltip('zoomTooltip');
         }
 
         function setupZoomDragEvents() {
-            const imgEl = document.getElementById('lightboxImg');
+            const wrapper = document.getElementById('lightboxImageWrapper');
 
-            imgEl.addEventListener('mousedown', dragStart);
+            wrapper.addEventListener('mousedown', dragStart);
             window.addEventListener('mousemove', dragMove);
             window.addEventListener('mouseup', dragEnd);
 
-            imgEl.addEventListener('touchstart', dragStart, {passive: false});
+            wrapper.addEventListener('touchstart', dragStart, {passive: false});
             window.addEventListener('touchmove', dragMove, {passive: false});
             window.addEventListener('touchend', dragEnd);
         }
@@ -719,9 +725,9 @@
             if(e.type === 'touchstart') e.preventDefault(); 
             
             isDragging = true;
-            const imgEl = document.getElementById('lightboxImg');
-            imgEl.style.cursor = 'grabbing';
-            imgEl.style.transition = 'none'; 
+            const wrapper = document.getElementById('lightboxImageWrapper');
+            wrapper.style.cursor = 'grabbing';
+            wrapper.style.transition = 'none'; 
             
             const touch = e.touches ? e.touches[0] : e;
             startX = touch.clientX - translateX;
@@ -740,17 +746,17 @@
 
         function dragEnd(e) {
             isDragging = false;
-            const imgEl = document.getElementById('lightboxImg');
-            if(zoomScale > 1) imgEl.style.cursor = 'grab';
+            const wrapper = document.getElementById('lightboxImageWrapper');
+            if(zoomScale > 1) wrapper.style.cursor = 'grab';
             
-            if(e && (e.type === 'touchend' || e.type === 'mouseup') && e.target === imgEl) {
+            if(e && (e.type === 'touchend' || e.type === 'mouseup') && wrapper.contains(e.target)) {
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTap;
                 if (tapLength < 300 && tapLength > 0) {
                     if (zoomScale === 1) changeZoom(1.5, null);
                     else {
                         zoomScale = 1; translateX = 0; translateY = 0; 
-                        imgEl.style.transition = 'transform 0.3s ease-in-out';
+                        wrapper.style.transition = 'transform 0.3s ease-in-out';
                         applyZoomPan();
                     }
                     if(e.cancelable) e.preventDefault();
@@ -1172,7 +1178,6 @@
                 if (appState.isWatermarked) {
                     const wmOverlay = document.createElement('div');
                     wmOverlay.className = "watermark-overlay";
-                    // PEMANGGILAN FUNGSI WATERMARK TILED DI SINI
                     wmOverlay.innerHTML = `<div class="watermark-pattern">${generateWatermarkPattern(vendorNameStr, false)}</div>`;
                     card.appendChild(wmOverlay);
                 }
@@ -1368,33 +1373,33 @@
 
         function openLightbox(index) {
             const lightbox = document.getElementById('lightbox');
+            const wrapper = document.getElementById('lightboxImageWrapper');
             const imgEl = document.getElementById('lightboxImg');
             const isCurrentlyOpen = !lightbox.classList.contains('hidden');
 
             const photosToProcess = appState.viewMode === 'selected' ? Array.from(appState.selectedMap.values()) : appState.photos;
 
             if (isCurrentlyOpen) {
-                imgEl.classList.remove('opacity-100', 'scale-100');
-                imgEl.classList.add('opacity-0', 'scale-95');
+                wrapper.classList.remove('opacity-100', 'scale-100');
+                wrapper.classList.add('opacity-0', 'scale-95');
                 
                 setTimeout(() => {
                     currentZoomIndex = index; 
                     currentZoomPhoto = photosToProcess[index];
                     document.getElementById('lightboxTitle').textContent = `${currentZoomPhoto.name} (${index + 1} of ${photosToProcess.length})`;
-                    document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
+                    imgEl.src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                     updateLightboxSelectBtn();
                     
                     zoomScale = 1; translateX = 0; translateY = 0;
-                    imgEl.style.removeProperty('--tw-scale-x');
-                    imgEl.style.removeProperty('--tw-scale-y');
-                    imgEl.style.removeProperty('--tw-translate-x');
-                    imgEl.style.removeProperty('--tw-translate-y');
-                    imgEl.style.cursor = 'default';
-                    imgEl.classList.replace('object-cover', 'object-contain');
+                    wrapper.style.removeProperty('--tw-scale-x');
+                    wrapper.style.removeProperty('--tw-scale-y');
+                    wrapper.style.removeProperty('--tw-translate-x');
+                    wrapper.style.removeProperty('--tw-translate-y');
+                    wrapper.style.cursor = 'default';
                     
-                    void imgEl.offsetWidth;
-                    imgEl.classList.remove('opacity-0', 'scale-95'); 
-                    imgEl.classList.add('opacity-100', 'scale-100');
+                    void wrapper.offsetWidth;
+                    wrapper.classList.remove('opacity-0', 'scale-95'); 
+                    wrapper.classList.add('opacity-100', 'scale-100');
 
                     if (appState.isWatermarked) {
                         const vendorNameStr = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Watermark';
@@ -1408,19 +1413,18 @@
                 currentZoomIndex = index; 
                 currentZoomPhoto = photosToProcess[index];
                 document.getElementById('lightboxTitle').textContent = `${currentZoomPhoto.name} (${index + 1} of ${photosToProcess.length})`;
-                document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
+                imgEl.src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
                 updateLightboxSelectBtn();
                 
                 zoomScale = 1; translateX = 0; translateY = 0;
-                imgEl.style.removeProperty('--tw-scale-x');
-                imgEl.style.removeProperty('--tw-scale-y');
-                imgEl.style.removeProperty('--tw-translate-x');
-                imgEl.style.removeProperty('--tw-translate-y');
-                imgEl.style.cursor = 'default';
-                imgEl.classList.replace('object-cover', 'object-contain');
+                wrapper.style.removeProperty('--tw-scale-x');
+                wrapper.style.removeProperty('--tw-scale-y');
+                wrapper.style.removeProperty('--tw-translate-x');
+                wrapper.style.removeProperty('--tw-translate-y');
+                wrapper.style.cursor = 'default';
                 
-                imgEl.classList.remove('opacity-0', 'scale-95');
-                imgEl.classList.add('opacity-100', 'scale-100');
+                wrapper.classList.remove('opacity-0', 'scale-95');
+                wrapper.classList.add('opacity-100', 'scale-100');
 
                 if (appState.isWatermarked) {
                     const vendorNameStr = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.namaVendor) ? CONFIG_APP.namaVendor : 'Watermark';
@@ -1451,7 +1455,12 @@
 
         function closeLightbox() {
             const lightbox = document.getElementById('lightbox');
+            const wrapper = document.getElementById('lightboxImageWrapper');
+            
             lightbox.classList.replace('opacity-100', 'opacity-0');
+            wrapper.classList.remove('opacity-100', 'scale-100');
+            wrapper.classList.add('opacity-0', 'scale-95');
+            
             setTimeout(() => { 
                 lightbox.classList.add('hidden'); currentZoomPhoto = null; document.body.style.overflow = 'auto'; renderGallery(); 
                 document.getElementById('lightboxWatermark').classList.add('hidden');
