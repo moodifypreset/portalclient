@@ -108,6 +108,8 @@
     <script>
         let sourceHandle = null;
         let destHandle = null;
+        // Variabel untuk melacak duplikasi hanya pada SESI INI SAJA
+        let sessionCopiedNames = {}; 
 
         async function selectSource() {
             try {
@@ -172,75 +174,87 @@
             return name.trim();
         }
 
-        // FUNGSI BARU: Parser Cerdas yang Telah Diperbarui
+        // FUNGSI PARSER CERDAS (Anti Spasi Siluman WA)
         function parseClientList(rawText) {
             let list = [];
             const lines = rawText.split('\n');
             
             for (let line of lines) {
-                line = line.trim();
+                line = line.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '').trim();
                 const upperLine = line.toUpperCase();
                 
-                // 1. Abaikan baris metadata dengan pencocokan yang lebih luas
                 if (!line || 
                     line.startsWith('=') || 
                     line.startsWith('*') || 
+                    upperLine.includes('LIST FOTO') ||
                     upperLine.includes('LAYANAN') || 
                     upperLine.includes('KLIEN') || 
                     upperLine.includes('TOTAL') || 
                     upperLine.includes('CATATAN:') || 
-                    upperLine.includes('DICETAK OTOMATIS')) {
+                    upperLine.includes('DICETAK OTOMATIS') ||
+                    upperLine.includes('DIKIRIM DARI')) {
                     continue;
                 }
                 
-                // 2. Hapus angka urutan list (contoh: "1. FOY_1171.JPG" -> "FOY_1171.JPG")
-                let cleanName = line.replace(/^\d+\.\s*/, '').trim();
+                let cleanName = line.replace(/^[\d\.\-\)]+\s*/, '').trim();
+                cleanName = cleanName.replace(/\s*_?\[folder\s*:.*\]_?/i, '').trim();
+                cleanName = cleanName.replace(/⭐/g, '').trim();
 
-                // 3. Hapus keterangan folder di belakang jika ada (contoh: "_[Folder: 1. RAW File (JPG)]_")
-                // Regex ini akan menghapus apapun mulai dari "[Folder:" beserta karakter penutupnya
-                cleanName = cleanName.replace(/\s*_?\[Folder:.*\]_?/i, '').trim();
-                
-                // 4. Hapus ekstensi file dengan aman karena teks folder sudah dibuang
                 const dotIndex = cleanName.lastIndexOf('.');
                 if (dotIndex !== -1) {
                     cleanName = cleanName.substring(0, dotIndex);
                 }
                 
-                // 5. Ubah ke huruf kapital untuk pencocokan yang akurat
                 cleanName = cleanName.trim().toUpperCase();
                 
-                if (cleanName) {
+                if (cleanName && cleanName.length > 1) {
                     list.push(cleanName);
                 }
             }
             
-            return [...new Set(list)]; 
+            return list; 
         }
 
-        async function searchFilesInDirectory(dirHandle, notFoundList, copiedCountRef, totalTarget) {
+        // FUNGSI PENCARIAN REKURSIF (Mencari terus tanpa henti untuk mendeteksi file beda kamera)
+        async function searchFilesInDirectory(dirHandle, targetList, foundSet, copiedCountRef) {
             for await (const entry of dirHandle.values()) {
                 if (entry.kind === 'file') {
                     const fileBaseName = getBaseName(entry.name);
-                    const listIndex = notFoundList.findIndex(t => t === fileBaseName);
                     
-                    if (listIndex !== -1) {
-                        addLog(`Menemukan: ${entry.name} (di folder /${dirHandle.name})`, "success");
+                    if (targetList.includes(fileBaseName)) {
                         const file = await entry.getFile();
-                        const newFileHandle = await destHandle.getFileHandle(entry.name, { create: true });
+                        let finalSaveName = entry.name;
+                        
+                        // CEK DUPLIKASI KHUSUS SESI INI (Mendeteksi file bernama sama dari beda sub-folder kamera)
+                        if (sessionCopiedNames[entry.name] !== undefined) {
+                            sessionCopiedNames[entry.name]++;
+                            const counter = sessionCopiedNames[entry.name];
+                            
+                            const dotIndex = entry.name.lastIndexOf('.');
+                            const baseName = dotIndex !== -1 ? entry.name.substring(0, dotIndex) : entry.name;
+                            const extension = dotIndex !== -1 ? entry.name.substring(dotIndex) : '';
+                            
+                            finalSaveName = `${baseName} (${counter})${extension}`;
+                            addLog(`⚠️ File kamera berbeda! Disalin sbg: ${finalSaveName} (dari /${dirHandle.name})`, "warning");
+                        } else {
+                            sessionCopiedNames[entry.name] = 0;
+                            addLog(`Menemukan: ${entry.name} (dari folder /${dirHandle.name})`, "success");
+                        }
+                        
+                        // Menimpa (overwrite) file jika memang sudah ada dari proses hari sebelumnya
+                        const newFileHandle = await destHandle.getFileHandle(finalSaveName, { create: true });
                         const writable = await newFileHandle.createWritable();
                         await writable.write(file);
                         await writable.close();
                         
                         copiedCountRef.count++;
-                        document.getElementById('progressText').innerText = `${copiedCountRef.count} / ${totalTarget} File Tercopy`;
+                        document.getElementById('progressText').innerText = `${copiedCountRef.count} File Tercopy`;
                         
-                        notFoundList.splice(listIndex, 1);
+                        foundSet.add(fileBaseName);
                     }
                 } else if (entry.kind === 'directory') {
-                    await searchFilesInDirectory(entry, notFoundList, copiedCountRef, totalTarget);
+                    await searchFilesInDirectory(entry, targetList, foundSet, copiedCountRef);
                 }
-                
-                if (notFoundList.length === 0) return;
             }
         }
 
@@ -251,7 +265,10 @@
             }
 
             const rawListText = document.getElementById('fileList').value;
-            const targetList = parseClientList(rawListText);
+            const rawList = parseClientList(rawListText);
+            
+            const targetList = [...new Set(rawList)];
+            const duplicateCount = rawList.length - targetList.length;
 
             if (targetList.length === 0) {
                 alert("Tidak ada nama file yang bisa diekstrak dari list. Pastikan format list benar!");
@@ -261,27 +278,35 @@
             const btn = document.getElementById('processBtn');
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Sedang Memproses...`;
-            
             btn.classList.replace('bg-blue-600', 'bg-slate-400');
             btn.classList.replace('hover:bg-blue-700', 'hover:bg-slate-500');
             btn.classList.remove('shadow-blue-600/30');
             
             clearLog();
-            addLog(`Memulai proses sortir untuk ${targetList.length} file foto unik...`);
-            addLog(`Sistem mencari otomatis ke dalam seluruh sub-folder.`);
+            
+            if (duplicateCount > 0) {
+                addLog(`INFO: Ditemukan ${duplicateCount} foto yang ditulis ganda oleh klien. Sistem merangkumnya.`, "warning");
+            }
+            
+            addLog(`Memulai proses sortir untuk ${targetList.length} nama unik...`);
+            addLog(`Sistem akan memindai seluruh sub-folder untuk mencari duplikat antar kamera.`);
             
             let copiedCountRef = { count: 0 }; 
-            let notFoundList = [...targetList]; 
+            let foundSet = new Set();
+            sessionCopiedNames = {}; // RESET pelacak duplikat untuk sesi baru
 
             try {
-                await searchFilesInDirectory(sourceHandle, notFoundList, copiedCountRef, targetList.length);
+                // Memindai secara total
+                await searchFilesInDirectory(sourceHandle, targetList, foundSet, copiedCountRef);
+
+                const notFoundList = targetList.filter(name => !foundSet.has(name));
 
                 addLog(`----------------------------------------`);
-                addLog(`PROSES SELESAI! Berhasil menyalin ${copiedCountRef.count} file.`, "success");
+                addLog(`PROSES SELESAI! Berhasil menyalin total ${copiedCountRef.count} file.`, "success");
                 
                 if (notFoundList.length > 0) {
                     addLog(`PERINGATAN: Ada ${notFoundList.length} file yang tidak ditemukan di seluruh folder!`, "error");
-                    addLog(`Daftar file tidak ditemukan: ${notFoundList.join(', ')}`, "warning");
+                    addLog(`Daftar file tidak ditemukan: ${notFoundList.join(', ')}`, "error");
                 } else {
                     addLog(`Luar biasa! Seluruh foto dari list berhasil ditemukan dan disalin.`, "success");
                 }
@@ -292,7 +317,6 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fa-solid fa-bolt mr-2"></i> Mulai Sortir & Copy File`;
-                
                 btn.classList.replace('bg-slate-400', 'bg-blue-600');
                 btn.classList.replace('hover:bg-slate-500', 'hover:bg-blue-700');
                 btn.classList.add('shadow-blue-600/30');
