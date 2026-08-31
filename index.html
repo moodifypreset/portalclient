@@ -139,7 +139,7 @@
                 </div>
                 
                 <div class="relative z-10">
-                    <h2 class="text-2xl md:text-3xl font-bold mb-1"><span data-i18n="welcomeTitle">Hallo</span>, <span id="displayClientName" class="text-blue-400 capitalize">Kakak</span> 👋</h2>
+                    <h2 class="text-2xl md:text-3xl font-bold mb-1"><span data-i18n="welcomeTitle">Hallo</span>, <span id="displayClientName" class="text-blue-400 capitalize">Kakak</span> 窓</h2>
                     <p class="text-slate-300 text-sm md:text-base leading-relaxed" data-i18n="welcomeDesc">Selamat datang di portal seleksi foto dari {vendor}.</p>
                 </div>
                 
@@ -199,7 +199,7 @@
                         <h3 class="font-bold text-xl text-slate-800 dark:text-white flex items-center gap-2">
                             <span id="currentFolderDisplay" data-i18n="galleryTitle">Koleksi Foto</span>
                         </h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="galleryDesc">Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="galleryDesc">Klik gambar untuk memilih. Klik ikon 剥 untuk perbesar & tambah catatan.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         
@@ -406,7 +406,7 @@
                 folderTitle: "Sub-Folder Tersedia",
                 btnBackFolder: "Kembali",
                 galleryTitle: "Koleksi Foto",
-                galleryDesc: "Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.",
+                galleryDesc: "Klik gambar untuk memilih. Klik ikon 剥 untuk perbesar & tambah catatan.",
                 sortDefault: "Urutan Asli",
                 sortRandom: "Acak (Random)",
                 btnReshuffle: "Acak Lagi",
@@ -449,7 +449,7 @@
                 folderTitle: "Available Sub-Folders",
                 btnBackFolder: "Go Back",
                 galleryTitle: "Photo Collection",
-                galleryDesc: "Click an image to select. Click 🔍 to zoom & add notes.",
+                galleryDesc: "Click an image to select. Click 剥 to zoom & add notes.",
                 sortDefault: "Original Order",
                 sortRandom: "Randomize",
                 btnReshuffle: "Shuffle Again",
@@ -863,7 +863,7 @@
             for (let i = 0; i < ids.length; i += 30) {
                 const chunk = ids.slice(i, i + 30);
                 const query = chunk.map(id => `id='${id}'`).join(' or ');
-                const apiUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,thumbnailLink)&key=${CONFIG_APP.googleApiKey}`;
+                const apiUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,thumbnailLink)&key=${CONFIG_APP.googleApiKey}&includeItemsFromAllDrives=true&supportsAllDrives=true`;
                 
                 try {
                     const response = await fetch(apiUrl);
@@ -952,7 +952,7 @@
                 let fetchedFiles = []; let nextPageToken = "";
                 const query = encodeURIComponent(`'${targetFolderId}' in parents and trashed=false`);
                 do {
-                    let apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=nextPageToken,files(id,name,mimeType,thumbnailLink)&key=${CONFIG_APP.googleApiKey}&pageSize=1000`;
+                    let apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=nextPageToken,files(id,name,mimeType,thumbnailLink)&key=${CONFIG_APP.googleApiKey}&pageSize=1000&includeItemsFromAllDrives=true&supportsAllDrives=true`;
                     if (nextPageToken) apiUrl += `&pageToken=${nextPageToken}`;
                     const response = await fetch(apiUrl);
                     const data = await response.json();
