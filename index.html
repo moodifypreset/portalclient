@@ -859,36 +859,38 @@
             if (typeof CONFIG_APP === 'undefined' || !CONFIG_APP.googleApiKey) return;
             
             const ids = Array.from(appState.selectedMap.keys());
+            let hasUpdates = false;
             
-            for (let i = 0; i < ids.length; i += 30) {
-                const chunk = ids.slice(i, i + 30);
-                const query = chunk.map(id => `id='${id}'`).join(' or ');
-                const apiUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,thumbnailLink)&key=${CONFIG_APP.googleApiKey}&includeItemsFromAllDrives=true&supportsAllDrives=true`;
-                
+            const fetchThumbnail = async (id) => {
+                const apiUrl = `https://www.googleapis.com/drive/v3/files/${id}?fields=id,thumbnailLink&key=${CONFIG_APP.googleApiKey}&supportsAllDrives=true`;
                 try {
                     const response = await fetch(apiUrl);
-                    const data = await response.json();
-                    
-                    if (data.files) {
-                        let isUpdated = false;
-                        data.files.forEach(f => {
-                            if (appState.selectedMap.has(f.id)) {
-                                const p = appState.selectedMap.get(f.id);
-                                p.url = f.thumbnailLink?.replace('=s220', '=s500');
-                                p.fullUrl = f.thumbnailLink?.replace('=s220', '=s1600');
-                                appState.selectedMap.set(f.id, p);
-                                isUpdated = true;
-                            }
-                        });
-                        
-                        if (isUpdated) {
-                            saveProgress();
-                            if (appState.viewMode === 'selected') renderGallery();
+                    if (response.ok) {
+                        const f = await response.json();
+                        if (f.thumbnailLink && appState.selectedMap.has(f.id)) {
+                            const p = appState.selectedMap.get(f.id);
+                            p.url = f.thumbnailLink.replace('=s220', '=s500');
+                            p.fullUrl = f.thumbnailLink.replace('=s220', '=s1600');
+                            appState.selectedMap.set(f.id, p);
+                            hasUpdates = true;
                         }
                     }
                 } catch (e) { 
-                    console.error("Gagal refresh URL foto lama:", e); 
+                    console.error("Gagal mengambil ulang URL untuk foto:", id); 
                 }
+            };
+
+            const chunkSize = 10;
+            for (let i = 0; i < ids.length; i += chunkSize) {
+                const chunk = ids.slice(i, i + chunkSize);
+                await Promise.all(chunk.map(id => fetchThumbnail(id)));
+                
+                if (hasUpdates) {
+                    saveProgress();
+                    if (appState.viewMode === 'selected') renderGallery();
+                    hasUpdates = false; 
+                }
+                await new Promise(r => setTimeout(r, 150)); 
             }
         }
 
@@ -964,11 +966,29 @@
                     appState.folders = fetchedFiles.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
                     let photoFiles = fetchedFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && f.thumbnailLink);
                     
-                    appState.photos = photoFiles.map(f => ({ 
-                        id: f.id, name: f.name, folderName: fullFolderPath,
-                        url: f.thumbnailLink?.replace('=s220', '=s500'), 
-                        fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') 
-                    }));
+                    let syncRequired = false;
+                    appState.photos = photoFiles.map(f => {
+                        const newUrl = f.thumbnailLink?.replace('=s220', '=s500');
+                        const newFullUrl = f.thumbnailLink?.replace('=s220', '=s1600');
+
+                        if (appState.selectedMap.has(f.id)) {
+                            const p = appState.selectedMap.get(f.id);
+                            if (p.url !== newUrl) {
+                                p.url = newUrl;
+                                p.fullUrl = newFullUrl;
+                                appState.selectedMap.set(f.id, p);
+                                syncRequired = true;
+                            }
+                        }
+
+                        return { 
+                            id: f.id, name: f.name, folderName: fullFolderPath,
+                            url: newUrl, 
+                            fullUrl: newFullUrl 
+                        };
+                    });
+                    
+                    if (syncRequired) saveProgress(); 
                     appState.originalPhotos = [...appState.photos];
                     
                     renderFolders(); 
@@ -1151,7 +1171,6 @@
                     overlay.appendChild(noteBadge);
                 }
 
-                // PENERAPAN CANVAS WATERMARK DI GRID
                 if (appState.isWatermarked && appState.watermarkDataUrl_Small) {
                     const wmOverlay = document.createElement('div');
                     wmOverlay.className = "watermark-overlay";
@@ -1362,7 +1381,6 @@
                     wrapper.classList.remove('opacity-0', 'scale-95'); 
                     wrapper.classList.add('opacity-100', 'scale-100');
 
-                    // PENERAPAN CANVAS WATERMARK DI LIGHTBOX
                     if (appState.isWatermarked && appState.watermarkDataUrl_Large) {
                         const lbWm = document.getElementById('lightboxWatermark');
                         lbWm.style.backgroundImage = `url(${appState.watermarkDataUrl_Large})`;
@@ -1388,7 +1406,6 @@
                 wrapper.classList.remove('opacity-0', 'scale-95');
                 wrapper.classList.add('opacity-100', 'scale-100');
 
-                // PENERAPAN CANVAS WATERMARK DI LIGHTBOX
                 if (appState.isWatermarked && appState.watermarkDataUrl_Large) {
                     const lbWm = document.getElementById('lightboxWatermark');
                     lbWm.style.backgroundImage = `url(${appState.watermarkDataUrl_Large})`;
