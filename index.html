@@ -273,10 +273,10 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button onclick="downloadList()" class="px-4 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-bold rounded-xl transition flex items-center gap-2 border border-slate-300 dark:border-slate-600 shadow-sm" title="Download file .txt">
+                <button onclick="openReviewModal()" class="px-4 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-bold rounded-xl transition flex items-center gap-2 border border-slate-300 dark:border-slate-600 shadow-sm" title="Download file .txt">
                     <i class="fa-solid fa-file-arrow-down text-lg"></i> <span class="hidden md:inline" data-i18n="btnDownload">Download List</span>
                 </button>
-                <button onclick="copyToClipboard()" class="px-5 md:px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center gap-2 shadow-lg">
+                <button onclick="openReviewModal()" class="px-5 md:px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center gap-2 shadow-lg">
                     <i class="fa-brands fa-whatsapp text-xl"></i> <span class="hidden md:inline" data-i18n="btnWA">Kirim WA</span><span class="md:hidden" data-i18n="btnWA">Kirim WA</span>
                 </button>
             </div>
@@ -321,6 +321,43 @@
             <button onclick="closeTutorial()" class="w-full py-4 bg-slate-900 dark:bg-blue-600 hover:bg-black dark:hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-lg text-sm uppercase tracking-wider" data-i18n="btnTut">
                 Mengerti, Mulai Memilih!
             </button>
+        </div>
+    </div>
+
+    <!-- MODAL REVIEW / RINGKASAN SEBELUM KIRIM -->
+    <div id="reviewModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex-col items-center opacity-0 transition-opacity duration-300 px-4 py-6 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl transform scale-95 transition-transform duration-300 my-auto" id="reviewContent">
+            <div class="flex justify-between items-start mb-5">
+                <div>
+                    <h3 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-white" data-i18n="reviewTitle">Konfirmasi Pilihan Anda</h3>
+                    <p id="reviewSummaryText" class="text-sm text-slate-500 dark:text-slate-400 mt-1">0 foto dipilih</p>
+                </div>
+                <button onclick="closeReviewModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-xl shrink-0 shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div id="reviewQuotaWrap" class="hidden mb-5">
+                <div class="flex justify-between items-end mb-1.5">
+                    <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider" data-i18n="quotaFooter">Kuota Paket Anda</span>
+                    <span id="reviewQuotaText" class="text-sm font-bold text-slate-800 dark:text-white">0 / 0</span>
+                </div>
+                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden shadow-inner">
+                    <div id="reviewQuotaBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="reviewList" class="max-h-[45vh] overflow-y-auto space-y-5 pr-1 -mr-1 mb-6"></div>
+
+            <div class="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-700">
+                <button onclick="closeReviewModal()" class="flex-1 py-3.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-bold rounded-xl transition text-sm" data-i18n="reviewBack">
+                    Kembali, Masih Mau Ubah
+                </button>
+                <button onclick="downloadList(); closeReviewModal();" class="flex-1 py-3.5 bg-slate-800 dark:bg-slate-600 hover:bg-black dark:hover:bg-slate-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-file-arrow-down"></i> <span data-i18n="reviewDownloadBtn">Download</span>
+                </button>
+                <button onclick="copyToClipboard(); closeReviewModal();" class="flex-1 py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-brands fa-whatsapp"></i> <span data-i18n="reviewSendBtn">Kirim Sekarang</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -434,7 +471,16 @@
                 alertCopy: "List foto disalin! Silahkan paste di WhatsApp.",
                 gridTip: "Ubah Baris Foto",
                 reshuffleTip: "Tekan ini untuk acak foto",
-                zoomTip: "Ketuk 2x atau gunakan ini untuk Zoom"
+                zoomTip: "Ketuk 2x atau gunakan ini untuk Zoom",
+                reviewTitle: "Konfirmasi Pilihan Anda",
+                reviewBack: "Kembali, Masih Mau Ubah",
+                reviewDownloadBtn: "Download",
+                reviewSendBtn: "Kirim Sekarang",
+                reviewNoNote: "Tanpa catatan",
+                reviewRemoveTitle: "Hapus dari pilihan",
+                reviewEmpty: "Belum ada foto dipilih.",
+                reviewCountText: "foto dipilih",
+                reviewDefaultFolder: "Galeri Utama"
             },
             en: {
                 subtitle: "Secure Selection Tool",
@@ -477,7 +523,16 @@
                 alertCopy: "List copied! Please paste it in WhatsApp.",
                 gridTip: "Change Grid Rows",
                 reshuffleTip: "Click to reshuffle",
-                zoomTip: "Double tap or use this to Zoom"
+                zoomTip: "Double tap or use this to Zoom",
+                reviewTitle: "Confirm Your Selection",
+                reviewBack: "Go Back, Still Editing",
+                reviewDownloadBtn: "Download",
+                reviewSendBtn: "Send Now",
+                reviewNoNote: "No notes",
+                reviewRemoveTitle: "Remove from selection",
+                reviewEmpty: "No photos selected yet.",
+                reviewCountText: "photos selected",
+                reviewDefaultFolder: "Main Gallery"
             }
         };
 
@@ -1277,6 +1332,137 @@
                 }
             }
             if (count > 0) { bar.classList.remove('translate-y-full'); } else { bar.classList.add('translate-y-full'); }
+        }
+
+        // --- FUNGSI MODAL REVIEW / RINGKASAN SEBELUM KIRIM ---
+        function openReviewModal() {
+            if (appState.selectedMap.size === 0) {
+                return showAlert(TRANSLATIONS[appState.lang].alertEmpty, 'error');
+            }
+            renderReviewList();
+            const modal = document.getElementById('reviewModal');
+            const content = document.getElementById('reviewContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.replace('opacity-0', 'opacity-100');
+                content.classList.replace('scale-95', 'scale-100');
+            }, 10);
+        }
+
+        function closeReviewModal() {
+            const modal = document.getElementById('reviewModal');
+            const content = document.getElementById('reviewContent');
+            modal.classList.replace('opacity-100', 'opacity-0');
+            content.classList.replace('scale-100', 'scale-95');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function renderReviewList() {
+            const langData = TRANSLATIONS[appState.lang];
+            const listEl = document.getElementById('reviewList');
+            const selectedPhotos = Array.from(appState.selectedMap.values());
+
+            document.getElementById('reviewSummaryText').textContent = `${selectedPhotos.length} ${langData.reviewCountText}`;
+
+            // Sinkronkan progress bar kuota (tampilan sama seperti action bar)
+            if (appState.kuota !== null) {
+                document.getElementById('reviewQuotaWrap').classList.remove('hidden');
+                const percentage = Math.min((selectedPhotos.length / appState.kuota) * 100, 100);
+                document.getElementById('reviewQuotaText').textContent = `${selectedPhotos.length} / ${appState.kuota}`;
+                document.getElementById('reviewQuotaBar').style.width = `${percentage}%`;
+                document.getElementById('reviewQuotaBar').className = `h-2.5 rounded-full transition-all duration-500 ease-out ${percentage >= 100 ? 'bg-green-500' : percentage >= 80 ? 'bg-yellow-500' : 'bg-blue-600'}`;
+            } else {
+                document.getElementById('reviewQuotaWrap').classList.add('hidden');
+            }
+
+            listEl.innerHTML = '';
+
+            if (selectedPhotos.length === 0) {
+                listEl.innerHTML = `<p class="text-sm text-slate-400 dark:text-slate-500 text-center py-8">${langData.reviewEmpty}</p>`;
+                return;
+            }
+
+            // Kelompokkan per folder kamera, biar mudah dicek asalnya
+            const groups = {};
+            selectedPhotos.forEach(p => {
+                const folder = p.folderName || langData.reviewDefaultFolder;
+                if (!groups[folder]) groups[folder] = [];
+                groups[folder].push(p);
+            });
+
+            Object.keys(groups).forEach(folderName => {
+                const groupWrap = document.createElement('div');
+
+                const groupTitle = document.createElement('p');
+                groupTitle.className = "text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 flex items-center gap-1.5";
+                groupTitle.innerHTML = `<i class="fa-solid fa-folder text-yellow-400"></i> ${folderName}`;
+                groupWrap.appendChild(groupTitle);
+
+                const itemsWrap = document.createElement('div');
+                itemsWrap.className = "space-y-2";
+
+                groups[folderName].forEach(photo => {
+                    const note = appState.notes[photo.id];
+                    const item = document.createElement('div');
+                    item.className = "flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5";
+
+                    const img = document.createElement('img');
+                    img.src = photo.url;
+                    img.className = `w-14 h-14 rounded-lg object-cover shrink-0 ${appState.isProtected ? 'anti-copy-img' : ''}`;
+                    img.loading = "lazy";
+
+                    const info = document.createElement('div');
+                    info.className = "flex-grow min-w-0";
+
+                    const nameEl = document.createElement('p');
+                    nameEl.className = "text-sm font-bold text-slate-800 dark:text-white truncate";
+                    nameEl.textContent = photo.name;
+                    info.appendChild(nameEl);
+
+                    const noteEl = document.createElement('p');
+                    if (note) {
+                        noteEl.className = "text-xs text-blue-600 dark:text-blue-400 mt-0.5 flex items-start gap-1";
+                        noteEl.innerHTML = `<i class="fa-solid fa-comment-dots mt-0.5"></i><span>${note}</span>`;
+                    } else {
+                        noteEl.className = "text-xs text-slate-400 dark:text-slate-500 mt-0.5 italic";
+                        noteEl.textContent = langData.reviewNoNote;
+                    }
+                    info.appendChild(noteEl);
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = "shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/30 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition";
+                    removeBtn.title = langData.reviewRemoveTitle;
+                    removeBtn.innerHTML = '<i class="fa-solid fa-trash-can text-sm"></i>';
+                    removeBtn.onclick = () => removeFromReview(photo.id);
+
+                    item.appendChild(img);
+                    item.appendChild(info);
+                    item.appendChild(removeBtn);
+                    itemsWrap.appendChild(item);
+                });
+
+                groupWrap.appendChild(itemsWrap);
+                listEl.appendChild(groupWrap);
+            });
+        }
+
+        function removeFromReview(photoId) {
+            appState.selectedMap.delete(photoId);
+            delete appState.notes[photoId];
+            saveProgress();
+            updateActionBar();
+            updateViewModeText();
+            renderGallery();
+
+            if (appState.selectedMap.size === 0) {
+                closeReviewModal();
+            } else {
+                renderReviewList();
+            }
         }
 
         function downloadList() {
