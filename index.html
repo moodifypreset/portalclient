@@ -345,6 +345,11 @@
                 </div>
             </div>
 
+            <div id="reviewZoomHint" class="hidden opacity-0 transition-opacity duration-300 mb-4 flex items-start gap-2 bg-blue-600 text-white text-xs font-medium py-2.5 px-3.5 rounded-xl shadow-md">
+                <i class="fa-solid fa-circle-info mt-0.5"></i>
+                <span data-i18n="reviewZoomHint">Tips: klik/tap foto untuk melihat versi lebih besar sebelum dikirim.</span>
+            </div>
+
             <div id="reviewList" class="max-h-[45vh] overflow-y-auto space-y-5 pr-1 -mr-1 mb-6"></div>
 
             <div class="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-700">
@@ -471,12 +476,14 @@
                 alertCopy: "List foto disalin! Silahkan paste di WhatsApp.",
                 gridTip: "Ubah Baris Foto",
                 reshuffleTip: "Tekan ini untuk acak foto",
-                zoomTip: "Ketuk 2x atau gunakan ini untuk Zoom",
+                zoomTip: "Ketuk 2x, cubit layar, atau gunakan ini untuk Zoom",
                 reviewTitle: "Konfirmasi Pilihan Anda",
                 reviewBack: "Kembali, Masih Mau Ubah",
                 reviewDownloadBtn: "Download",
                 reviewSendBtn: "Kirim Sekarang",
                 reviewNoNote: "Tanpa catatan",
+                reviewZoomTitle: "Klik untuk lihat lebih besar",
+                reviewZoomHint: "Tips: klik/tap foto untuk melihat versi lebih besar sebelum dikirim.",
                 reviewRemoveTitle: "Hapus dari pilihan",
                 reviewEmpty: "Belum ada foto dipilih.",
                 reviewCountText: "foto dipilih",
@@ -523,12 +530,14 @@
                 alertCopy: "List copied! Please paste it in WhatsApp.",
                 gridTip: "Change Grid Rows",
                 reshuffleTip: "Click to reshuffle",
-                zoomTip: "Double tap or use this to Zoom",
+                zoomTip: "Double tap, pinch, or use this to Zoom",
                 reviewTitle: "Confirm Your Selection",
                 reviewBack: "Go Back, Still Editing",
                 reviewDownloadBtn: "Download",
                 reviewSendBtn: "Send Now",
                 reviewNoNote: "No notes",
+                reviewZoomTitle: "Click to view larger",
+                reviewZoomHint: "Tip: click/tap a photo to view a larger version before sending.",
                 reviewRemoveTitle: "Remove from selection",
                 reviewEmpty: "No photos selected yet.",
                 reviewCountText: "photos selected",
@@ -627,6 +636,12 @@
         let startX, startY, translateX = 0, translateY = 0;
         let hasSeenZoomTooltip = false;
         let lastTap = 0;
+        let isPinching = false;
+        let initialPinchDistance = null;
+        let initialPinchScale = 1;
+        let initialPinchTranslateX = 0;
+        let initialPinchTranslateY = 0;
+        let hasSeenReviewZoomHint = localStorage.getItem('client_portal_review_zoom_hint_seen') === '1';
 
         document.addEventListener("DOMContentLoaded", () => {
             updateDarkModeIcon(document.documentElement.classList.contains('dark'));
@@ -700,12 +715,12 @@
 
             const lightboxEl = document.getElementById('lightbox');
             lightboxEl.addEventListener('touchstart', e => {
-                if (zoomScale > 1) return; 
+                if (zoomScale > 1 || e.touches.length > 1) return; 
                 if (e.target.tagName.toLowerCase() === 'textarea') return;
                 touchstartX = e.changedTouches[0].screenX;
             }, { passive: true });
             lightboxEl.addEventListener('touchend', e => {
-                if (zoomScale > 1) return; 
+                if (zoomScale > 1 || isPinching) return; 
                 if (e.target.tagName.toLowerCase() === 'textarea') return;
                 touchendX = e.changedTouches[0].screenX;
                 handleSwipeGesture();
@@ -762,9 +777,47 @@
             wrapper.addEventListener('touchstart', dragStart, {passive: false});
             window.addEventListener('touchmove', dragMove, {passive: false});
             window.addEventListener('touchend', dragEnd);
+
+            // Zoom pakai scroll wheel mouse (desktop)
+            wrapper.addEventListener('wheel', handleWheelZoom, {passive: false});
+        }
+
+        function getPinchDistance(touches) {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function handleWheelZoom(e) {
+            e.preventDefault();
+            const wrapper = document.getElementById('lightboxImageWrapper');
+            wrapper.style.transition = 'none';
+
+            const step = e.deltaY < 0 ? 0.25 : -0.25;
+            zoomScale += step;
+            if (zoomScale <= 1) { zoomScale = 1; translateX = 0; translateY = 0; }
+            if (zoomScale > 4) zoomScale = 4;
+
+            applyZoomPan();
+            hideTooltip('zoomTooltip');
         }
 
         function dragStart(e) {
+            // --- Mulai gesture pinch (2 jari) ---
+            if (e.type === 'touchstart' && e.touches && e.touches.length === 2) {
+                isPinching = true;
+                isDragging = false;
+                const wrapper = document.getElementById('lightboxImageWrapper');
+                wrapper.style.transition = 'none';
+                initialPinchDistance = getPinchDistance(e.touches);
+                initialPinchScale = zoomScale;
+                initialPinchTranslateX = translateX;
+                initialPinchTranslateY = translateY;
+                e.preventDefault();
+                return;
+            }
+
+            if (isPinching) return; 
             if (zoomScale <= 1) return;
             if(e.type === 'touchstart') e.preventDefault(); 
             
@@ -779,6 +832,21 @@
         }
 
         function dragMove(e) {
+            // --- Proses pinch (2 jari) ---
+            if (e.type === 'touchmove' && e.touches && e.touches.length === 2) {
+                if (!isPinching || initialPinchDistance === null) return;
+                e.preventDefault();
+                const newDistance = getPinchDistance(e.touches);
+                let newScale = initialPinchScale * (newDistance / initialPinchDistance);
+                if (newScale <= 1) { newScale = 1; translateX = 0; translateY = 0; }
+                else { translateX = initialPinchTranslateX; translateY = initialPinchTranslateY; }
+                if (newScale > 4) newScale = 4;
+                zoomScale = newScale;
+                applyZoomPan();
+                return;
+            }
+
+            if (isPinching) return; 
             if (!isDragging || zoomScale <= 1) return;
             if(e.type === 'touchmove') e.preventDefault(); 
             
@@ -789,8 +857,26 @@
         }
 
         function dragEnd(e) {
-            isDragging = false;
             const wrapper = document.getElementById('lightboxImageWrapper');
+
+            // --- Selesai gesture pinch ---
+            if (isPinching && (!e.touches || e.touches.length < 2)) {
+                isPinching = false;
+                initialPinchDistance = null;
+                wrapper.style.transition = 'transform 0.3s ease-in-out';
+                if (zoomScale <= 1) {
+                    zoomScale = 1; translateX = 0; translateY = 0;
+                    wrapper.style.cursor = 'default';
+                } else {
+                    wrapper.style.cursor = 'grab';
+                }
+                applyZoomPan();
+                hideTooltip('zoomTooltip');
+                setTimeout(() => { wrapper.style.transition = ''; }, 300);
+                return;
+            }
+
+            isDragging = false;
             if(zoomScale > 1) wrapper.style.cursor = 'grab';
             
             if(e && (e.type === 'touchend' || e.type === 'mouseup') && wrapper.contains(e.target)) {
@@ -1348,6 +1434,18 @@
                 modal.classList.replace('opacity-0', 'opacity-100');
                 content.classList.replace('scale-95', 'scale-100');
             }, 10);
+
+            if (!hasSeenReviewZoomHint) {
+                hasSeenReviewZoomHint = true;
+                localStorage.setItem('client_portal_review_zoom_hint_seen', '1');
+                const hint = document.getElementById('reviewZoomHint');
+                hint.classList.remove('hidden');
+                setTimeout(() => hint.classList.replace('opacity-0', 'opacity-100'), 200);
+                setTimeout(() => {
+                    hint.classList.replace('opacity-100', 'opacity-0');
+                    setTimeout(() => hint.classList.add('hidden'), 300);
+                }, 5000);
+            }
         }
 
         function closeReviewModal() {
@@ -1410,10 +1508,22 @@
                     const item = document.createElement('div');
                     item.className = "flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5";
 
+                    const imgWrap = document.createElement('div');
+                    imgWrap.className = "relative shrink-0 cursor-zoom-in";
+                    imgWrap.title = langData.reviewZoomTitle || 'Klik untuk lihat lebih besar';
+                    imgWrap.onclick = () => openLightboxFromReview(photo.id);
+
                     const img = document.createElement('img');
                     img.src = photo.url;
-                    img.className = `w-14 h-14 rounded-lg object-cover shrink-0 ${appState.isProtected ? 'anti-copy-img' : ''}`;
+                    img.className = `w-14 h-14 rounded-lg object-cover block ${appState.isProtected ? 'anti-copy-img' : ''}`;
                     img.loading = "lazy";
+
+                    const zoomBadge = document.createElement('div');
+                    zoomBadge.className = "absolute -bottom-1 -right-1 w-5 h-5 bg-slate-900/90 dark:bg-black/90 text-white rounded-full flex items-center justify-center text-[9px] shadow-md border border-white/50 pointer-events-none";
+                    zoomBadge.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus"></i>';
+
+                    imgWrap.appendChild(img);
+                    imgWrap.appendChild(zoomBadge);
 
                     const info = document.createElement('div');
                     info.className = "flex-grow min-w-0";
@@ -1439,7 +1549,7 @@
                     removeBtn.innerHTML = '<i class="fa-solid fa-trash-can text-sm"></i>';
                     removeBtn.onclick = () => removeFromReview(photo.id);
 
-                    item.appendChild(img);
+                    item.appendChild(imgWrap);
                     item.appendChild(info);
                     item.appendChild(removeBtn);
                     itemsWrap.appendChild(item);
@@ -1448,6 +1558,17 @@
                 groupWrap.appendChild(itemsWrap);
                 listEl.appendChild(groupWrap);
             });
+        }
+
+        function openLightboxFromReview(photoId) {
+            const selectedPhotos = Array.from(appState.selectedMap.values());
+            const idx = selectedPhotos.findIndex(p => p.id === photoId);
+            if (idx === -1) return;
+
+            // Pastikan lightbox membaca dari daftar foto terpilih (urutan sama seperti di modal ini)
+            appState.viewMode = 'selected';
+            closeReviewModal();
+            setTimeout(() => openLightbox(idx), 320); // tunggu animasi modal review selesai tertutup dulu
         }
 
         function removeFromReview(photoId) {
