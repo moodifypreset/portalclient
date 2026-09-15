@@ -325,7 +325,12 @@
         </div>
         <button onclick="prevPhoto(event)" class="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-left"></i></button>
         <button onclick="nextPhoto(event)" class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-black/50 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-xl md:text-2xl z-50 transition hidden md:flex"><i class="fa-solid fa-chevron-right"></i></button>
-        <div class="relative w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24 pointer-events-none">
+        <div id="zoomControls" class="absolute top-20 right-3 md:right-6 flex flex-col gap-2 z-50">
+            <button onclick="zoomInImage()" title="Perbesar" class="w-10 h-10 bg-black/50 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-base shadow-lg transition"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            <button onclick="zoomOutImage()" title="Perkecil" class="w-10 h-10 bg-black/50 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-base shadow-lg transition"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <button id="zoomResetBtn" onclick="resetZoomImage()" title="Tutup Zoom" class="hidden w-10 h-10 bg-black/50 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-base shadow-lg transition"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="relative w-full h-full flex items-center justify-center p-2 pb-32 md:pb-24 pointer-events-none overflow-hidden" id="lightboxImgWrapper">
             <img id="lightboxImg" src="" draggable="false" class="max-w-full max-h-full object-contain rounded-md shadow-2xl transition-all duration-200 ease-in-out pointer-events-auto select-none opacity-100 transform scale-100">
             <div id="lightboxWatermark" class="watermark-layer hidden absolute inset-0 z-20 pointer-events-none"></div>
         </div>
@@ -547,6 +552,8 @@
 
         let currentZoomIndex = 0; 
         let currentZoomPhoto = null;
+        let currentImgScale = 1;
+        const ZOOM_MIN = 1, ZOOM_MAX = 3, ZOOM_STEP = 0.5;
         let touchstartX = 0;
         let touchendX = 0;
         let hasSeenTutorial = false; 
@@ -706,7 +713,13 @@
             if (savedData) {
                 try {
                     const data = JSON.parse(savedData);
-                    appState.selectedMap = new Map(data.selected || []);
+                    // FIX URL EXPIRED UNTUK DATA LAMA (jika sebelumnya tersimpan pakai thumbnailLink)
+                    const fixedSelected = (data.selected || []).map(([id, photoObj]) => {
+                        photoObj.url = `https://drive.google.com/thumbnail?id=${id}&sz=w500`;
+                        photoObj.fullUrl = `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+                        return [id, photoObj];
+                    });
+                    appState.selectedMap = new Map(fixedSelected);
                     appState.notes = data.notes || {};
                     if (appState.selectedMap.size > 0) {
                         setTimeout(() => { updateActionBar(); }, 1000);
@@ -772,7 +785,7 @@
                 let fetchedFiles = []; let nextPageToken = "";
                 const query = encodeURIComponent(`'${targetFolderId}' in parents and trashed=false`);
                 do {
-                    let apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=nextPageToken,files(id,name,mimeType,thumbnailLink)&key=${CONFIG_APP.googleApiKey}&pageSize=1000`;
+                    let apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=nextPageToken,files(id,name,mimeType)&key=${CONFIG_APP.googleApiKey}&pageSize=1000`;
                     if (nextPageToken) apiUrl += `&pageToken=${nextPageToken}`;
                     const response = await fetch(apiUrl);
                     const data = await response.json();
@@ -782,12 +795,13 @@
 
                 if (fetchedFiles.length > 0 || appState.folderHistory.length > 0) {
                     appState.folders = fetchedFiles.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-                    let photoFiles = fetchedFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && f.thumbnailLink);
+                    let photoFiles = fetchedFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
                     
+                    // FIX: format URL permanen berbasis ID, tidak kedaluwarsa seperti thumbnailLink
                     appState.photos = photoFiles.map(f => ({ 
                         id: f.id, name: f.name, folderName: displayTitle,
-                        url: f.thumbnailLink?.replace('=s220', '=s500'), 
-                        fullUrl: f.thumbnailLink?.replace('=s220', '=s1600') 
+                        url: `https://drive.google.com/thumbnail?id=${f.id}&sz=w500`, 
+                        fullUrl: `https://drive.google.com/thumbnail?id=${f.id}&sz=w1600` 
                     }));
                     appState.originalPhotos = [...appState.photos];
                     
@@ -952,6 +966,7 @@
                 const globalIndex = appState.photos.findIndex(p => p.id === photo.id); 
                 const card = document.createElement('div');
                 card.className = `photo-card relative bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden aspect-square shadow-sm hover:shadow-md ${appState.selectedMap.has(photo.id) ? 'selected' : ''}`;
+                card.setAttribute('data-photo-id', photo.id);
                 
                 const img = document.createElement('img');
                 img.src = photo.url; 
@@ -959,6 +974,17 @@
                 img.loading = "lazy";
                 img.draggable = false;
                 img.onclick = () => toggleSelect(photo, card);
+                img.onerror = function() {
+                    const attempts = parseInt(this.dataset.attempts || '0');
+                    if (attempts < 2) {
+                        this.dataset.attempts = attempts + 1;
+                        setTimeout(() => { this.src = photo.url + (photo.url.includes('?') ? '&' : '?') + '_r=' + Date.now(); }, 700 * (attempts + 1));
+                    } else {
+                        this.onerror = null;
+                        this.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="100%" height="100%" fill="%23334155"/><text x="50%" y="50%" fill="%2394a3b8" font-family="sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle">Gagal Muat, Klik</text></svg>');
+                        this.onclick = () => window.open('https://drive.google.com/file/d/' + photo.id + '/view', '_blank');
+                    }
+                };
                 card.appendChild(img);
 
                 if (appState.wmMode) {
@@ -1002,6 +1028,28 @@
                 grid.appendChild(card);
             });
             renderPagination(photosToProcess.length);
+        }
+
+        function updateGalleryVisuals() {
+            const isSmall = appState.gridMode > 2;
+            document.querySelectorAll('.photo-card').forEach(card => {
+                const photoId = card.getAttribute('data-photo-id');
+                if (appState.selectedMap.has(photoId)) card.classList.add('selected'); else card.classList.remove('selected');
+                let badge = card.querySelector('.note-badge');
+                if (appState.notes[photoId]) {
+                    if (!badge) {
+                        const overlay = card.querySelector('.selected-overlay');
+                        if (overlay) {
+                            badge = document.createElement('div');
+                            const rightPos = isSmall ? 'right-8' : 'right-12';
+                            const badgeSize = isSmall ? 'w-5 h-5 text-[10px]' : 'w-8 h-8 text-sm';
+                            badge.className = `note-badge absolute top-2 ${rightPos} bg-yellow-500 text-white ${badgeSize} rounded-full flex items-center justify-center shadow-md z-20 pointer-events-none`;
+                            badge.innerHTML = '<i class="fa-solid fa-comment-dots"></i>';
+                            overlay.appendChild(badge);
+                        }
+                    }
+                } else if (badge) badge.remove();
+            });
         }
 
         function renderPagination(totalItems) {
@@ -1050,7 +1098,7 @@
                 appState.selectedMap.set(photoObj.id, photoObj); 
                 cardElement.classList.add('selected');
             }
-            updateActionBar(); saveProgress();
+            updateActionBar(); saveProgress(); updateGalleryVisuals();
             if (appState.viewMode === 'all') updateViewModeText();
         }
 
@@ -1087,10 +1135,15 @@
             
             let textContent = `LIST FOTO PILIHAN KLIEN\n=======================\nLayanan : ${vendor}\nKlien   : ${appState.clientName || 'Klien'}\nTotal   : ${selectedPhotos.length} Foto\n=======================\n\n`;
             
+            let noteCounterTxt = 0;
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
-                textContent += `${index + 1}. ${p.name}\n`;
-                if (note) textContent += `   Catatan: ${note}\n`;
+                textContent += `${index + 1}. ${p.name} (Folder: ${p.folderName || 'Utama'})\n`;
+                if (note) {
+                    noteCounterTxt++;
+                    const noteCode = `CN${String(noteCounterTxt).padStart(3, '0')}`;
+                    textContent += `   Catatan #${noteCode}: ${note}\n`;
+                }
             });
             
             textContent += `\n=======================\nDicetak otomatis melalui ${vendor} Portal\n`;
@@ -1110,10 +1163,15 @@
             const waNumber = (typeof CONFIG_APP !== 'undefined' && CONFIG_APP.whatsappAdmin) ? CONFIG_APP.whatsappAdmin : '';
             
             let textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${selectedPhotos.length} Foto\n\n`;
+            let noteCounter = 0;
             selectedPhotos.forEach((p, index) => {
                 const note = appState.notes[p.id];
-                textToCopy += `${index + 1}. ${p.name}\n`;
-                if (note) textToCopy += `   _Catatan: ${note}_\n`;
+                textToCopy += `${index + 1}. ${p.name} _[Folder: ${p.folderName || 'Utama'}]_\n`;
+                if (note) {
+                    noteCounter++;
+                    const noteCode = `CN${String(noteCounter).padStart(3, '0')}`;
+                    textToCopy += `   _Catatan #${noteCode}: ${note}_\n`;
+                }
             });
             textToCopy += `\n_Dikirim dari ${vendor} Portal_`;
 
@@ -1142,6 +1200,39 @@
             }
         }
 
+        function applyImgZoom() {
+            const img = document.getElementById('lightboxImg'); const wrapper = document.getElementById('lightboxImgWrapper'); const resetBtn = document.getElementById('zoomResetBtn');
+            if (!img || !wrapper) return;
+            img.style.setProperty('--tw-scale-x', currentImgScale); img.style.setProperty('--tw-scale-y', currentImgScale);
+            if (currentImgScale > 1) {
+                wrapper.classList.remove('pointer-events-none', 'overflow-hidden');
+                wrapper.classList.add('pointer-events-auto', 'overflow-auto', 'cursor-grab');
+                if (resetBtn) resetBtn.classList.remove('hidden');
+            } else {
+                wrapper.classList.add('pointer-events-none', 'overflow-hidden');
+                wrapper.classList.remove('pointer-events-auto', 'overflow-auto', 'cursor-grab');
+                if (resetBtn) resetBtn.classList.add('hidden');
+                wrapper.scrollTop = 0; wrapper.scrollLeft = 0;
+            }
+        }
+        function zoomInImage() { currentImgScale = Math.min(ZOOM_MAX, currentImgScale + ZOOM_STEP); applyImgZoom(); }
+        function zoomOutImage() { currentImgScale = Math.max(ZOOM_MIN, currentImgScale - ZOOM_STEP); applyImgZoom(); }
+        function resetZoomImage() { currentImgScale = 1; applyImgZoom(); }
+
+        function setLightboxImgSrc(imgEl, photoObj) {
+            imgEl.dataset.attempts = '0';
+            imgEl.onerror = function() {
+                const attempts = parseInt(this.dataset.attempts || '0');
+                if (attempts < 2) {
+                    this.dataset.attempts = attempts + 1;
+                    setTimeout(() => { this.src = (photoObj.fullUrl || photoObj.url) + '?_r=' + Date.now(); }, 700 * (attempts + 1));
+                } else {
+                    showAlert(appState.lang === 'id' ? 'Gagal memuat foto ukuran penuh.' : 'Failed to load full-size photo.', 'error');
+                }
+            };
+            imgEl.src = photoObj.fullUrl || photoObj.url;
+        }
+
         function openLightbox(index) {
             const lightbox = document.getElementById('lightbox');
             const imgEl = document.getElementById('lightboxImg');
@@ -1161,19 +1252,21 @@
             const photosToProcess = appState.viewMode === 'selected' ? Array.from(appState.selectedMap.values()) : appState.photos;
 
             if (isCurrentlyOpen) {
-                imgEl.classList.remove('opacity-100', 'scale-100');
-                imgEl.classList.add('opacity-0', 'scale-95');
+                imgEl.classList.remove('opacity-100');
+                imgEl.classList.add('opacity-0');
+                imgEl.style.setProperty('--tw-scale-x', 0.95); imgEl.style.setProperty('--tw-scale-y', 0.95);
                 
                 setTimeout(() => {
                     currentZoomIndex = index; 
                     currentZoomPhoto = photosToProcess[index];
                     document.getElementById('lightboxTitle').textContent = `${currentZoomPhoto.name} (${index + 1} of ${photosToProcess.length})`;
-                    document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
+                    setLightboxImgSrc(imgEl, currentZoomPhoto);
                     updateLightboxSelectBtn();
                     
                     void imgEl.offsetWidth;
-                    imgEl.classList.remove('opacity-0', 'scale-95'); 
-                    imgEl.classList.add('opacity-100', 'scale-100');
+                    imgEl.classList.remove('opacity-0'); 
+                    imgEl.classList.add('opacity-100');
+                    currentImgScale = 1; applyImgZoom();
 
                     preloadNeighbors(currentZoomIndex, photosToProcess);
                 }, 200); 
@@ -1182,11 +1275,12 @@
                 currentZoomIndex = index; 
                 currentZoomPhoto = photosToProcess[index];
                 document.getElementById('lightboxTitle').textContent = `${currentZoomPhoto.name} (${index + 1} of ${photosToProcess.length})`;
-                document.getElementById('lightboxImg').src = currentZoomPhoto.fullUrl || currentZoomPhoto.url;
+                setLightboxImgSrc(imgEl, currentZoomPhoto);
                 updateLightboxSelectBtn();
                 
-                imgEl.classList.remove('opacity-0', 'scale-95');
-                imgEl.classList.add('opacity-100', 'scale-100');
+                imgEl.classList.remove('opacity-0');
+                imgEl.classList.add('opacity-100');
+                currentImgScale = 1; applyImgZoom();
                 
                 lightbox.classList.remove('hidden'); 
                 setTimeout(() => { lightbox.classList.replace('opacity-0', 'opacity-100'); }, 10);
@@ -1200,7 +1294,7 @@
             const lightbox = document.getElementById('lightbox');
             lightbox.classList.replace('opacity-100', 'opacity-0');
             setTimeout(() => { 
-                lightbox.classList.add('hidden'); currentZoomPhoto = null; document.body.style.overflow = 'auto'; renderGallery(); 
+                lightbox.classList.add('hidden'); currentZoomPhoto = null; document.body.style.overflow = 'auto'; currentImgScale = 1; applyImgZoom(); renderGallery(); 
             }, 300);
         }
 
@@ -1224,7 +1318,7 @@
                 }
                 appState.selectedMap.set(currentZoomPhoto.id, currentZoomPhoto);
             }
-            updateLightboxSelectBtn(); updateActionBar(); saveProgress(); 
+            updateLightboxSelectBtn(); updateActionBar(); saveProgress(); updateGalleryVisuals();
             if (appState.viewMode === 'all') updateViewModeText();
         }
 
@@ -1250,7 +1344,7 @@
             const noteText = document.getElementById('lightboxNote').value.trim();
             if (noteText) appState.notes[currentZoomPhoto.id] = noteText;
             else delete appState.notes[currentZoomPhoto.id];
-            saveProgress(); 
+            saveProgress(); updateGalleryVisuals();
         }
     </script>
 </body>
